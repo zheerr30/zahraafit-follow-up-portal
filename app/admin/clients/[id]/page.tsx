@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { FileText, Save, StickyNote, Upload } from "lucide-react";
+import { FileText, Pencil, Save, StickyNote, Upload, X } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/Feedback";
 import {
@@ -28,6 +28,32 @@ import type {
 type PlanView = Plan & {
   signedUrl?: string;
 };
+
+type ClientEditForm = {
+  full_name: string;
+  phone: string;
+  age: string;
+  height_cm: string;
+  start_weight: string;
+  goal: string;
+  status: "active" | "paused";
+  notes: string;
+};
+
+const emptyClientEditForm: ClientEditForm = {
+  full_name: "",
+  phone: "",
+  age: "",
+  height_cm: "",
+  start_weight: "",
+  goal: "",
+  status: "active",
+  notes: ""
+};
+
+function toOptionalNumber(value: string) {
+  return value.trim() === "" ? null : Number(value);
+}
 
 async function signPhotos(photos: FollowupPhoto[]) {
   return Promise.all(
@@ -78,6 +104,10 @@ export default function AdminClientDetailsPage() {
   const [planContent, setPlanContent] = useState("");
   const [planFile, setPlanFile] = useState<File | null>(null);
   const [savingPlan, setSavingPlan] = useState(false);
+  const [isEditingClient, setIsEditingClient] = useState(false);
+  const [clientEditForm, setClientEditForm] = useState<ClientEditForm>(emptyClientEditForm);
+  const [savingClient, setSavingClient] = useState(false);
+  const [clientEditSuccess, setClientEditSuccess] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -162,6 +192,81 @@ export default function AdminClientDetailsPage() {
 
     loadDetails();
   }, [auth.profile, clientId, refreshKey]);
+
+  function openClientEditForm() {
+    if (!client) return;
+
+    setClientEditForm({
+      full_name: clientProfile?.full_name || "",
+      phone: clientProfile?.phone || "",
+      age: client.age === null ? "" : String(client.age),
+      height_cm: client.height_cm === null ? "" : String(client.height_cm),
+      start_weight: client.start_weight === null ? "" : String(client.start_weight),
+      goal: client.goal || "",
+      status: client.status,
+      notes: client.notes || ""
+    });
+    setClientEditSuccess(null);
+    setIsEditingClient(true);
+  }
+
+  function updateClientEditField(name: keyof ClientEditForm, value: string) {
+    setClientEditForm((current) => ({
+      ...current,
+      [name]: value
+    }));
+  }
+
+  async function handleUpdateClient(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!client || !clientProfile || !clientEditForm.full_name.trim()) return;
+
+    setSavingClient(true);
+    setError(null);
+    setClientEditSuccess(null);
+
+    const profileUpdate = {
+      full_name: clientEditForm.full_name.trim(),
+      phone: clientEditForm.phone.trim() || null
+    };
+
+    const clientUpdate = {
+      age: toOptionalNumber(clientEditForm.age),
+      height_cm: toOptionalNumber(clientEditForm.height_cm),
+      start_weight: toOptionalNumber(clientEditForm.start_weight),
+      goal: clientEditForm.goal.trim() || null,
+      status: clientEditForm.status,
+      notes: clientEditForm.notes.trim() || null
+    };
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update(profileUpdate)
+      .eq("id", clientProfile.id);
+
+    if (profileError) {
+      setSavingClient(false);
+      setError(profileError.message);
+      return;
+    }
+
+    const { error: clientError } = await supabase
+      .from("clients")
+      .update(clientUpdate)
+      .eq("id", client.id);
+
+    setSavingClient(false);
+
+    if (clientError) {
+      setError(clientError.message);
+      return;
+    }
+
+    setClientProfile((current) => (current ? { ...current, ...profileUpdate } : current));
+    setClient((current) => (current ? { ...current, ...clientUpdate } : current));
+    setClientEditSuccess("تم حفظ بيانات العميلة بنجاح.");
+    setIsEditingClient(false);
+  }
 
   async function handleAddCoachNote(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -289,11 +394,27 @@ export default function AdminClientDetailsPage() {
           <div className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
             <aside className="space-y-6">
               <section className="panel p-5">
-                <p className="text-sm font-bold text-zahraa-coral">ملف العميلة</p>
-                <h2 className="mt-1 text-2xl font-black text-zahraa-navy">
-                  {clientProfile?.full_name || "عميلة بدون اسم"}
-                </h2>
-                <p className="mt-2 text-sm text-slate-500">{clientProfile?.email || "-"}</p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-zahraa-coral">ملف العميلة</p>
+                    <h2 className="mt-1 text-2xl font-black text-zahraa-navy">
+                      {clientProfile?.full_name || "عميلة بدون اسم"}
+                    </h2>
+                    <p className="mt-2 text-sm text-slate-500">{clientProfile?.email || "-"}</p>
+                    <p className="mt-1 text-sm text-slate-500">{clientProfile?.phone || "لا يوجد رقم جوال"}</p>
+                  </div>
+
+                  <button className="secondary-button py-2" type="button" onClick={openClientEditForm}>
+                    <Pencil size={18} />
+                    تعديل بيانات العميلة
+                  </button>
+                </div>
+
+                {clientEditSuccess ? (
+                  <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
+                    {clientEditSuccess}
+                  </div>
+                ) : null}
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
                   <Info label="العمر" value={formatNumber(client.age, " سنة")} />
@@ -306,6 +427,127 @@ export default function AdminClientDetailsPage() {
                   <p className="text-sm font-bold text-zahraa-navy">الهدف</p>
                   <p className="mt-2 text-sm leading-7 text-slate-700">{client.goal || "-"}</p>
                 </div>
+
+                <div className="mt-4 rounded-lg bg-zahraa-mist p-4">
+                  <p className="text-sm font-bold text-zahraa-navy">ملاحظات عامة</p>
+                  <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
+                    {client.notes || "-"}
+                  </p>
+                </div>
+
+                {isEditingClient ? (
+                  <form className="mt-5 rounded-lg border border-zahraa-coral/25 bg-zahraa-coral/5 p-4" onSubmit={handleUpdateClient}>
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <h3 className="font-black text-zahraa-navy">تعديل بيانات العميلة</h3>
+                      <button
+                        className="secondary-button px-3 py-2"
+                        type="button"
+                        onClick={() => setIsEditingClient(false)}
+                        disabled={savingClient}
+                      >
+                        <X size={18} />
+                        إغلاق
+                      </button>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <label className="block">
+                        <span className="field-label">الاسم الكامل</span>
+                        <input
+                          className="field-input"
+                          value={clientEditForm.full_name}
+                          onChange={(event) => updateClientEditField("full_name", event.target.value)}
+                          required
+                        />
+                      </label>
+
+                      <label className="block">
+                        <span className="field-label">رقم الجوال</span>
+                        <input
+                          className="field-input"
+                          dir="ltr"
+                          type="tel"
+                          value={clientEditForm.phone}
+                          onChange={(event) => updateClientEditField("phone", event.target.value)}
+                          placeholder="+9665XXXXXXXX"
+                        />
+                      </label>
+
+                      <label className="block">
+                        <span className="field-label">العمر</span>
+                        <input
+                          className="field-input"
+                          type="number"
+                          min="10"
+                          max="100"
+                          value={clientEditForm.age}
+                          onChange={(event) => updateClientEditField("age", event.target.value)}
+                        />
+                      </label>
+
+                      <label className="block">
+                        <span className="field-label">الطول</span>
+                        <input
+                          className="field-input"
+                          type="number"
+                          min="100"
+                          max="250"
+                          step="0.1"
+                          value={clientEditForm.height_cm}
+                          onChange={(event) => updateClientEditField("height_cm", event.target.value)}
+                        />
+                      </label>
+
+                      <label className="block">
+                        <span className="field-label">وزن البداية</span>
+                        <input
+                          className="field-input"
+                          type="number"
+                          min="20"
+                          max="300"
+                          step="0.1"
+                          value={clientEditForm.start_weight}
+                          onChange={(event) => updateClientEditField("start_weight", event.target.value)}
+                        />
+                      </label>
+
+                      <label className="block">
+                        <span className="field-label">الحالة</span>
+                        <select
+                          className="field-input"
+                          value={clientEditForm.status}
+                          onChange={(event) => updateClientEditField("status", event.target.value)}
+                        >
+                          <option value="active">active</option>
+                          <option value="paused">paused</option>
+                        </select>
+                      </label>
+                    </div>
+
+                    <label className="mt-4 block">
+                      <span className="field-label">الهدف</span>
+                      <textarea
+                        className="field-input min-h-24 resize-y"
+                        value={clientEditForm.goal}
+                        onChange={(event) => updateClientEditField("goal", event.target.value)}
+                      />
+                    </label>
+
+                    <label className="mt-4 block">
+                      <span className="field-label">ملاحظات عامة</span>
+                      <textarea
+                        className="field-input min-h-24 resize-y"
+                        value={clientEditForm.notes}
+                        onChange={(event) => updateClientEditField("notes", event.target.value)}
+                      />
+                    </label>
+
+                    <button className="primary-button mt-4 w-full" type="submit" disabled={savingClient}>
+                      <Save size={18} />
+                      {savingClient ? "جاري الحفظ..." : "حفظ"}
+                    </button>
+                  </form>
+                ) : null}
               </section>
 
               <section className="panel p-5">
