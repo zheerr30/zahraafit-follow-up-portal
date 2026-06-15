@@ -112,7 +112,7 @@ anon public key
 2. أنشئي مستخدمة جديدة للمدربة بالبريد:
 
 ```text
-zheer30@gmail.com
+zheerr30@gmail.com
 ```
 
 3. بعد إنشاء المستخدم، شغلي ملف SQL التالي في `SQL Editor`:

@@ -203,7 +203,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 5. اكتبي بريد المدربة وكلمة المرور:
 
 ```text
-zheer30@gmail.com
+zheerr30@gmail.com
 ```
 
 6. احفظي الحساب.
