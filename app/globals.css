@@ -23,8 +23,8 @@ body {
   min-height: 100vh;
   color: #15213a;
   background:
-    linear-gradient(135deg, rgba(242, 101, 57, 0.08), transparent 28rem),
-    linear-gradient(225deg, rgba(11, 46, 107, 0.08), transparent 26rem),
+    radial-gradient(circle at top right, rgba(242, 101, 57, 0.08), transparent 22rem),
+    linear-gradient(180deg, #ffffff 0, var(--zahraa-mist) 18rem),
     var(--zahraa-mist);
 }
 
@@ -42,7 +42,7 @@ button {
 
 @layer components {
   .page-shell {
-    @apply min-h-screen px-4 py-5 sm:px-6 lg:px-8;
+    @apply min-h-screen px-4 py-4 sm:px-6 lg:px-8;
   }
 
   .page-container {
@@ -50,7 +50,7 @@ button {
   }
 
   .panel {
-    @apply rounded-lg border border-slate-200 bg-white shadow-soft;
+    @apply rounded-lg border border-slate-100 bg-white shadow-soft;
   }
 
   .field-label {
@@ -58,19 +58,19 @@ button {
   }
 
   .field-input {
-    @apply w-full rounded-md border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-zahraa-coral focus:ring-4 focus:ring-zahraa-coral/15;
+    @apply w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-zahraa-coral focus:ring-4 focus:ring-zahraa-coral/15;
   }
 
   .primary-button {
-    @apply inline-flex items-center justify-center gap-2 rounded-md bg-zahraa-coral px-4 py-3 text-sm font-bold text-white transition hover:bg-[#df542b] disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-zahraa-coral px-4 py-3 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#df542b] hover:shadow-md disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60;
   }
 
   .secondary-button {
-    @apply inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-zahraa-navy transition hover:border-zahraa-navy/30 hover:bg-zahraa-mist disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-black text-zahraa-navy shadow-sm transition hover:-translate-y-0.5 hover:border-zahraa-navy/30 hover:bg-zahraa-mist hover:shadow-md disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60;
   }
 
   .nav-pill {
-    @apply inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-zahraa-navy;
+    @apply inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-zahraa-mist hover:text-zahraa-navy;
   }
 
   .section-title {

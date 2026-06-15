@@ -1,4 +1,4 @@
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Inbox, Loader2 } from "lucide-react";
 
 export function LoadingState({ label = "جاري التحميل..." }: { label?: string }) {
   return (
@@ -19,7 +19,10 @@ export function EmptyState({
   description: string;
 }) {
   return (
-    <div className="rounded-lg border border-dashed border-slate-300 bg-zahraa-mist px-4 py-8 text-center">
+    <div className="rounded-lg border border-dashed border-slate-200 bg-gradient-to-b from-white to-zahraa-mist px-4 py-8 text-center">
+      <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-white text-zahraa-coral shadow-sm">
+        <Inbox size={20} />
+      </div>
       <p className="font-black text-zahraa-navy">{title}</p>
       <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
     </div>

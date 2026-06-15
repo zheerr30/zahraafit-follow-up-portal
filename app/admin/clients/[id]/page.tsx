@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import { FileText, Pencil, Save, StickyNote, Upload, X } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/Feedback";
+import { GoalProgressTracker } from "@/components/GoalProgressTracker";
+import { ProgressLineChart } from "@/components/ProgressLineChart";
 import {
   commitmentLabel,
   formatDate,
@@ -35,6 +37,7 @@ type ClientEditForm = {
   age: string;
   height_cm: string;
   start_weight: string;
+  target_weight: string;
   goal: string;
   status: "active" | "paused";
   notes: string;
@@ -46,6 +49,7 @@ const emptyClientEditForm: ClientEditForm = {
   age: "",
   height_cm: "",
   start_weight: "",
+  target_weight: "",
   goal: "",
   status: "active",
   notes: ""
@@ -202,6 +206,7 @@ export default function AdminClientDetailsPage() {
       age: client.age === null ? "" : String(client.age),
       height_cm: client.height_cm === null ? "" : String(client.height_cm),
       start_weight: client.start_weight === null ? "" : String(client.start_weight),
+      target_weight: client.target_weight === null ? "" : String(client.target_weight),
       goal: client.goal || "",
       status: client.status,
       notes: client.notes || ""
@@ -234,6 +239,7 @@ export default function AdminClientDetailsPage() {
       age: toOptionalNumber(clientEditForm.age),
       height_cm: toOptionalNumber(clientEditForm.height_cm),
       start_weight: toOptionalNumber(clientEditForm.start_weight),
+      target_weight: toOptionalNumber(clientEditForm.target_weight),
       goal: clientEditForm.goal.trim() || null,
       status: clientEditForm.status,
       notes: clientEditForm.notes.trim() || null
@@ -420,6 +426,7 @@ export default function AdminClientDetailsPage() {
                   <Info label="العمر" value={formatNumber(client.age, " سنة")} />
                   <Info label="الطول" value={formatNumber(client.height_cm, " سم")} />
                   <Info label="وزن البداية" value={formatNumber(client.start_weight, " كجم")} />
+                  <Info label="الوزن المستهدف" value={formatNumber(client.target_weight, " كجم")} />
                   <Info label="الحالة" value={client.status === "active" ? "نشطة" : "متوقفة"} />
                 </div>
 
@@ -508,6 +515,19 @@ export default function AdminClientDetailsPage() {
                           step="0.1"
                           value={clientEditForm.start_weight}
                           onChange={(event) => updateClientEditField("start_weight", event.target.value)}
+                        />
+                      </label>
+
+                      <label className="block">
+                        <span className="field-label">الوزن المستهدف</span>
+                        <input
+                          className="field-input"
+                          type="number"
+                          min="20"
+                          max="300"
+                          step="0.1"
+                          value={clientEditForm.target_weight}
+                          onChange={(event) => updateClientEditField("target_weight", event.target.value)}
                         />
                       </label>
 
@@ -630,6 +650,10 @@ export default function AdminClientDetailsPage() {
             </aside>
 
             <section className="space-y-6">
+              <GoalProgressTracker client={client} followups={followups} />
+
+              <ProgressLineChart followups={followups} />
+
               <div className="panel p-5">
                 <h2 className="section-title">خطط العميلة</h2>
                 <div className="mt-4 space-y-3">

@@ -9,7 +9,7 @@ export function formatDate(value?: string | null) {
 }
 
 export function formatNumber(value?: number | null, suffix = "") {
-  if (value === null || value === undefined) return "-";
+  if (value === null || value === undefined) return "غير محدد";
   return `${value.toLocaleString("ar-SA")}${suffix}`;
 }
 

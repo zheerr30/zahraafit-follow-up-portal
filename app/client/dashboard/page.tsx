@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { CalendarDays, FileText, Footprints, Plus, Ruler, Scale, StickyNote } from "lucide-react";
+import { CalendarDays, FileText, Footprints, Plus, Ruler, Scale, StickyNote, Target } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/Feedback";
+import { GoalProgressTracker } from "@/components/GoalProgressTracker";
+import { ProgressLineChart } from "@/components/ProgressLineChart";
 import { StatCard } from "@/components/StatCard";
 import { formatDate, formatNumber } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
@@ -27,6 +29,7 @@ export default function ClientDashboardPage() {
 
       setLoadingData(true);
       setError(null);
+      setPlanUrl(null);
 
       const { data: clientData, error: clientError } = await supabase
         .from("clients")
@@ -58,7 +61,7 @@ export default function ClientDashboardPage() {
           .select("*")
           .eq("client_id", typedClient.id)
           .order("week_date", { ascending: false })
-          .limit(4),
+          .limit(12),
         supabase
           .from("coach_notes")
           .select("*")
@@ -107,35 +110,98 @@ export default function ClientDashboardPage() {
         {error || !client ? (
           <ErrorState message={error || "تعذر تحميل ملف العميلة."} />
         ) : (
-          <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
-            <section className="space-y-6">
-              <div className="panel p-5">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-sm font-bold text-zahraa-coral">مرحبًا</p>
-                    <h2 className="mt-1 text-2xl font-black text-zahraa-navy">
-                      {auth.profile.full_name}
-                    </h2>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                      {client.goal || "لم يتم تحديد هدف بعد."}
+          <div className="space-y-6">
+            <section className="overflow-hidden rounded-lg bg-zahraa-navy shadow-soft">
+              <div className="grid gap-5 p-5 text-white lg:grid-cols-[1.3fr_0.7fr] lg:p-7">
+                <div>
+                  <p className="text-sm font-black text-zahraa-coral">ZahraaFit Dashboard</p>
+                  <h2 className="mt-2 text-3xl font-black leading-tight">
+                    مرحبًا {auth.profile.full_name}
+                  </h2>
+                  <p className="mt-3 max-w-2xl text-sm leading-7 text-white/80">
+                    {client.goal || "أضيفي هدفك مع المدربة ليظهر هنا بشكل أوضح."}
+                  </p>
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <Link className="primary-button" href="/client/follow-up/new">
+                      <Plus size={18} />
+                      تعبئة المتابعة الأسبوعية
+                    </Link>
+                    <Link className="secondary-button border-white/20 bg-white/10 text-white hover:bg-white/15" href="/client/follow-ups">
+                      عرض سجل المتابعات
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                  <div className="rounded-lg border border-white/10 bg-white/10 p-4">
+                    <div className="flex items-center gap-2 text-white/70">
+                      <Target size={18} />
+                      <span className="text-xs font-black">الوزن المستهدف</span>
+                    </div>
+                    <p className="mt-2 text-3xl font-black">
+                      {formatNumber(client.target_weight, " كجم")}
                     </p>
                   </div>
-
-                  <Link className="primary-button" href="/client/follow-up/new">
-                    <Plus size={18} />
-                    تعبئة المتابعة الأسبوعية
-                  </Link>
-                </div>
-
-                <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <StatCard label="وزن البداية" value={formatNumber(client.start_weight, " كجم")} icon={<Scale size={20} />} />
-                  <StatCard label="الطول" value={formatNumber(client.height_cm, " سم")} icon={<Ruler size={20} />} />
-                  <StatCard label="العمر" value={formatNumber(client.age, " سنة")} icon={<CalendarDays size={20} />} />
-                  <StatCard label="الحالة" value={client.status === "active" ? "نشطة" : "متوقفة"} icon={<Footprints size={20} />} />
+                  <div className="rounded-lg border border-white/10 bg-white/10 p-4">
+                    <div className="flex items-center gap-2 text-white/70">
+                      <Footprints size={18} />
+                      <span className="text-xs font-black">الحالة</span>
+                    </div>
+                    <p className="mt-2 text-3xl font-black">
+                      {client.status === "active" ? "نشطة" : "متوقفة"}
+                    </p>
+                  </div>
                 </div>
               </div>
+            </section>
 
-              <div className="panel p-5">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard label="وزن البداية" value={formatNumber(client.start_weight, " كجم")} icon={<Scale size={20} />} />
+              <StatCard label="الوزن المستهدف" value={formatNumber(client.target_weight, " كجم")} icon={<Target size={20} />} />
+              <StatCard label="الطول" value={formatNumber(client.height_cm, " سم")} icon={<Ruler size={20} />} />
+              <StatCard label="العمر" value={formatNumber(client.age, " سنة")} icon={<CalendarDays size={20} />} />
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
+              <section className="space-y-6">
+                <GoalProgressTracker client={client} followups={followups} />
+
+                <ProgressLineChart followups={followups} />
+
+                <div className="panel p-5">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <h2 className="section-title">آخر المتابعات</h2>
+                    <Link className="secondary-button py-2" href="/client/follow-ups">
+                      عرض السجل
+                    </Link>
+                  </div>
+
+                  {followups.length ? (
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {followups.slice(0, 4).map((followup) => (
+                        <article key={followup.id} className="rounded-lg border border-slate-100 bg-white p-4 shadow-sm">
+                          <p className="text-sm font-bold text-zahraa-coral">
+                            {formatDate(followup.week_date)}
+                          </p>
+                          <div className="mt-3 grid grid-cols-3 gap-2 text-sm text-slate-600">
+                            <span>الوزن: {formatNumber(followup.weight_kg, " كجم")}</span>
+                            <span>الخصر: {formatNumber(followup.waist_cm, " سم")}</span>
+                            <span>الأرداف: {formatNumber(followup.hips_cm, " سم")}</span>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyState
+                      title="لم يتم إرسال متابعات بعد"
+                      description="ابدئي بأول متابعة أسبوعية وسيظهر ملخص القياسات هنا."
+                    />
+                  )}
+                </div>
+              </section>
+
+              <aside className="space-y-6">
+                <div className="panel p-5">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <h2 className="section-title">الخطة الحالية</h2>
                   <FileText className="text-zahraa-coral" size={22} />
@@ -167,42 +233,9 @@ export default function ClientDashboardPage() {
                     description="ستظهر الخطة هنا بعد إضافتها من حساب المدربة."
                   />
                 )}
-              </div>
-
-              <div className="panel p-5">
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <h2 className="section-title">آخر المتابعات</h2>
-                  <Link className="secondary-button py-2" href="/client/follow-ups">
-                    عرض السجل
-                  </Link>
                 </div>
 
-                {followups.length ? (
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {followups.map((followup) => (
-                      <article key={followup.id} className="rounded-lg border border-slate-200 p-4">
-                        <p className="text-sm font-bold text-zahraa-coral">
-                          {formatDate(followup.week_date)}
-                        </p>
-                        <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
-                          <span>الوزن: {formatNumber(followup.weight_kg, " كجم")}</span>
-                          <span>الخصر: {formatNumber(followup.waist_cm, " سم")}</span>
-                          <span>الأرداف: {formatNumber(followup.hips_cm, " سم")}</span>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <EmptyState
-                    title="لم يتم إرسال متابعات بعد"
-                    description="ابدئي بأول متابعة أسبوعية من الزر أعلى الصفحة."
-                  />
-                )}
-              </div>
-            </section>
-
-            <aside className="space-y-6">
-              <div className="panel p-5">
+                <div className="panel p-5">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <h2 className="section-title">ملاحظات المدربة</h2>
                   <StickyNote className="text-zahraa-coral" size={22} />
@@ -225,8 +258,9 @@ export default function ClientDashboardPage() {
                     description="ستظهر ملاحظات المدربة هنا عند إضافتها."
                   />
                 )}
-              </div>
-            </aside>
+                </div>
+              </aside>
+            </div>
           </div>
         )}
       </div>

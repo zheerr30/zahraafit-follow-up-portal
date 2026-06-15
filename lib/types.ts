@@ -18,6 +18,7 @@ export type Client = {
   height_cm: number | null;
   goal: string | null;
   start_weight: number | null;
+  target_weight: number | null;
   status: "active" | "paused";
   notes: string | null;
   created_at: string;

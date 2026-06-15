@@ -30,11 +30,15 @@ create table if not exists public.clients (
   height_cm numeric(5, 2) check (height_cm is null or height_cm between 100 and 250),
   goal text,
   start_weight numeric(6, 2) check (start_weight is null or start_weight between 20 and 300),
+  target_weight numeric(6, 2) check (target_weight is null or target_weight between 20 and 300),
   status text not null default 'active' check (status in ('active', 'paused')),
   notes text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.clients
+add column if not exists target_weight numeric(6, 2) check (target_weight is null or target_weight between 20 and 300);
 
 create table if not exists public.plans (
   id uuid primary key default gen_random_uuid(),
