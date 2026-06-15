@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LockKeyhole, LogIn, Mail } from "lucide-react";
 import { ErrorState } from "@/components/Feedback";
@@ -140,6 +141,13 @@ export default function LoginPage() {
               <LogIn size={18} />
               {loading ? "جاري الدخول..." : "دخول"}
             </button>
+
+            <p className="text-center text-sm text-slate-500">
+              ليس لديك حساب؟{" "}
+              <Link className="font-black text-zahraa-coral hover:text-zahraa-navy" href="/signup">
+                إنشاء حساب جديد
+              </Link>
+            </p>
           </form>
         </div>
       </section>

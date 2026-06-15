@@ -200,19 +200,21 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 2. افتحي `Authentication`.
 3. افتحي `Users`.
 4. اضغطي `Add user` أو `Create user`.
-5. اكتبي بريد المدربة وكلمة المرور.
-6. احفظي الحساب.
-7. افتحي `SQL Editor`.
-8. شغلي هذا الاستعلام بعد تغيير البريد:
+5. اكتبي بريد المدربة وكلمة المرور:
 
-```sql
-update public.profiles
-set role = 'admin',
-    full_name = 'ZahraaFit Coach'
-where email = 'coach@example.com';
+```text
+zheer30@gmail.com
 ```
 
-9. تأكدي أن الاستعلام غيّر صفًا واحدًا.
+6. احفظي الحساب.
+7. افتحي `SQL Editor`.
+8. افتحي ملف:
+
+```text
+supabase/admin-setup.sql
+```
+
+9. انسخي محتواه كاملًا وشغليه.
 10. سجلي الدخول من `/login` باستخدام بريد المدربة.
 11. يجب أن يتم تحويلك إلى:
 
@@ -220,57 +222,32 @@ where email = 'coach@example.com';
 /admin
 ```
 
-إذا لم يظهر profile للمدربة، شغلي هذا الاستعلام بعد تغيير البيانات:
-
-```sql
-insert into public.profiles (id, full_name, email, role)
-select id, 'ZahraaFit Coach', email, 'admin'
-from auth.users
-where email = 'coach@example.com'
-on conflict (id) do update
-set full_name = excluded.full_name,
-    role = excluded.role;
-```
-
 ## 7. إنشاء حساب عميلة وربطه بالمدربة
 
-في نسخة MVP الحالية، إنشاء حسابات العميلات يتم من Supabase Dashboard.
+العميلة تستطيع إنشاء حسابها مباشرة من التطبيق.
 
-1. افتحي `Authentication > Users`.
-2. أنشئي مستخدمة جديدة للعميلة.
-3. افتحي `SQL Editor`.
-4. شغلي هذا الاستعلام بعد تغيير البريد والبيانات:
+1. افتحي:
 
-```sql
-insert into public.clients (
-  profile_id,
-  coach_id,
-  age,
-  height_cm,
-  goal,
-  start_weight,
-  status
-)
-select
-  client_profile.id,
-  coach_profile.id,
-  28,
-  165,
-  'تحسين اللياقة وخفض الوزن',
-  72,
-  'active'
-from public.profiles client_profile
-cross join public.profiles coach_profile
-where client_profile.email = 'client@example.com'
-  and coach_profile.email = 'coach@example.com';
+```text
+/signup
 ```
 
-5. سجلي الدخول ببريد العميلة.
-6. يجب أن يتم تحويلك إلى:
+2. أدخلي الاسم الكامل، رقم الجوال، البريد، وكلمة المرور.
+3. عند التسجيل يتم إنشاء:
+
+```text
+Supabase Auth user
+profiles row with role client
+clients row linked to the profile
+```
+
+4. إذا كان تأكيد البريد غير مفعّل، سيتم تحويل العميلة مباشرة إلى:
 
 ```text
 /client/dashboard
 ```
+
+5. إذا كان تأكيد البريد مفعّلًا في Supabase، ستحتاج العميلة فتح رسالة التأكيد ثم تسجيل الدخول.
 
 ## 8. نشر المشروع على Vercel
 

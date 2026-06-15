@@ -5,6 +5,7 @@
 النطاق الحالي فقط:
 
 - تسجيل دخول
+- إنشاء حساب عميلة
 - لوحة العميلة
 - نموذج متابعة أسبوعية
 - سجل المتابعات والصور
@@ -56,6 +57,12 @@ npm run dev
 http://localhost:3000/login
 ```
 
+صفحة إنشاء حساب العميلة:
+
+```bash
+http://localhost:3000/signup
+```
+
 ## Environment Variables
 
 المتغيرات المطلوبة بالضبط:
@@ -102,44 +109,27 @@ anon public key
 ## إنشاء حساب Admin
 
 1. من Supabase افتحي `Authentication > Users`.
-2. أنشئي مستخدمة جديدة للمدربة بالبريد وكلمة المرور.
-3. بعد إنشاء المستخدم، شغلي هذا الاستعلام في `SQL Editor` مع تغيير البريد:
+2. أنشئي مستخدمة جديدة للمدربة بالبريد:
 
-```sql
-update public.profiles
-set role = 'admin',
-    full_name = 'ZahraaFit Coach'
-where email = 'coach@example.com';
+```text
+zheer30@gmail.com
 ```
 
-## ربط عميلة بحسابها
+3. بعد إنشاء المستخدم، شغلي ملف SQL التالي في `SQL Editor`:
 
-1. أنشئي حساب العميلة من `Authentication > Users`.
-2. بعد إنشاء الحساب، اربطيه بجدول العميلات:
-
-```sql
-insert into public.clients (
-  profile_id,
-  coach_id,
-  age,
-  height_cm,
-  goal,
-  start_weight,
-  status
-)
-select
-  client_profile.id,
-  coach_profile.id,
-  28,
-  165,
-  'تحسين اللياقة وخفض الوزن',
-  72,
-  'active'
-from public.profiles client_profile
-cross join public.profiles coach_profile
-where client_profile.email = 'client@example.com'
-  and coach_profile.email = 'coach@example.com';
+```text
+supabase/admin-setup.sql
 ```
+
+## إنشاء حساب عميلة
+
+العميلة تستطيع إنشاء حسابها من:
+
+```text
+/signup
+```
+
+عند التسجيل يتم إنشاء حساب Supabase Auth، وسجل `profiles` بدور `client`، وسجل `clients` مرتبط بالحساب.
 
 ## النشر على Vercel
 

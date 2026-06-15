@@ -125,14 +125,21 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, full_name, email, role)
+  insert into public.profiles (id, full_name, email, role, phone)
   values (
     new.id,
     coalesce(nullif(new.raw_user_meta_data ->> 'full_name', ''), split_part(coalesce(new.email, 'client'), '@', 1)),
     coalesce(new.email, ''),
-    'client'
+    'client',
+    nullif(new.raw_user_meta_data ->> 'phone', '')
   )
   on conflict (id) do nothing;
+
+  if coalesce(new.raw_user_meta_data ->> 'signup_source', '') = 'client_signup' then
+    insert into public.clients (profile_id, status)
+    values (new.id, 'active')
+    on conflict (profile_id) do nothing;
+  end if;
 
   return new;
 end;
@@ -205,6 +212,16 @@ create policy "Admins can insert clients"
 on public.clients for insert
 to authenticated
 with check (public.is_admin());
+
+drop policy if exists "Clients can insert own client record" on public.clients;
+create policy "Clients can insert own client record"
+on public.clients for insert
+to authenticated
+with check (
+  profile_id = auth.uid()
+  and coach_id is null
+  and status = 'active'
+);
 
 drop policy if exists "Admins can update clients" on public.clients;
 create policy "Admins can update clients"
