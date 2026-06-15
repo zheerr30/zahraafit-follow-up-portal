@@ -53,7 +53,8 @@ export default function ClientFollowUpsPage() {
         .from("weekly_followups")
         .select("*")
         .eq("client_id", client.id)
-        .order("week_date", { ascending: false });
+        .order("week_date", { ascending: false })
+        .order("created_at", { ascending: false });
 
       if (followupsError) {
         setError("تعذر تحميل سجل المتابعات.");

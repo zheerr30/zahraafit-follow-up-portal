@@ -37,7 +37,6 @@ type ClientEditForm = {
   age: string;
   height_cm: string;
   start_weight: string;
-  target_weight: string;
   goal: string;
   status: "active" | "paused";
   notes: string;
@@ -49,7 +48,6 @@ const emptyClientEditForm: ClientEditForm = {
   age: "",
   height_cm: "",
   start_weight: "",
-  target_weight: "",
   goal: "",
   status: "active",
   notes: ""
@@ -147,7 +145,8 @@ export default function AdminClientDetailsPage() {
           .from("weekly_followups")
           .select("*")
           .eq("client_id", typedClient.id)
-          .order("week_date", { ascending: false }),
+          .order("week_date", { ascending: false })
+          .order("created_at", { ascending: false }),
         supabase
           .from("coach_notes")
           .select("*")
@@ -206,7 +205,6 @@ export default function AdminClientDetailsPage() {
       age: client.age === null ? "" : String(client.age),
       height_cm: client.height_cm === null ? "" : String(client.height_cm),
       start_weight: client.start_weight === null ? "" : String(client.start_weight),
-      target_weight: client.target_weight === null ? "" : String(client.target_weight),
       goal: client.goal || "",
       status: client.status,
       notes: client.notes || ""
@@ -239,7 +237,6 @@ export default function AdminClientDetailsPage() {
       age: toOptionalNumber(clientEditForm.age),
       height_cm: toOptionalNumber(clientEditForm.height_cm),
       start_weight: toOptionalNumber(clientEditForm.start_weight),
-      target_weight: toOptionalNumber(clientEditForm.target_weight),
       goal: clientEditForm.goal.trim() || null,
       status: clientEditForm.status,
       notes: clientEditForm.notes.trim() || null
@@ -426,7 +423,7 @@ export default function AdminClientDetailsPage() {
                   <Info label="العمر" value={formatNumber(client.age, " سنة")} />
                   <Info label="الطول" value={formatNumber(client.height_cm, " سم")} />
                   <Info label="وزن البداية" value={formatNumber(client.start_weight, " كجم")} />
-                  <Info label="الوزن المستهدف" value={formatNumber(client.target_weight, " كجم")} />
+                  <Info label="الوزن المستهدف من العميلة" value={formatNumber(client.target_weight, " كجم")} />
                   <Info label="الحالة" value={client.status === "active" ? "نشطة" : "متوقفة"} />
                 </div>
 
@@ -515,19 +512,6 @@ export default function AdminClientDetailsPage() {
                           step="0.1"
                           value={clientEditForm.start_weight}
                           onChange={(event) => updateClientEditField("start_weight", event.target.value)}
-                        />
-                      </label>
-
-                      <label className="block">
-                        <span className="field-label">الوزن المستهدف</span>
-                        <input
-                          className="field-input"
-                          type="number"
-                          min="20"
-                          max="300"
-                          step="0.1"
-                          value={clientEditForm.target_weight}
-                          onChange={(event) => updateClientEditField("target_weight", event.target.value)}
                         />
                       </label>
 

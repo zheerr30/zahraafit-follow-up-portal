@@ -39,6 +39,7 @@ export default function NewFollowUpPage() {
 
   const [form, setForm] = useState({
     week_date: new Date().toISOString().slice(0, 10),
+    target_weight: "",
     weight_kg: "",
     waist_cm: "",
     hips_cm: "",
@@ -63,7 +64,12 @@ export default function NewFollowUpPage() {
       if (clientError || !data) {
         setError("لم يتم العثور على ملف العميلة المرتبط بحسابك.");
       } else {
-        setClient(data as Client);
+        const typedClient = data as Client;
+        setClient(typedClient);
+        setForm((current) => ({
+          ...current,
+          target_weight: typedClient.target_weight === null ? "" : String(typedClient.target_weight)
+        }));
       }
 
       setLoadingClient(false);
@@ -121,6 +127,23 @@ export default function NewFollowUpPage() {
 
     setSaving(true);
     setError(null);
+
+    const targetWeight = numberOrNull(form.target_weight);
+    if (targetWeight !== client.target_weight) {
+      const { error: targetError } = await supabase.rpc("set_client_target_weight", {
+        target_weight_value: targetWeight
+      });
+
+      if (targetError) {
+        setSaving(false);
+        setError(
+          targetError.message.includes("set_client_target_weight")
+            ? "تحتاج قاعدة البيانات إلى تحديث دالة حفظ الوزن المستهدف. شغّلي ملف SQL الأخير في Supabase ثم حاولي مرة أخرى."
+            : targetError.message
+        );
+        return;
+      }
+    }
 
     const { data, error: insertError } = await supabase
       .from("weekly_followups")
@@ -206,6 +229,23 @@ export default function NewFollowUpPage() {
                 onChange={(event) => updateField("weight_kg", event.target.value)}
                 placeholder="مثال: 68.5"
               />
+            </label>
+
+            <label className="block">
+              <span className="field-label">الوزن المستهدف</span>
+              <input
+                className="field-input"
+                type="number"
+                min="20"
+                max="300"
+                step="0.1"
+                value={form.target_weight}
+                onChange={(event) => updateField("target_weight", event.target.value)}
+                placeholder="مثال: 60"
+              />
+              <span className="mt-1 block text-xs font-semibold text-slate-400">
+                تحدده العميلة ويمكن تغييره مع أي متابعة.
+              </span>
             </label>
 
             <label className="block">

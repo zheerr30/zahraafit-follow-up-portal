@@ -61,6 +61,7 @@ export default function ClientDashboardPage() {
           .select("*")
           .eq("client_id", typedClient.id)
           .order("week_date", { ascending: false })
+          .order("created_at", { ascending: false })
           .limit(12),
         supabase
           .from("coach_notes")

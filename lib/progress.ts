@@ -20,7 +20,11 @@ const stableThreshold = 0.2;
 function latestWeightedFollowups(followups: WeeklyFollowup[]) {
   return [...followups]
     .filter((followup) => followup.weight_kg !== null)
-    .sort((a, b) => new Date(b.week_date).getTime() - new Date(a.week_date).getTime());
+    .sort((a, b) => {
+      const weekDiff = new Date(b.week_date).getTime() - new Date(a.week_date).getTime();
+      if (weekDiff !== 0) return weekDiff;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 }
 
 export function getGoalDirection(client: Client): GoalDirection {
@@ -57,16 +61,30 @@ export function calculateGoalProgress(client: Client, followups: WeeklyFollowup[
     const isSteady = Math.abs(weightDelta) <= stableThreshold;
     if (isSteady) {
       trend = "steady";
-      trendLabel = "ثبات";
+      trendLabel = "آخر تغيير: ثبات";
       arrow = "→";
     } else if (direction === "loss") {
       trend = weightDelta < 0 ? "good" : "bad";
-      trendLabel = weightDelta < 0 ? "نزول مناسب" : "زيادة تحتاج انتباه";
+      trendLabel = weightDelta < 0 ? "آخر تغيير: نزول مناسب" : "آخر تغيير: زيادة تحتاج انتباه";
       arrow = weightDelta < 0 ? "↓" : "↑";
     } else if (direction === "gain") {
       trend = weightDelta > 0 ? "good" : "bad";
-      trendLabel = weightDelta > 0 ? "زيادة مناسبة" : "نزول يحتاج انتباه";
+      trendLabel = weightDelta > 0 ? "آخر تغيير: زيادة مناسبة" : "آخر تغيير: نزول يحتاج انتباه";
       arrow = weightDelta > 0 ? "↑" : "↓";
+    }
+  } else if (currentWeight !== null && startWeight !== null) {
+    if (direction === "loss" && currentWeight < startWeight - stableThreshold) {
+      trend = "good";
+      trendLabel = "تقدم نحو الهدف";
+      arrow = "↓";
+    } else if (direction === "gain" && currentWeight > startWeight + stableThreshold) {
+      trend = "good";
+      trendLabel = "تقدم نحو الهدف";
+      arrow = "↑";
+    } else if (direction !== "unknown") {
+      trend = "steady";
+      trendLabel = "بانتظار تغيير أوضح";
+      arrow = "→";
     }
   }
 
