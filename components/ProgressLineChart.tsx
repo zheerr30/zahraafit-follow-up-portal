@@ -36,7 +36,7 @@ export function ProgressLineChart({ followups }: { followups: WeeklyFollowup[] }
 
   if (points.length < 2) {
     return (
-      <section className="panel p-5">
+      <section className="panel p-6 reveal-card">
         <SectionHeader />
         <div className="mt-4">
           <EmptyState
@@ -49,7 +49,7 @@ export function ProgressLineChart({ followups }: { followups: WeeklyFollowup[] }
   }
 
   return (
-    <section className="panel p-5">
+    <section className="panel p-6 reveal-card">
       <SectionHeader />
       <div className="mt-5 grid gap-4 xl:grid-cols-2">
         <MiniChart
@@ -84,7 +84,7 @@ function MiniChart({
 
   if (chartPoints.length < 2) {
     return (
-      <div className="rounded-lg border border-slate-100 bg-white p-4">
+      <div className="rounded-[26px] border border-slate-100 bg-white p-4 shadow-sm">
         <h3 className="text-base font-black text-zahraa-navy">{title}</h3>
         <div className="mt-3">
           <EmptyState
@@ -132,7 +132,7 @@ function MiniChart({
   }
 
   return (
-    <div className="rounded-lg border border-slate-100 bg-white p-4 shadow-sm">
+    <div className="rounded-[26px] border border-slate-100 bg-gradient-to-br from-white to-zahraa-mist/70 p-4 shadow-sm">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-base font-black text-zahraa-navy">{title}</h3>
@@ -143,7 +143,7 @@ function MiniChart({
         </p>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-lg border border-slate-100 bg-white">
+      <div className="mt-4 overflow-hidden rounded-[22px] border border-slate-100 bg-white shadow-inner">
         <svg className="h-auto w-full" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={title}>
           <rect width={width} height={height} fill="#FFFFFF" />
           {[0, 1, 2, 3].map((line) => {
@@ -209,7 +209,7 @@ function SectionHeader() {
   return (
     <div className="flex items-center justify-between gap-3">
       <div>
-        <p className="text-sm font-bold text-zahraa-coral">Progress Chart</p>
+        <p className="eyebrow">Progress Chart</p>
         <h2 className="section-title mt-1">تغير القياسات عبر المتابعات</h2>
       </div>
       <Activity className="text-zahraa-coral" size={22} />

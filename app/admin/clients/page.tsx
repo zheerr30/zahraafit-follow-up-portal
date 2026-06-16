@@ -98,10 +98,11 @@ export default function AdminClientsPage() {
       <div className="page-container">
         <AppHeader profile={auth.profile} title="قائمة العميلات" />
 
-        <section className="panel p-5">
+        <section className="panel p-6 reveal-card">
           <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h2 className="section-title">العميلات</h2>
+              <p className="eyebrow">Clients</p>
+              <h2 className="section-title mt-1">العميلات</h2>
               <p className="muted-text mt-1">اختاري عميلة لمراجعة المتابعات، الصور، الخطة، والملاحظات.</p>
             </div>
 
@@ -125,15 +126,15 @@ export default function AdminClientsPage() {
             />
           ) : null}
 
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {filteredClients.map((client) => (
               <Link
                 key={client.id}
-                className="rounded-lg border border-slate-200 bg-white p-4 transition hover:border-zahraa-coral/50 hover:shadow-soft"
+                className="group rounded-[28px] border border-slate-100 bg-gradient-to-br from-white to-zahraa-mist/75 p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-zahraa-coral/40 hover:shadow-soft"
                 href={`/admin/clients/${client.id}`}
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-zahraa-mist text-zahraa-coral">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-zahraa-coral/10 text-zahraa-coral transition group-hover:bg-zahraa-coral group-hover:text-white">
                     <UserRound size={21} />
                   </div>
                   <div className="min-w-0">
@@ -144,7 +145,7 @@ export default function AdminClientsPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                <div className="mt-5 grid grid-cols-2 gap-2 text-sm">
                   <Info label="الهدف" value={client.goal || "-"} />
                   <Info label="وزن البداية" value={formatNumber(client.start_weight, " كجم")} />
                   <Info label="الحالة" value={client.status === "active" ? "نشطة" : "متوقفة"} />
@@ -161,8 +162,8 @@ export default function AdminClientsPage() {
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md bg-zahraa-mist px-3 py-2">
-      <p className="text-xs font-bold text-slate-500">{label}</p>
+    <div className="rounded-2xl bg-white/80 px-3 py-3 shadow-sm">
+      <p className="text-xs font-black text-slate-500">{label}</p>
       <p className="mt-1 truncate font-black text-zahraa-navy">{value}</p>
     </div>
   );

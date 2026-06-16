@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { CalendarDays, FileText, Footprints, Plus, Ruler, Scale, StickyNote, Target } from "lucide-react";
+import { CalendarDays, FileText, Footprints, Plus, Ruler, Scale, Sparkles, StickyNote, Target } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/Feedback";
 import { GoalProgressTracker } from "@/components/GoalProgressTracker";
@@ -112,17 +112,25 @@ export default function ClientDashboardPage() {
           <ErrorState message={error || "تعذر تحميل ملف العميلة."} />
         ) : (
           <div className="space-y-6">
-            <section className="overflow-hidden rounded-lg bg-zahraa-navy shadow-soft">
-              <div className="grid gap-5 p-5 text-white lg:grid-cols-[1.3fr_0.7fr] lg:p-7">
-                <div>
-                  <p className="text-sm font-black text-zahraa-coral">ZahraaFit Dashboard</p>
-                  <h2 className="mt-2 text-3xl font-black leading-tight">
-                    مرحبًا {auth.profile.full_name}
-                  </h2>
-                  <p className="mt-3 max-w-2xl text-sm leading-7 text-white/80">
-                    {client.goal || "أضيفي هدفك مع المدربة ليظهر هنا بشكل أوضح."}
-                  </p>
-                  <div className="mt-5 flex flex-wrap gap-3">
+            <section className="dashboard-hero reveal-card">
+              <div className="hero-orb -right-16 top-8 h-52 w-52 bg-zahraa-coral/35" />
+              <div className="hero-orb left-10 -top-20 h-60 w-60 bg-white/12" />
+              <div className="relative grid gap-6 p-6 text-white lg:grid-cols-[1.25fr_0.75fr] lg:p-8">
+                <div className="flex flex-col justify-between">
+                  <div>
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/85 backdrop-blur">
+                      <Sparkles size={15} className="text-zahraa-coral" />
+                      ZahraaFit Premium Follow-up
+                    </div>
+                    <h2 className="mt-5 max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-5xl">
+                      مرحبًا {auth.profile.full_name}
+                    </h2>
+                    <p className="mt-4 max-w-2xl text-base leading-8 text-white/78">
+                      {client.goal || "تابعي تقدمك الأسبوعي، قياساتك، خطتك، وملاحظات المدربة من مكان واحد مرتب وواضح."}
+                    </p>
+                  </div>
+
+                  <div className="mt-7 flex flex-wrap gap-3">
                     <Link className="primary-button" href="/client/follow-up/new">
                       <Plus size={18} />
                       تعبئة المتابعة الأسبوعية
@@ -134,23 +142,25 @@ export default function ClientDashboardPage() {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                  <div className="rounded-lg border border-white/10 bg-white/10 p-4">
-                    <div className="flex items-center gap-2 text-white/70">
-                      <Target size={18} />
+                  <div className="glass-card p-5">
+                    <div className="flex items-center justify-between gap-3 text-white/72">
                       <span className="text-xs font-black">الوزن المستهدف</span>
+                      <Target size={19} />
                     </div>
-                    <p className="mt-2 text-3xl font-black">
+                    <p className="mt-3 text-4xl font-black tracking-tight">
                       {formatNumber(client.target_weight, " كجم")}
                     </p>
+                    <p className="mt-2 text-xs font-semibold text-white/55">تحدده العميلة من نموذج المتابعة</p>
                   </div>
-                  <div className="rounded-lg border border-white/10 bg-white/10 p-4">
-                    <div className="flex items-center gap-2 text-white/70">
-                      <Footprints size={18} />
-                      <span className="text-xs font-black">الحالة</span>
+                  <div className="glass-card p-5">
+                    <div className="flex items-center justify-between gap-3 text-white/72">
+                      <span className="text-xs font-black">حالة الاشتراك</span>
+                      <Footprints size={19} />
                     </div>
-                    <p className="mt-2 text-3xl font-black">
+                    <p className="mt-3 text-4xl font-black tracking-tight">
                       {client.status === "active" ? "نشطة" : "متوقفة"}
                     </p>
+                    <p className="mt-2 text-xs font-semibold text-white/55">تظهر حسب إعداد المدربة</p>
                   </div>
                 </div>
               </div>

@@ -396,25 +396,28 @@ export default function AdminClientDetailsPage() {
         ) : (
           <div className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
             <aside className="space-y-6">
-              <section className="panel p-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-sm font-bold text-zahraa-coral">ملف العميلة</p>
-                    <h2 className="mt-1 text-2xl font-black text-zahraa-navy">
-                      {clientProfile?.full_name || "عميلة بدون اسم"}
-                    </h2>
-                    <p className="mt-2 text-sm text-slate-500">{clientProfile?.email || "-"}</p>
-                    <p className="mt-1 text-sm text-slate-500">{clientProfile?.phone || "لا يوجد رقم جوال"}</p>
+              <section className="panel overflow-hidden reveal-card">
+                <div className="relative bg-zahraa-navy px-5 py-5 text-white">
+                  <div className="hero-orb -right-12 top-0 h-32 w-32 bg-zahraa-coral/35" />
+                  <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="eyebrow">Client Profile</p>
+                      <h2 className="mt-1 text-2xl font-black tracking-tight">
+                        {clientProfile?.full_name || "عميلة بدون اسم"}
+                      </h2>
+                      <p className="mt-2 text-sm text-white/70">{clientProfile?.email || "-"}</p>
+                      <p className="mt-1 text-sm text-white/70">{clientProfile?.phone || "لا يوجد رقم جوال"}</p>
+                    </div>
+
+                    <button className="secondary-button border-white/20 bg-white/10 px-4 py-2 text-white hover:bg-white/15" type="button" onClick={openClientEditForm}>
+                      <Pencil size={18} />
+                      تعديل بيانات العميلة
+                    </button>
                   </div>
-
-                  <button className="secondary-button py-2" type="button" onClick={openClientEditForm}>
-                    <Pencil size={18} />
-                    تعديل بيانات العميلة
-                  </button>
                 </div>
-
+                <div className="p-5">
                 {clientEditSuccess ? (
-                  <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
                     {clientEditSuccess}
                   </div>
                 ) : null}
@@ -427,12 +430,12 @@ export default function AdminClientDetailsPage() {
                   <Info label="الحالة" value={client.status === "active" ? "نشطة" : "متوقفة"} />
                 </div>
 
-                <div className="mt-4 rounded-lg bg-zahraa-mist p-4">
+                <div className="mt-4 rounded-[22px] bg-zahraa-mist p-4">
                   <p className="text-sm font-bold text-zahraa-navy">الهدف</p>
                   <p className="mt-2 text-sm leading-7 text-slate-700">{client.goal || "-"}</p>
                 </div>
 
-                <div className="mt-4 rounded-lg bg-zahraa-mist p-4">
+                <div className="mt-4 rounded-[22px] bg-zahraa-mist p-4">
                   <p className="text-sm font-bold text-zahraa-navy">ملاحظات عامة</p>
                   <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
                     {client.notes || "-"}
@@ -440,7 +443,7 @@ export default function AdminClientDetailsPage() {
                 </div>
 
                 {isEditingClient ? (
-                  <form className="mt-5 rounded-lg border border-zahraa-coral/25 bg-zahraa-coral/5 p-4" onSubmit={handleUpdateClient}>
+                  <form className="mt-5 rounded-[24px] border border-zahraa-coral/25 bg-zahraa-coral/5 p-4" onSubmit={handleUpdateClient}>
                     <div className="mb-4 flex items-center justify-between gap-3">
                       <h3 className="font-black text-zahraa-navy">تعديل بيانات العميلة</h3>
                       <button
@@ -552,6 +555,7 @@ export default function AdminClientDetailsPage() {
                     </button>
                   </form>
                 ) : null}
+                </div>
               </section>
 
               <section className="panel p-5">
@@ -576,7 +580,7 @@ export default function AdminClientDetailsPage() {
                 <div className="mt-5 space-y-3">
                   {coachNotes.length ? (
                     coachNotes.map((note) => (
-                      <article key={note.id} className="rounded-lg bg-zahraa-mist p-4">
+                      <article key={note.id} className="rounded-[22px] bg-zahraa-mist p-4">
                         <p className="whitespace-pre-line text-sm leading-7 text-slate-700">{note.note}</p>
                         <p className="mt-3 text-xs font-bold text-slate-400">{formatDate(note.created_at)}</p>
                       </article>
@@ -643,7 +647,7 @@ export default function AdminClientDetailsPage() {
                 <div className="mt-4 space-y-3">
                   {plans.length ? (
                     plans.map((plan) => (
-                      <article key={plan.id} className="rounded-lg border border-slate-200 p-4">
+                      <article key={plan.id} className="rounded-[24px] border border-slate-100 bg-white p-4 shadow-sm">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                           <div>
                             <h3 className="font-black text-zahraa-navy">{plan.title}</h3>
@@ -657,7 +661,7 @@ export default function AdminClientDetailsPage() {
                         </div>
 
                         {plan.content ? (
-                          <p className="mt-3 whitespace-pre-line rounded-lg bg-zahraa-mist p-3 text-sm leading-7 text-slate-700">
+                          <p className="mt-3 whitespace-pre-line rounded-[20px] bg-zahraa-mist p-3 text-sm leading-7 text-slate-700">
                             {plan.content}
                           </p>
                         ) : null}
@@ -682,7 +686,7 @@ export default function AdminClientDetailsPage() {
                 <div className="mt-4 space-y-4">
                   {followups.length ? (
                     followups.map((followup) => (
-                      <article key={followup.id} className="rounded-lg border border-slate-200 p-4">
+                      <article key={followup.id} className="rounded-[26px] border border-slate-100 bg-white p-5 shadow-sm">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                           <div>
                             <p className="text-sm font-bold text-zahraa-coral">{formatDate(followup.week_date)}</p>
@@ -703,7 +707,7 @@ export default function AdminClientDetailsPage() {
                         </div>
 
                         {followup.client_notes ? (
-                          <div className="mt-4 rounded-lg bg-zahraa-mist p-4">
+                          <div className="mt-4 rounded-[22px] bg-zahraa-mist p-4">
                             <p className="text-sm font-bold text-zahraa-navy">ملاحظات العميلة</p>
                             <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
                               {followup.client_notes}
@@ -714,7 +718,7 @@ export default function AdminClientDetailsPage() {
                         {followup.photos.length ? (
                           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                             {followup.photos.map((photo) => (
-                              <figure key={photo.id} className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                              <figure key={photo.id} className="overflow-hidden rounded-[22px] border border-slate-100 bg-white shadow-sm">
                                 {photo.signedUrl ? (
                                   <img
                                     className="aspect-[4/5] w-full object-cover"
@@ -734,7 +738,7 @@ export default function AdminClientDetailsPage() {
                           </div>
                         ) : null}
 
-                        <div className="mt-4 rounded-lg border border-zahraa-coral/25 bg-zahraa-coral/5 p-4">
+                        <div className="mt-4 rounded-[24px] border border-zahraa-coral/25 bg-zahraa-coral/5 p-4">
                           <label className="block">
                             <span className="field-label">ملاحظة المدربة على هذه المتابعة</span>
                             <textarea
@@ -776,8 +780,8 @@ export default function AdminClientDetailsPage() {
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md bg-zahraa-mist px-3 py-2">
-      <p className="text-xs font-bold text-slate-500">{label}</p>
+    <div className="rounded-2xl bg-zahraa-mist px-3 py-3">
+      <p className="text-xs font-black text-slate-500">{label}</p>
       <p className="mt-1 text-sm font-black text-zahraa-navy">{value}</p>
     </div>
   );

@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LockKeyhole, LogIn, Mail } from "lucide-react";
+import { CheckCircle2, LockKeyhole, LogIn, Mail, Sparkles } from "lucide-react";
 import { ErrorState } from "@/components/Feedback";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import type { Profile } from "@/lib/types";
@@ -75,29 +75,39 @@ export default function LoginPage() {
 
   return (
     <main className="page-shell flex items-center justify-center">
-      <section className="grid w-full max-w-5xl overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="bg-zahraa-navy p-8 text-white sm:p-10">
-          <p className="text-sm font-bold text-zahraa-coral">ZahraaFit</p>
-          <h1 className="mt-4 text-3xl font-black leading-tight sm:text-4xl">
+      <section className="grid w-full max-w-6xl overflow-hidden rounded-[36px] border border-white/70 bg-white/90 shadow-soft backdrop-blur-xl lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="dashboard-hero rounded-none p-8 text-white sm:p-10">
+          <div className="hero-orb -right-16 top-10 h-52 w-52 bg-zahraa-coral/35" />
+          <div className="hero-orb left-8 -top-16 h-56 w-56 bg-white/12" />
+          <div className="relative">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/85 backdrop-blur">
+            <Sparkles size={15} className="text-zahraa-coral" />
+            ZahraaFit Portal
+          </div>
+          <h1 className="mt-5 text-4xl font-black leading-tight tracking-tight sm:text-5xl">
             بوابة المتابعة الأسبوعية
           </h1>
-          <p className="mt-4 max-w-md text-sm leading-7 text-white/80">
+          <p className="mt-5 max-w-md text-base leading-8 text-white/78">
             مساحة خاصة للعميلة والمدربة لمتابعة الخطة، القياسات، الصور، وملاحظات
             التحسن بدون أي متجر أو دفع أو أدوات خارج نطاق المتابعة.
           </p>
 
           <div className="mt-10 grid gap-3 text-sm text-white/86">
-            <div className="rounded-md border border-white/20 bg-white/10 px-4 py-3">
+            <div className="glass-card flex items-center gap-3 px-4 py-4">
+              <CheckCircle2 size={18} className="text-zahraa-coral" />
               دخول العميلة لمراجعة الخطة وتعبئة المتابعة.
             </div>
-            <div className="rounded-md border border-white/20 bg-white/10 px-4 py-3">
+            <div className="glass-card flex items-center gap-3 px-4 py-4">
+              <CheckCircle2 size={18} className="text-zahraa-coral" />
               دخول المدربة لمراجعة العميلات وكتابة الملاحظات.
             </div>
           </div>
+          </div>
         </div>
 
-        <div className="p-8 sm:p-10">
-          <h2 className="text-2xl font-black text-zahraa-navy">تسجيل الدخول</h2>
+        <div className="p-8 sm:p-12">
+          <p className="eyebrow">Welcome back</p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-zahraa-navy">تسجيل الدخول</h2>
           <p className="mt-2 text-sm leading-6 text-slate-500">
             استخدمي البريد وكلمة المرور المسجلة في Supabase.
           </p>

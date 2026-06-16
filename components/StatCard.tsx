@@ -10,12 +10,12 @@ export function StatCard({
   icon?: ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-slate-100 bg-white p-4 shadow-sm">
+    <div className="metric-tile reveal-card">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-bold text-slate-500">{label}</p>
-        {icon ? <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zahraa-coral/10 text-zahraa-coral">{icon}</div> : null}
+        <p className="text-sm font-black text-slate-500">{label}</p>
+        {icon ? <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-zahraa-coral/10 text-zahraa-coral shadow-sm">{icon}</div> : null}
       </div>
-      <p className="mt-3 text-2xl font-black text-zahraa-navy">{value}</p>
+      <p className="mt-4 text-3xl font-black tracking-tight text-zahraa-navy">{value}</p>
     </div>
   );
 }

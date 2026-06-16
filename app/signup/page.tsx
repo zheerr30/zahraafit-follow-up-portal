@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LockKeyhole, Mail, Phone, UserRound, UserPlus } from "lucide-react";
+import { LockKeyhole, Mail, Phone, Sparkles, UserRound, UserPlus } from "lucide-react";
 import { ErrorState } from "@/components/Feedback";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 
@@ -98,23 +98,31 @@ export default function SignupPage() {
 
   return (
     <main className="page-shell flex items-center justify-center">
-      <section className="grid w-full max-w-5xl overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="bg-zahraa-navy p-8 text-white sm:p-10">
-          <p className="text-sm font-bold text-zahraa-coral">ZahraaFit</p>
-          <h1 className="mt-4 text-3xl font-black leading-tight sm:text-4xl">
+      <section className="grid w-full max-w-6xl overflow-hidden rounded-[36px] border border-white/70 bg-white/90 shadow-soft backdrop-blur-xl lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="dashboard-hero rounded-none p-8 text-white sm:p-10">
+          <div className="hero-orb -right-16 top-10 h-52 w-52 bg-zahraa-coral/35" />
+          <div className="hero-orb left-8 -top-16 h-56 w-56 bg-white/12" />
+          <div className="relative">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/85 backdrop-blur">
+            <Sparkles size={15} className="text-zahraa-coral" />
+            ZahraaFit Portal
+          </div>
+          <h1 className="mt-5 text-4xl font-black leading-tight tracking-tight sm:text-5xl">
             إنشاء حساب عميلة
           </h1>
-          <p className="mt-4 max-w-md text-sm leading-7 text-white/80">
+          <p className="mt-5 max-w-md text-base leading-8 text-white/78">
             أنشئي حسابك للوصول إلى خطتك، تعبئة المتابعة الأسبوعية، ومراجعة ملاحظات المدربة.
           </p>
 
           <Link className="secondary-button mt-8 border-white/20 bg-white/10 text-white hover:bg-white/15" href="/login">
             لدي حساب بالفعل
           </Link>
+          </div>
         </div>
 
-        <div className="p-8 sm:p-10">
-          <h2 className="text-2xl font-black text-zahraa-navy">بيانات الحساب</h2>
+        <div className="p-8 sm:p-12">
+          <p className="eyebrow">Create profile</p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-zahraa-navy">بيانات الحساب</h2>
           <p className="mt-2 text-sm leading-6 text-slate-500">
             استخدمي بريدًا صحيحًا وكلمة مرور آمنة.
           </p>

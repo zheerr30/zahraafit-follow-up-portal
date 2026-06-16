@@ -57,25 +57,30 @@ export default function AdminDashboardPage() {
       <div className="page-container">
         <AppHeader profile={auth.profile} title="لوحة المدربة" />
 
-        <section className="mb-6 overflow-hidden rounded-lg bg-zahraa-navy shadow-soft">
-          <div className="grid gap-5 p-5 text-white lg:grid-cols-[1.2fr_0.8fr] lg:p-7">
+        <section className="dashboard-hero mb-6 reveal-card">
+          <div className="hero-orb -right-16 top-6 h-56 w-56 bg-zahraa-coral/35" />
+          <div className="hero-orb left-10 -top-20 h-64 w-64 bg-white/12" />
+          <div className="relative grid gap-6 p-6 text-white lg:grid-cols-[1.15fr_0.85fr] lg:p-8">
             <div>
-              <p className="text-sm font-black text-zahraa-coral">Coach Command Center</p>
-              <h2 className="mt-2 text-3xl font-black leading-tight">لوحة متابعة العميلات</h2>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-white/80">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/85 backdrop-blur">
+                <Sparkles size={15} className="text-zahraa-coral" />
+                Coach Command Center
+              </div>
+              <h2 className="mt-5 text-4xl font-black leading-tight tracking-tight sm:text-5xl">لوحة متابعة العميلات</h2>
+              <p className="mt-4 max-w-2xl text-base leading-8 text-white/78">
                 مكان واحد لمراجعة المتابعات، الصور، الخطط، وملاحظات كل عميلة بسرعة ووضوح.
               </p>
-              <Link className="primary-button mt-5" href="/admin/clients">
+              <Link className="primary-button mt-7" href="/admin/clients">
                 <UsersRound size={18} />
                 فتح قائمة العميلات
               </Link>
             </div>
-            <div className="rounded-lg border border-white/10 bg-white/10 p-5">
+            <div className="glass-card p-6">
               <div className="flex items-center gap-2 text-white/75">
                 <Sparkles size={18} />
                 <span className="text-sm font-black">ملخص اليوم</span>
               </div>
-              <p className="mt-4 text-4xl font-black">{formatNumber(clientsCount)}</p>
+              <p className="mt-5 text-6xl font-black tracking-tight">{formatNumber(clientsCount)}</p>
               <p className="mt-2 text-sm text-white/75">عميلة في النظام</p>
             </div>
           </div>
@@ -105,7 +110,7 @@ export default function AdminDashboardPage() {
             {latestFollowups.length ? (
               <div className="mt-5 grid gap-3">
                 {latestFollowups.map((followup) => (
-                  <div key={followup.id} className="rounded-lg border border-slate-100 bg-white p-4 shadow-sm">
+                  <div key={followup.id} className="rounded-[22px] border border-slate-100 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm font-black text-zahraa-navy">
