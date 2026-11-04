@@ -67,6 +67,9 @@ export default function LoginPage() {
         <div className="field">
           <label htmlFor="password">كلمة المرور</label>
           <input id="password" className="inp" type="password" dir="ltr" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <Link className="link" href="/forgot" style={{ alignSelf: "flex-start", minHeight: 36 }}>
+            نسيتي كلمة المرور؟
+          </Link>
         </div>
         {message ? <p className="alert err" role="alert">{message}</p> : null}
         <button className="btn btn-p btn-block" type="submit" disabled={loading}>
