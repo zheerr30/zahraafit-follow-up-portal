@@ -26,7 +26,7 @@ export function HomeToday({ clientId, plans }: { clientId: string; plans: Plan[]
         supabase.from("body_logs").select("weight_kg").eq("client_id", clientId).not("weight_kg", "is", null).order("log_date", { ascending: false }).limit(1).maybeSingle()
       ]);
       if (d) {
-        setEaten(Object.values((d.meals || {}) as Record<string, boolean>).filter(Boolean).length);
+        setEaten(Object.entries((d.meals || {}) as Record<string, unknown>).filter(([k, v]) => /^\d+-\d+$/.test(k) && v === true).length);
         setWater(d.water || 0);
       }
       if (work) {

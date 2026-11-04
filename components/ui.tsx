@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { ClipboardList, Dumbbell, Home, Inbox, LineChart, Loader2, LogOut, UserRound, Utensils, Wrench } from "lucide-react";
+import { BookOpen, ClipboardList, Dumbbell, Home, Inbox, LineChart, Loader2, LogOut, UserRound, Utensils, Wrench } from "lucide-react";
 import { signOut } from "@/lib/use-auth";
 
 /** Her logo, dark, for light pages. */
@@ -77,7 +77,7 @@ export function ClientShell({ title, sub, action, children }: { title: ReactNode
     { href: "/app/food", label: "أكلي", icon: <Utensils /> },
     { href: "/app/workout", label: "تماريني", icon: <Dumbbell /> },
     { href: "/app/progress", label: "تقدّمي", icon: <LineChart /> },
-    { href: "/app/account", label: "حسابي", icon: <UserRound /> }
+    { href: "/app/guide", label: "دليلك", icon: <BookOpen /> }
   ];
   return (
     <div className="app">
@@ -88,6 +88,9 @@ export function ClientShell({ title, sub, action, children }: { title: ReactNode
         </div>
         <div className="row" style={{ gap: 8 }}>
           {action}
+          <Link className="icon-btn" href="/app/account" aria-label="حسابي" aria-current={path === "/app/account" ? "page" : undefined}>
+            <UserRound />
+          </Link>
           <LogoWhite height={34} />
         </div>
       </header>
