@@ -6,12 +6,10 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { ClipboardList, Dumbbell, Home, Inbox, LineChart, Loader2, LogOut, UserRound, Utensils, Wrench } from "lucide-react";
 import { signOut } from "@/lib/use-auth";
 
-export function Brand() {
-  return (
-    <span className="brand">
-      Zahraa<b>Fit</b>
-    </span>
-  );
+/** Her logo, dark, for light pages. */
+export function Brand({ height = 44 }: { height?: number }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img className="logo-d" src="/brand/logo-white.png" alt="ZahraaFit" style={{ height }} />;
 }
 
 /** White logo for navy bars. */

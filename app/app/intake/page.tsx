@@ -165,7 +165,7 @@ export default function IntakePage() {
         <Link className="icon-btn" href="/app" aria-label="رجوع للرئيسية">
           <ChevronRight />
         </Link>
-        <Brand />
+        <Brand height={34} />
         <span style={{ width: 44 }} />
       </header>
       <main className="screen gutter" style={{ paddingBottom: 40 }}>
