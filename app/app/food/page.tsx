@@ -104,13 +104,18 @@ export default function FoodPage() {
     );
   }
 
-  const total = meals.reduce((t, x) => ({ cal: t.cal + x.meal.cal, p: t.p + x.meal.p }), { cal: 0, p: 0 });
+  const total = meals.reduce((t, x) => ({ cal: t.cal + x.meal.cal, p: t.p + x.meal.p, c: t.c + x.meal.c, f: t.f + x.meal.f }), { cal: 0, p: 0, c: 0, f: 0 });
+  const MACROS: [string, number, number, string][] = [
+    ["بروتين", total.p, plan.target.p, "var(--clay)"],
+    ["كارب", total.c, plan.target.c, "var(--blue)"],
+    ["دهون", total.f, plan.target.f, "var(--amber)"]
+  ];
   const eatenCount = meals.filter((x) => log.meals[x.key]).length;
   const open = Math.round(plan.target.cal - total.cal);
-  const pdf = cp.files.find((f) => f.kind === "nutrition");
+  const pdf = cp.pdfs.find((f) => /غذائي/.test(f.title)) || cp.pdfs.find((f) => f.kind === "nutrition");
 
   return (
-    <ClientShell title="أكلي" action={pdf?.url ? <a className="btn btn-g btn-sm" href={pdf.url} target="_blank" rel="noreferrer"><FileText />PDF</a> : undefined}>
+    <ClientShell title="أكلي" action={pdf ? <a className="btn btn-g btn-sm" href={pdf.href} target={pdf.external ? "_blank" : undefined} rel="noreferrer"><FileText />PDF</a> : undefined}>
       <div className="days" role="group" aria-label="أيام الجدول">
         {plan.days.map((d, i) => (
           <button key={i} type="button" className="day-pill" aria-pressed={i === day} onClick={() => setDay(i)}>
@@ -125,9 +130,23 @@ export default function FoodPage() {
           <span>
             <span className="label">سعرات اليوم {day + 1}</span>
             <br />
-            <b className="num" style={{ fontSize: 34, lineHeight: 1.1 }}>{Math.round(total.cal)}</b> <span className="muted small">سعرة · بروتين {Math.round(total.p)} جم</span>
+            <b className="num" style={{ fontSize: 34, lineHeight: 1.1 }}>{Math.round(total.cal)}</b> <span className="muted small">سعرة{plan.target.cal ? ` من ${plan.target.cal}` : ""}</span>
           </span>
           <span className="small muted">{eatenCount} من {meals.length}</span>
+        </div>
+        <div className="grid3">
+          {MACROS.map(([label, v, target, color]) => (
+            <div key={label} className="macro-tile">
+              <span className="small"><i style={{ background: color }} />{label}</span>
+              <b className="num">{Math.round(v)}<small> جم</small></b>
+              {target ? (
+                <>
+                  <span className="bar" aria-hidden="true"><i style={{ width: `${Math.min(100, (v / target) * 100)}%`, background: color }} /></span>
+                  <span className="note">هدفك {Math.round(target)}</span>
+                </>
+              ) : null}
+            </div>
+          ))}
         </div>
         {open > 40 ? <p className="note">عندك {open} سعرة مفتوحة اليوم. خذيها كيف ما تبين: قهوة بحليب، فاكهة، أو قطعة شوكولاتة.</p> : null}
       </section>
@@ -143,7 +162,7 @@ export default function FoodPage() {
             <div style={{ minWidth: 0 }}>
               <span className="label">{slot || meal.slot}{swapped ? " · بدلتيها" : ""}</span>
               <h3>{meal.name}</h3>
-              <span className="small muted">{meal.cal} سعرة · بروتين {Math.round(meal.p)} جم</span>
+              <span className="small muted">{meal.cal} سعرة · بروتين {Math.round(meal.p)} · كارب {Math.round(meal.c)} · دهون {Math.round(meal.f)} جم</span>
             </div>
             <button type="button" className="eat" aria-pressed={Boolean(log.meals[key])} onClick={() => saveLog({ ...log, meals: { ...log.meals, [key]: !log.meals[key] } })}>
               <Check />
@@ -277,7 +296,7 @@ function MealOptions({ plan, slot, current, onPick }: { plan: MealPlanData; slot
           <span className="radio" />
           <span style={{ minWidth: 0 }}>
             <span className="opt-t">{o.meal.name}</span>
-            <span className="opt-s">{o.where} · {o.meal.cal} سعرة · بروتين {Math.round(o.meal.p)} جم</span>
+            <span className="opt-s">{o.where} · {o.meal.cal} سعرة · بروتين {Math.round(o.meal.p)} · كارب {Math.round(o.meal.c)} · دهون {Math.round(o.meal.f)} جم</span>
           </span>
         </button>
       ))}

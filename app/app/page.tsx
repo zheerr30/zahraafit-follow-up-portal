@@ -136,14 +136,23 @@ export default function ClientHome() {
               تماريني
             </Link>
           ) : null}
-          {plans.map((x) =>
-            x.url ? (
-              <a key={x.id} className={`btn btn-block ${plans.some((y) => y.data) ? "btn-on-navy" : "btn-p"}`} href={x.url} target="_blank" rel="noreferrer">
+          {plans.map((x) => {
+            const isDoc = (x.data as { format?: string } | null)?.format === "zahraafit-doc";
+            if (!x.url && !isDoc) return null;
+            const label = `${x.title.replace(/\s*\(PDF\)$/, "")} (PDF)`;
+            const cls = `btn btn-block ${plans.some((y) => y.kind !== "other" && y.data) ? "btn-on-navy" : "btn-p"}`;
+            return x.url ? (
+              <a key={x.id} className={cls} href={x.url} target="_blank" rel="noreferrer">
                 <FileText />
-                {x.title} (PDF)
+                {label}
               </a>
-            ) : null
-          )}
+            ) : (
+              <Link key={x.id} className={cls} href={`/app/print/${x.id}`}>
+                <FileText />
+                {label}
+              </Link>
+            );
+          })}
         </section>
         <section className="card row between wrap">
           <span className="row small">

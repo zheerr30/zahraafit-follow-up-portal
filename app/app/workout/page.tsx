@@ -96,7 +96,7 @@ export default function WorkoutPage() {
     }
     return null;
   };
-  const pdf = cp.files.find((f) => f.kind === "workout");
+  const pdf = cp.pdfs.find((f) => /رياضي/.test(f.title)) || cp.pdfs.find((f) => f.kind === "workout");
 
   function start(i: number) {
     const d = plan!.days[i];
@@ -159,7 +159,7 @@ export default function WorkoutPage() {
   }
 
   return (
-    <ClientShell title="تماريني" action={pdf?.url ? <a className="btn btn-g btn-sm" href={pdf.url} target="_blank" rel="noreferrer"><FileText />PDF</a> : undefined}>
+    <ClientShell title="تماريني" action={pdf ? <a className="btn btn-g btn-sm" href={pdf.href} target={pdf.external ? "_blank" : undefined} rel="noreferrer"><FileText />PDF</a> : undefined}>
       <section className="hero">
         <Rings />
         <span className="label">تمرينك الجاي · تمارين هالأسبوع {thisWeek}</span>

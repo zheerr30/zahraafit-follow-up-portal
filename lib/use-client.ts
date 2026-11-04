@@ -7,6 +7,8 @@ import type { Client, Plan, Profile } from "@/lib/types";
 
 export type PlanRow = Plan & { url?: string };
 
+const isDoc = (d: unknown) => Boolean(d && typeof d === "object" && (d as { format?: string }).format === "zahraafit-doc");
+
 /** The signed-in subscriber's client record and her current plans. */
 export function useClientPlans(profile: Profile | null) {
   const [client, setClient] = useState<Client | null>(null);
@@ -43,6 +45,10 @@ export function useClientPlans(profile: Profile | null) {
     client,
     plans,
     files: plans.filter((p) => p.url),
+    /** Everything she can save as PDF: uploaded files and the generator's designed documents. */
+    pdfs: plans
+      .filter((p) => p.url || isDoc(p.data))
+      .map((p) => ({ id: p.id, title: p.title.replace(/\s*\(PDF\)$/, ""), href: p.url || `/app/print/${p.id}`, external: Boolean(p.url), kind: p.kind })),
     mealRow,
     meal: (mealRow?.data as MealPlanData | undefined) || null,
     workoutRow,

@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, Loader2, Send, X } from "lucide-react";
-import { FILL_SCRIPT, READ_PLANS_SCRIPT, mealGeneratorFields } from "@/lib/generator";
+import { FILL_SCRIPT, READ_DOC_SCRIPT, READ_PLANS_SCRIPT, mealGeneratorFields } from "@/lib/generator";
+import { packDoc } from "@/lib/doc-pack";
 import { parsePlanFile, type MealPlanData, type ParsedPlan } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 
@@ -60,9 +61,17 @@ export function GeneratorPanel({ answers, name, onClose, onUse }: { answers: unk
     setReading(false);
   }
 
-  function use(p: MealPlanData) {
+  async function use(p: MealPlanData, newest: boolean) {
     try {
-      onUse(parsePlanFile(JSON.stringify(p)));
+      const parsed = parsePlanFile(JSON.stringify(p));
+      // The generator's designed document matches the plan it shows last.
+      if (newest) {
+        try {
+          const doc = String(win()?.eval(READ_DOC_SCRIPT) || "");
+          if (doc.length > 500) parsed.doc = await packDoc(doc, html || "");
+        } catch {}
+      }
+      onUse(parsed);
       onClose();
     } catch (e) {
       setError((e as Error).message);
@@ -107,7 +116,7 @@ export function GeneratorPanel({ answers, name, onClose, onUse }: { answers: unk
             </div>
             <div className="opts">
               {sorted.map((p, i) => (
-                <button key={`${p.date}-${i}`} type="button" className="opt" onClick={() => use(p)}>
+                <button key={`${p.date}-${i}`} type="button" className="opt" onClick={() => use(p, p === plans?.[0])}>
                   <Check size={18} color="var(--clay)" />
                   <span>
                     <span className="opt-t">{p.name || "بدون اسم"}</span>

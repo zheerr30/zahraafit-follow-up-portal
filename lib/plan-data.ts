@@ -45,8 +45,11 @@ export type WorkoutPlanData = {
 };
 
 export type ParsedPlan =
-  | { kind: "nutrition"; title: string; data: MealPlanData }
-  | { kind: "workout"; title: string; data: WorkoutPlanData };
+  | { kind: "nutrition"; title: string; data: MealPlanData; doc?: PlanDoc }
+  | { kind: "workout"; title: string; data: WorkoutPlanData; doc?: PlanDoc };
+
+/** A plan's designed document (the generator's own file), saved next to the plan data (see lib/doc-pack.ts). */
+export type PlanDoc = { format: string; html?: string; gz?: string };
 
 const arr = <T,>(x: unknown): T[] => (Array.isArray(x) ? (x as T[]) : []);
 const str = (x: unknown) => (x === null || x === undefined ? "" : String(x));

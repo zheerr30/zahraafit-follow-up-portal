@@ -58,6 +58,9 @@ export const FILL_SCRIPT = (fields: Record<string, string>) => `(function(F){
   return true;
 })(${JSON.stringify(fields)})`;
 
+/** Runs inside the generator page: the designed plan document it is showing (its own "download" file). */
+export const READ_DOC_SCRIPT = `(function(){try{var f=planFileHTML();return f&&f.html?f.html:"";}catch(e){return "";}})()`;
+
 /**
  * Runs inside the generator page: returns the plans it holds, newest first,
  * converted to the platform's meal-plan format (same reading as the generator's

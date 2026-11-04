@@ -90,6 +90,9 @@ export function PlanDelivery({ req, onDelivered, toast, incoming }: { req: PlanR
     for (const p of pending) {
       if (p.parsed) {
         rows.push({ client_id: req.client_id, title: p.parsed.title, kind: p.parsed.kind, data: p.parsed.data, content: message.trim() || null, is_current: true });
+        if (p.parsed.doc) {
+          rows.push({ client_id: req.client_id, title: `${p.parsed.title} (PDF)`, kind: "other", data: p.parsed.doc, content: message.trim() || null, is_current: true });
+        }
         continue;
       }
       const path = `${req.client_id}/${safeFileName(p.file!.name)}`;
@@ -168,7 +171,7 @@ export function PlanDelivery({ req, onDelivered, toast, incoming }: { req: PlanR
           <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
             {p.parsed ? (
               <>
-                <b className="small">{p.parsed.title} · تفاعلي</b>
+                <b className="small">{p.parsed.title} · تفاعلي{p.parsed.doc ? " + PDF" : ""}</b>
                 <span className="note">
                   {p.parsed.kind === "nutrition"
                     ? `${p.parsed.data.days.length} أيام · ${p.parsed.data.target.cal} سعرة`
