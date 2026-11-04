@@ -1,82 +1,78 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { FileText, FileUp, Loader2, Send, Trash2 } from "lucide-react";
+import { FileText, FileUp, Loader2, Send, Sparkles, Trash2 } from "lucide-react";
 import { formatDate, safeFileName } from "@/lib/format";
+import { parsePlanFile, type ParsedPlan } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 import type { Plan, PlanRequest } from "@/lib/types";
 
 const KINDS = ["الجدول الغذائي", "الجدول الرياضي", "ملف إضافي"];
+const KIND_OF: Record<string, "nutrition" | "workout" | "other"> = { "الجدول الغذائي": "nutrition", "الجدول الرياضي": "workout", "ملف إضافي": "other" };
 const MAX_MB = 20;
 
-type Pending = { file: File; title: string };
+type Pending = { name: string; title: string; file?: File; parsed?: ParsedPlan };
 
 /**
- * Step 2 and 3 on a request: attach the plan files, then send them.
- * Files stay in this browser until "send"; sending uploads them, makes them
- * her current plan (older plans stay in her history) and closes the request.
+ * Steps 2 and 3 on a request: attach the plan (PDF files and/or the data files
+ * from the export buttons), then send. Nothing is saved until "send".
  */
-export function PlanDelivery({
-  req,
-  onDelivered,
-  toast
-}: {
-  req: PlanRequest;
-  onDelivered: (r: PlanRequest) => void;
-  toast: (m: string) => void;
-}) {
+export function PlanDelivery({ req, onDelivered, toast }: { req: PlanRequest; onDelivered: (r: PlanRequest) => void; toast: (m: string) => void }) {
   const [pending, setPending] = useState<Pending[]>([]);
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState<(Plan & { url?: string })[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function loadSent() {
-    const { data } = await supabase
-      .from("plans")
-      .select("*")
-      .eq("client_id", req.client_id)
-      .gte("created_at", req.submitted_at)
-      .order("created_at", { ascending: true });
-    const list = (data as Plan[] | null) || [];
-    const withUrls = await Promise.all(
-      list.map(async (p) => {
-        if (!p.file_path) return p;
-        const { data: s } = await supabase.storage.from("client-plans").createSignedUrl(p.file_path, 60 * 60);
-        return { ...p, url: s?.signedUrl };
-      })
-    );
-    setSent(withUrls);
-  }
-
   useEffect(() => {
-    if (req.status === "delivered") loadSent();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [req.status, req.id]);
+    if (req.status !== "delivered") return;
+    (async () => {
+      const { data } = await supabase.from("plans").select("*").eq("client_id", req.client_id).gte("created_at", req.submitted_at).order("created_at", { ascending: true });
+      const list = (data as Plan[] | null) || [];
+      setSent(
+        await Promise.all(
+          list.map(async (p) => {
+            if (!p.file_path) return p;
+            const { data: s } = await supabase.storage.from("client-plans").createSignedUrl(p.file_path, 60 * 60);
+            return { ...p, url: s?.signedUrl };
+          })
+        )
+      );
+    })();
+  }, [req.status, req.id, req.client_id, req.submitted_at]);
 
-  function defaultTitle() {
-    const used = new Set(pending.map((p) => p.title));
-    if (req.wants_nutrition && !used.has(KINDS[0])) return KINDS[0];
-    if (req.wants_workout && !used.has(KINDS[1])) return KINDS[1];
-    return KINDS[2];
-  }
-
-  function addFiles(files: FileList | null) {
+  async function addFiles(files: FileList | null) {
     if (!files) return;
     setError(null);
     const next = [...pending];
+    const pdfTitle = () => {
+      const used = new Set(next.filter((p) => p.file).map((p) => p.title));
+      if (req.wants_nutrition && !used.has(KINDS[0])) return KINDS[0];
+      if (req.wants_workout && !used.has(KINDS[1])) return KINDS[1];
+      return KINDS[2];
+    };
     for (const f of Array.from(files)) {
+      if (f.name.toLowerCase().endsWith(".json") || f.type === "application/json") {
+        try {
+          const parsed = parsePlanFile(await f.text());
+          const rest = next.filter((p) => !(p.parsed && p.parsed.kind === parsed.kind));
+          next.length = 0;
+          next.push(...rest, { name: f.name, title: parsed.title, parsed });
+        } catch (e) {
+          setError((e as Error).message);
+        }
+        continue;
+      }
       if (!/pdf|image\//.test(f.type)) {
-        setError("ارفعي الخطة كملف PDF. احفظيها من المولّد بزر «حفظ PDF».");
+        setError("ارفعي الخطة PDF، أو ملف البيانات اللي ينزل من زر التصدير.");
         continue;
       }
       if (f.size > MAX_MB * 1024 * 1024) {
         setError(`الملف ${f.name} أكبر من ${MAX_MB} ميقا.`);
         continue;
       }
-      const used = new Set(next.map((p) => p.title));
-      const title = req.wants_nutrition && !used.has(KINDS[0]) ? KINDS[0] : req.wants_workout && !used.has(KINDS[1]) ? KINDS[1] : defaultTitle();
-      next.push({ file: f, title });
+      next.push({ name: f.name, title: pdfTitle(), file: f });
     }
     setPending(next);
   }
@@ -86,15 +82,19 @@ export function PlanDelivery({
     setBusy(true);
     setError(null);
 
-    const rows: Partial<Plan>[] = [];
+    const rows: Record<string, unknown>[] = [];
     for (const p of pending) {
-      const path = `${req.client_id}/${safeFileName(p.file.name)}`;
-      const { error: upErr } = await supabase.storage.from("client-plans").upload(path, p.file, { upsert: false, contentType: p.file.type });
+      if (p.parsed) {
+        rows.push({ client_id: req.client_id, title: p.parsed.title, kind: p.parsed.kind, data: p.parsed.data, content: message.trim() || null, is_current: true });
+        continue;
+      }
+      const path = `${req.client_id}/${safeFileName(p.file!.name)}`;
+      const { error: upErr } = await supabase.storage.from("client-plans").upload(path, p.file!, { upsert: false, contentType: p.file!.type });
       if (upErr) {
         setBusy(false);
-        return setError(`ما قدرنا نرفع ${p.file.name}. جربي مرة ثانية.`);
+        return setError(`ما قدرنا نرفع ${p.name}. جربي مرة ثانية.`);
       }
-      rows.push({ client_id: req.client_id, title: p.title, content: message.trim() || null, file_path: path, is_current: true });
+      rows.push({ client_id: req.client_id, title: p.title, kind: KIND_OF[p.title] || "other", content: message.trim() || null, file_path: path, is_current: true });
     }
 
     // Older plans stay in her history but stop being "current".
@@ -102,7 +102,11 @@ export function PlanDelivery({
     const { error: insErr } = await supabase.from("plans").insert(rows);
     if (insErr) {
       setBusy(false);
-      return setError("رفعنا الملفات بس ما قدرنا نحفظ الخطة. جربي مرة ثانية.");
+      return setError(
+        /column|kind|data/.test(insErr.message)
+          ? "قاعدة البيانات تحتاج تحديث: شغلي ملف phase2-interactive-plans.sql في Supabase، وبعدها أرسلي مرة ثانية."
+          : "ما قدرنا نحفظ الخطة. جربي مرة ثانية."
+      );
     }
 
     const { data, error: updErr } = await supabase
@@ -112,7 +116,7 @@ export function PlanDelivery({
       .select("*")
       .single();
     setBusy(false);
-    if (updErr || !data) return setError("انحفظت الخطة بس ما قدرنا نقفل الطلب. اضغطي «أرسلي» مرة ثانية.");
+    if (updErr || !data) return setError("انحفظت الخطة بس ما قدرنا نقفل الطلب. جربي مرة ثانية.");
     setPending([]);
     setMessage("");
     onDelivered(data as PlanRequest);
@@ -127,8 +131,9 @@ export function PlanDelivery({
         {sent.map((p) => (
           <div key={p.id} className="row between wrap">
             <span className="row small">
-              <FileText size={18} color="var(--clay)" />
+              {p.data ? <Sparkles size={18} color="var(--clay)" /> : <FileText size={18} color="var(--clay)" />}
               {p.title}
+              {p.data ? <span className="chip clay">تفاعلي</span> : null}
             </span>
             {p.url ? (
               <a className="btn btn-g btn-sm" href={p.url} target="_blank" rel="noreferrer">
@@ -141,33 +146,48 @@ export function PlanDelivery({
     );
   }
 
+  const hasData = pending.some((p) => p.parsed);
+
   return (
     <section className="card stack">
       <div className="stack" style={{ gap: 4 }}>
         <span className="label">الخطوة ٢</span>
-        <h2 style={{ fontSize: 17 }}>ارفعي ملف الخطة</h2>
-        <p className="note">بعد ما يطلع الجدول من المولّد، احفظيه PDF وارفعيه هنا. تقدرين ترفعين أكثر من ملف، مثلًا الغذائي والرياضي.</p>
+        <h2 style={{ fontSize: 17 }}>ارفعي الخطة</h2>
+        <p className="note">
+          ارفعي الـPDF من المولّد، ومعه <b>ملف البيانات</b> من زر التصدير عشان تصير خطتها تفاعلية.{" "}
+          <Link className="link" href="/coach/tools" style={{ minHeight: 0, fontSize: 12.5 }}>
+            وين الزر؟
+          </Link>
+        </p>
       </div>
 
       {pending.map((p, i) => (
-        <div key={i} className="row" style={{ gap: 8, padding: 12, borderRadius: 14, background: "var(--sunken)" }}>
-          <FileText size={20} color="var(--clay)" style={{ flexShrink: 0 }} />
-          <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-            <label className="sr-only" htmlFor={`kind-${i}`}>نوع الملف</label>
-            <select
-              id={`kind-${i}`}
-              className="inp"
-              style={{ minHeight: 40, fontSize: 14 }}
-              value={p.title}
-              onChange={(e) => setPending(pending.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))}
-            >
-              {KINDS.map((k) => (
-                <option key={k} value={k}>{k}</option>
-              ))}
-            </select>
-            <span className="note" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.file.name}</span>
+        <div key={i} className="row" style={{ gap: 8, padding: 12, borderRadius: 14, background: p.parsed ? "var(--clay-tint)" : "var(--sunken)" }}>
+          {p.parsed ? <Sparkles size={20} color="var(--clay)" style={{ flexShrink: 0 }} /> : <FileText size={20} color="var(--clay)" style={{ flexShrink: 0 }} />}
+          <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+            {p.parsed ? (
+              <>
+                <b className="small">{p.parsed.title} · تفاعلي</b>
+                <span className="note">
+                  {p.parsed.kind === "nutrition"
+                    ? `${p.parsed.data.days.length} أيام · ${p.parsed.data.target.cal} سعرة`
+                    : `${p.parsed.data.days.length} أيام · ${p.parsed.data.days.reduce((a, d) => a + d.exercises.length, 0)} تمرين`}
+                  {p.parsed.data.name ? ` · ${p.parsed.data.name}` : ""}
+                </span>
+              </>
+            ) : (
+              <>
+                <label className="sr-only" htmlFor={`kind-${i}`}>نوع الملف</label>
+                <select id={`kind-${i}`} className="inp" style={{ minHeight: 40, fontSize: 14 }} value={p.title} onChange={(e) => setPending(pending.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))}>
+                  {KINDS.map((k) => (
+                    <option key={k} value={k}>{k}</option>
+                  ))}
+                </select>
+              </>
+            )}
+            <span className="note" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
           </div>
-          <button type="button" className="icon-btn" aria-label={`شيلي ${p.file.name}`} onClick={() => setPending(pending.filter((_, j) => j !== i))}>
+          <button type="button" className="icon-btn" aria-label={`شيلي ${p.name}`} onClick={() => setPending(pending.filter((_, j) => j !== i))}>
             <Trash2 size={18} />
           </button>
         </div>
@@ -175,9 +195,10 @@ export function PlanDelivery({
 
       <label className="file-drop">
         <FileUp />
-        <span>{pending.length ? "أضيفي ملف ثاني" : "اختاري ملف الخطة (PDF)"}</span>
-        <input type="file" className="sr-only" accept="application/pdf,image/*" multiple onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+        <span>{pending.length ? "أضيفي ملف ثاني" : "اختاري الـPDF وملف البيانات"}</span>
+        <input type="file" className="sr-only" accept="application/pdf,image/*,application/json,.json" multiple onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
       </label>
+      {pending.length && !hasData ? <p className="note">بدون ملف البيانات، المشتركة تشوف الـPDF بس، وما تقدر تعلّم على وجباتها أو تسجل تمارينها.</p> : null}
 
       <div className="stack" style={{ gap: 4, marginTop: 6 }}>
         <span className="label">الخطوة ٣</span>

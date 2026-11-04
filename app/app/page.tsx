@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { CheckCircle2, ClipboardEdit, Clock3, FileText, PenLine } from "lucide-react";
+import { CheckCircle2, ClipboardEdit, Clock3, Dumbbell, FileText, PenLine, Utensils } from "lucide-react";
 import { ClientShell, Loading, Rings } from "@/components/ui";
 import { deliveryWindow, formatDay } from "@/lib/business-days";
 import { formatDate } from "@/lib/format";
@@ -124,11 +124,23 @@ export default function ClientHome() {
           <h2>خطتك جاهزة</h2>
           {!plan ? <p>المدربة أرسلت خطتك. إذا ما وصلتك تواصلي معها.</p> : null}
           {plan?.content ? <p style={{ whiteSpace: "pre-line" }}>{plan.content}</p> : null}
+          {plans.some((x) => x.kind === "nutrition" && x.data) ? (
+            <Link className="btn btn-p btn-block" href="/app/food">
+              <Utensils />
+              وجباتي
+            </Link>
+          ) : null}
+          {plans.some((x) => x.kind === "workout" && x.data) ? (
+            <Link className="btn btn-p btn-block" href="/app/workout">
+              <Dumbbell />
+              تماريني
+            </Link>
+          ) : null}
           {plans.map((x) =>
             x.url ? (
-              <a key={x.id} className="btn btn-p btn-block" href={x.url} target="_blank" rel="noreferrer">
+              <a key={x.id} className={`btn btn-block ${plans.some((y) => y.data) ? "btn-on-navy" : "btn-p"}`} href={x.url} target="_blank" rel="noreferrer">
                 <FileText />
-                افتحي {x.title}
+                {x.title} (PDF)
               </a>
             ) : null
           )}

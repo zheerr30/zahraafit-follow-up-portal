@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { ClipboardList, Home, Inbox, Loader2, LogOut, UserRound } from "lucide-react";
+import { ClipboardList, Dumbbell, Home, Inbox, LineChart, Loader2, LogOut, UserRound, Utensils, Wrench } from "lucide-react";
 import { signOut } from "@/lib/use-auth";
 
 export function Brand() {
@@ -70,6 +70,9 @@ export function ClientShell({ title, sub, action, children }: { title: ReactNode
   const path = usePathname();
   const tabs = [
     { href: "/app", label: "الرئيسية", icon: <Home /> },
+    { href: "/app/food", label: "أكلي", icon: <Utensils /> },
+    { href: "/app/workout", label: "تماريني", icon: <Dumbbell /> },
+    { href: "/app/progress", label: "تقدّمي", icon: <LineChart /> },
     { href: "/app/account", label: "حسابي", icon: <UserRound /> }
   ];
   return (
@@ -101,7 +104,8 @@ export function CoachShell({ children }: { children: ReactNode }) {
   const path = usePathname();
   const links = [
     { href: "/coach", label: "خطط تنتظرك", icon: <Inbox size={17} />, match: (p: string) => p === "/coach" || p.startsWith("/coach/requests") },
-    { href: "/coach/subscribers", label: "المشتركات", icon: <ClipboardList size={17} />, match: (p: string) => p.startsWith("/coach/subscribers") }
+    { href: "/coach/subscribers", label: "المشتركات", icon: <ClipboardList size={17} />, match: (p: string) => p.startsWith("/coach/subscribers") },
+    { href: "/coach/tools", label: "أزرار التصدير", icon: <Wrench size={17} />, match: (p: string) => p.startsWith("/coach/tools") }
   ];
   return (
     <div className="app wide">

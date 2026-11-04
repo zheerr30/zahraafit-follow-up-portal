@@ -33,6 +33,8 @@ export type Plan = {
   file_path: string | null;
   file_url: string | null;
   is_current: boolean;
+  kind?: "nutrition" | "workout" | "other" | null;
+  data?: unknown;
   created_by: string | null;
   created_at: string;
 };
