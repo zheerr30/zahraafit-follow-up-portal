@@ -121,9 +121,9 @@ export default function FoodPage() {
 
   const total = meals.reduce((t, x) => ({ cal: t.cal + x.meal.cal, p: t.p + x.meal.p, c: t.c + x.meal.c, f: t.f + x.meal.f }), { cal: 0, p: 0, c: 0, f: 0 });
   const MACROS: [string, number, number, string][] = [
-    ["بروتين", total.p, plan.target.p, "var(--protein)"],
-    ["كارب", total.c, plan.target.c, "var(--carb)"],
-    ["دهون", total.f, plan.target.f, "var(--fat)"]
+    ["💪 بروتين", total.p, plan.target.p, "var(--protein)"],
+    ["🌾 كارب", total.c, plan.target.c, "var(--carb)"],
+    ["🫒 دهون", total.f, plan.target.f, "var(--fat)"]
   ];
   const eatenCount = meals.filter((x) => log.meals[x.key]).length;
   const open = Math.round(plan.target.cal - total.cal);
@@ -200,9 +200,9 @@ export default function FoodPage() {
               </span>
             </div>
             <div className="mrow">
-              <div className="mtile" style={{ "--c": "var(--protein)" } as React.CSSProperties}><b>{Math.round(meal.p)}g</b><span>بروتين</span></div>
-              <div className="mtile" style={{ "--c": "var(--carb)" } as React.CSSProperties}><b>{Math.round(meal.c)}g</b><span>كارب</span></div>
-              <div className="mtile" style={{ "--c": "var(--fat)" } as React.CSSProperties}><b>{Math.round(meal.f)}g</b><span>دهون</span></div>
+              <div className="mtile" style={{ "--c": "var(--protein)" } as React.CSSProperties}><b>{Math.round(meal.p)}g</b><span>💪 بروتين</span></div>
+              <div className="mtile" style={{ "--c": "var(--carb)" } as React.CSSProperties}><b>{Math.round(meal.c)}g</b><span>🌾 كارب</span></div>
+              <div className="mtile" style={{ "--c": "var(--fat)" } as React.CSSProperties}><b>{Math.round(meal.f)}g</b><span>🫒 دهون</span></div>
             </div>
             <div className="ings">
               {meal.ingredients.map((ing) => {
