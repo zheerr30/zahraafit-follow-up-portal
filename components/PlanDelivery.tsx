@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { FileText, FileUp, Loader2, Send, Sparkles, Trash2 } from "lucide-react";
 import { formatDate, safeFileName } from "@/lib/format";
@@ -18,12 +17,17 @@ type Pending = { name: string; title: string; file?: File; parsed?: ParsedPlan }
  * Steps 2 and 3 on a request: attach the plan (PDF files and/or the data files
  * from the export buttons), then send. Nothing is saved until "send".
  */
-export function PlanDelivery({ req, onDelivered, toast }: { req: PlanRequest; onDelivered: (r: PlanRequest) => void; toast: (m: string) => void }) {
+export function PlanDelivery({ req, onDelivered, toast, incoming }: { req: PlanRequest; onDelivered: (r: PlanRequest) => void; toast: (m: string) => void; incoming?: ParsedPlan | null }) {
   const [pending, setPending] = useState<Pending[]>([]);
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState<(Plan & { url?: string })[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!incoming) return;
+    setPending((prev) => [...prev.filter((p) => !(p.parsed && p.parsed.kind === incoming.kind)), { name: "من المولّد", title: incoming.title, parsed: incoming }]);
+  }, [incoming]);
 
   useEffect(() => {
     if (req.status !== "delivered") return;
@@ -154,10 +158,7 @@ export function PlanDelivery({ req, onDelivered, toast }: { req: PlanRequest; on
         <span className="label">الخطوة ٢</span>
         <h2 style={{ fontSize: 17 }}>ارفعي الخطة</h2>
         <p className="note">
-          ارفعي الـPDF من المولّد، ومعه <b>ملف البيانات</b> من زر التصدير عشان تصير خطتها تفاعلية.{" "}
-          <Link className="link" href="/coach/tools" style={{ minHeight: 0, fontSize: 12.5 }}>
-            وين الزر؟
-          </Link>
+          الجدول اللي ترسلينه من المولّد يطلع هنا. وتقدرين تضيفين PDF لو تبين.
         </p>
       </div>
 
@@ -195,10 +196,10 @@ export function PlanDelivery({ req, onDelivered, toast }: { req: PlanRequest; on
 
       <label className="file-drop">
         <FileUp />
-        <span>{pending.length ? "أضيفي ملف ثاني" : "اختاري الـPDF وملف البيانات"}</span>
+        <span>{pending.length ? "أضيفي ملف ثاني (PDF)" : "أو ارفعي PDF"}</span>
         <input type="file" className="sr-only" accept="application/pdf,image/*,application/json,.json" multiple onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
       </label>
-      {pending.length && !hasData ? <p className="note">بدون ملف البيانات، المشتركة تشوف الـPDF بس، وما تقدر تعلّم على وجباتها أو تسجل تمارينها.</p> : null}
+      {pending.length && !hasData ? <p className="note">بالـPDF بس، المشتركة تقرأ خطتها، بس ما تقدر تعلّم على وجباتها أو تبدل الأصناف. ولّدي الجدول من الخطوة ١ عشان تصير تفاعلية.</p> : null}
 
       <div className="stack" style={{ gap: 4, marginTop: 6 }}>
         <span className="label">الخطوة ٣</span>

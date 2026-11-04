@@ -1,85 +1,88 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Bookmark, Dumbbell, Utensils } from "lucide-react";
-import { CoachShell, Loading } from "@/components/ui";
-import { MEAL_BOOKMARKLET, WORKOUT_BOOKMARKLET } from "@/lib/bookmarklets";
+import { useEffect, useState } from "react";
+import { FileUp, Loader2, Utensils } from "lucide-react";
+import { CoachShell, Loading, useToast } from "@/components/ui";
+import { formatDate } from "@/lib/format";
+import { MEAL_GENERATOR_PATH } from "@/lib/generator";
+import { supabase } from "@/lib/supabase";
 import { useAuthGuard } from "@/lib/use-auth";
 
-/** React refuses javascript: links, so the href is set after mount. */
-function BookmarkButton({ href, label, icon }: { href: string; label: string; icon: React.ReactNode }) {
-  const ref = useRef<HTMLAnchorElement>(null);
-  useEffect(() => {
-    ref.current?.setAttribute("href", href);
-  }, [href]);
-  return (
-    <a
-      ref={ref}
-      className="btn btn-p"
-      style={{ cursor: "grab" }}
-      draggable
-      onClick={(e) => {
-        e.preventDefault();
-        alert("لا تضغطين الزر هنا. اسحبيه بالماوس لشريط المفضلة فوق.");
-      }}
-    >
-      {icon}
-      {label}
-    </a>
-  );
-}
-
-export default function ToolsPage() {
+export default function GeneratorsPage() {
   const auth = useAuthGuard("admin");
-  if (auth.loading) return <Loading />;
+  const toast = useToast();
+  const [updated, setUpdated] = useState<string | null | undefined>(undefined);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function load() {
+    const { data, error: err } = await supabase.storage.from("generators").list("", { search: MEAL_GENERATOR_PATH });
+    if (err) {
+      setError("قاعدة البيانات تحتاج تحديث: شغلي ملف phase3-generators.sql في Supabase.");
+      setUpdated(null);
+      return;
+    }
+    const f = (data || []).find((x) => x.name === MEAL_GENERATOR_PATH);
+    setUpdated(f ? f.updated_at || f.created_at || "" : null);
+  }
+
+  useEffect(() => {
+    if (auth.profile) load();
+  }, [auth.profile]);
+
+  async function upload(file: File | undefined) {
+    if (!file) return;
+    setError(null);
+    if (!/\.html?$/i.test(file.name)) return setError("اختاري ملف المولّد نفسه، اللي ينتهي بـ .html");
+    const text = await file.text();
+    if (!/PLANS|generate\(/.test(text)) return setError("الملف هذا ما يبين إنه مولّد الأكل. تأكدي إنك اخترتي الملف الصحيح.");
+    setBusy(true);
+    const { error: err } = await supabase.storage.from("generators").upload(MEAL_GENERATOR_PATH, new Blob([text], { type: "text/html" }), { upsert: true, contentType: "text/html" });
+    setBusy(false);
+    if (err) return setError("ما قدرنا نرفع الملف. إذا ما شغلتي ملف phase3-generators.sql في Supabase، شغليه أول.");
+    toast.show("رفعنا المولّد. يشتغل من صفحات الطلبات على طول");
+    load();
+  }
+
+  if (auth.loading || updated === undefined) return <Loading />;
   if (!auth.profile) return null;
 
   return (
     <CoachShell>
-      <h1 style={{ fontSize: 24 }}>أزرار التصدير</h1>
-      <p className="muted">
-        زرين تحطينهم في شريط المفضلة في Chrome مرة وحدة. كل زر يقرأ الجدول من المولّد وينزل لك ملف بيانات صغير، ترفعينه للمشتركة مع الـPDF، فتصير خطتها تفاعلية في التطبيق. الأزرار ما تغير في المولّدين شي.
-      </p>
+      <h1 style={{ fontSize: 24 }}>المولّدات</h1>
+      <p className="muted">ارفعي ملف المولّد هنا مرة وحدة. بعدها تفتحينه من صفحة أي طلب، ومعلومات المشتركة معبّاة فيه لحالها.</p>
 
       <section className="card stack">
-        <h2 style={{ fontSize: 17 }}>١. ركّبي الزرين (مرة وحدة بس)</h2>
-        <ol className="small" style={{ margin: 0, paddingInlineStart: 20, lineHeight: 2 }}>
-          <li>
-            إذا شريط المفضلة مو ظاهر في Chrome: اضغطي <b>Cmd + Shift + B</b> (أو <b>Ctrl + Shift + B</b> في الويندوز).
-          </li>
-          <li>
-            <b>اسحبي</b> كل زر من تحت بالماوس، وأفلتيه فوق في شريط المفضلة.
-          </li>
-        </ol>
-        <div className="row wrap">
-          <BookmarkButton href={MEAL_BOOKMARKLET} label="تصدير الغذائي" icon={<Utensils />} />
-          <BookmarkButton href={WORKOUT_BOOKMARKLET} label="تصدير الرياضي" icon={<Dumbbell />} />
+        <div className="row">
+          <span className="avatar"><Utensils size={20} /></span>
+          <div>
+            <b>مولّد الأكل</b>
+            <div className="small muted">{updated ? `آخر تحديث ${formatDate(updated)}` : "ما رفعتيه للحين"}</div>
+          </div>
         </div>
+        <label className="file-drop">
+          {busy ? <Loader2 className="spin" /> : <FileUp />}
+          <span>{updated ? "ارفعي النسخة الجديدة (تحل محل القديمة)" : "اختاري ملف المولّد (.html)"}</span>
+          <input type="file" className="sr-only" accept=".html,.htm,text/html" disabled={busy} onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ""; }} />
+        </label>
+        {error ? <p className="alert err" role="alert">{error}</p> : null}
         <p className="note">
-          <Bookmark size={14} style={{ verticalAlign: "-2px" }} /> إذا الجوال ما يسمح بالسحب، ركبيهم من الكمبيوتر. المولّدين أصلًا تشتغلين عليهم من الكمبيوتر.
+          كل ما تعدلين على المولّد في محادثة Claude، نزّلي الملف الجديد وارفعيه هنا. المنصة تستخدم آخر نسخة رفعتيها.
         </p>
       </section>
 
       <section className="card stack">
-        <h2 style={{ fontSize: 17 }}>٢. كل مرة تسوين خطة</h2>
-        <ol className="small" style={{ margin: 0, paddingInlineStart: 20, lineHeight: 2 }}>
-          <li>ولّدي الجدول في المولّد زي العادة، واحفظيه PDF زي العادة.</li>
-          <li>
-            وأنتِ في صفحة المولّد، اضغطي زر <b>تصدير الغذائي</b> (أو <b>تصدير الرياضي</b>) في شريط المفضلة.
-          </li>
-          <li>في مولّد الأكل تطلع لك قائمة آخر الجداول. اختاري جدول المشتركة، وينزل الملف.</li>
-          <li>
-            في صفحة طلب المشتركة، الخطوة ٢، ارفعي <b>الـPDF وملف البيانات</b> مع بعض، وأرسلي.
-          </li>
-        </ol>
-      </section>
-
-      <section className="card stack">
-        <h2 style={{ fontSize: 17 }}>إذا الزر ما اشتغل</h2>
+        <b>مفتاح Claude</b>
         <p className="small muted">
-          إذا طلع لك «ما لقيت جدول»، تأكدي إنك ولّدتي الجدول في نفس الصفحة قبل ما تضغطين. وإذا يوم من الأيام تعديل على المولّد غيّر طريقة حفظ الجداول، الزر بيوقف. الـPDF يوصل للمشتركة عادي، وأرسلي لي آخر نسخة من المولّد وأعدل الزر.
+          أول مرة تفتحين المولّد هنا، حطي مفتاح Claude في إعداداته زي ما تسوين في المولّد. ينحفظ في هذا المتصفح بس، ويكفي مرة وحدة لكل جهاز.
         </p>
       </section>
+
+      <section className="card stack">
+        <b>مولّد التمارين</b>
+        <p className="small muted">الجاي: نفس الطريقة لمولّد التمارين. لين ذاك الوقت ارفعي الـPDF حقه زي العادة.</p>
+      </section>
+      {toast.node}
     </CoachShell>
   );
 }

@@ -105,7 +105,7 @@ export function CoachShell({ children }: { children: ReactNode }) {
   const links = [
     { href: "/coach", label: "خطط تنتظرك", icon: <Inbox size={17} />, match: (p: string) => p === "/coach" || p.startsWith("/coach/requests") },
     { href: "/coach/subscribers", label: "المشتركات", icon: <ClipboardList size={17} />, match: (p: string) => p.startsWith("/coach/subscribers") },
-    { href: "/coach/tools", label: "أزرار التصدير", icon: <Wrench size={17} />, match: (p: string) => p.startsWith("/coach/tools") }
+    { href: "/coach/tools", label: "المولّدات", icon: <Wrench size={17} />, match: (p: string) => p.startsWith("/coach/tools") }
   ];
   return (
     <div className="app wide">

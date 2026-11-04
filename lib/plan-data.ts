@@ -18,6 +18,7 @@ export type MealPlanData = {
   format: "zahraafit-meal-plan";
   v: number;
   name: string;
+  date?: string;
   target: { cal: number; p: number; c: number; f: number };
   days: { n: number; meals: Meal[] }[];
   extras: { snacks: Meal[]; salads: Meal[] };

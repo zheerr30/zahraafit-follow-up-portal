@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ChevronRight, ClipboardCopy, FileText, ShieldCheck, Undo2 } from "lucide-react";
+import { ChevronRight, ClipboardCopy, FileText, ShieldCheck, Undo2, Utensils } from "lucide-react";
+import { GeneratorPanel } from "@/components/GeneratorPanel";
+import type { ParsedPlan } from "@/lib/plan-data";
 import { PlanDelivery } from "@/components/PlanDelivery";
 import { CoachShell, Loading, useToast } from "@/components/ui";
 import { businessDaysBetween, deliveryWindow, formatDay } from "@/lib/business-days";
@@ -34,6 +36,8 @@ export default function CoachRequestPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [genOpen, setGenOpen] = useState(false);
+  const [incoming, setIncoming] = useState<ParsedPlan | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -119,14 +123,20 @@ export default function CoachRequestPage() {
         <section className="card stack">
           <div className="stack" style={{ gap: 4 }}>
             <span className="label">الخطوة ١</span>
-            <h2 style={{ fontSize: 17 }}>انسخي معلوماتها للمولّد</h2>
+            <h2 style={{ fontSize: 17 }}>ولّدي الجدول</h2>
             <p className="note">
-              الصقيها في محادثة المولّد عشان يطلع لك الجدول. المشتركة تنتظره بين <b>{formatDay(win.from)}</b> و<b>{formatDay(win.to)}</b>.
+              يفتح لك المولّد ومعلوماتها معبّاة فيه. المشتركة تنتظره بين <b>{formatDay(win.from)}</b> و<b>{formatDay(win.to)}</b>.
             </p>
           </div>
-          <button type="button" className="btn btn-p btn-block" onClick={() => { copy(); if (req.status === "submitted") update({ status: "in_progress", started_at: new Date().toISOString() }, "نسخت معلوماتها، وصارت في «شغالة عليها»"); }}>
+          {req.wants_nutrition ? (
+            <button type="button" className="btn btn-p btn-block" onClick={() => { setGenOpen(true); if (req.status === "submitted") update({ status: "in_progress", started_at: new Date().toISOString() }, "صارت في «شغالة عليها»"); }}>
+              <Utensils />
+              ولّدي الجدول الغذائي
+            </button>
+          ) : null}
+          <button type="button" className={`btn btn-block ${req.wants_nutrition ? "btn-g" : "btn-p"}`} onClick={() => { copy(); if (req.status === "submitted") update({ status: "in_progress", started_at: new Date().toISOString() }, "نسخت معلوماتها، وصارت في «شغالة عليها»"); }}>
             <ClipboardCopy />
-            انسخي معلوماتها
+            انسخي معلوماتها{req.wants_workout ? " (لمولّد التمارين)" : ""}
           </button>
           {req.status === "in_progress" ? (
             <div className="row between wrap small">
@@ -137,12 +147,13 @@ export default function CoachRequestPage() {
               </button>
             </div>
           ) : (
-            <p className="note">لما تنسخين معلوماتها تنتقل لـ «شغالة عليها»، وما تقدر تعدل معلوماتها بعدها.</p>
+            <p className="note">أول ما تبدئين، الطلب ينتقل لـ «شغالة عليها»، وما تقدر تعدل معلوماتها بعدها.</p>
           )}
         </section>
       ) : null}
 
-      <PlanDelivery req={req} onDelivered={setReq} toast={toast.show} />
+      <PlanDelivery req={req} onDelivered={setReq} toast={toast.show} incoming={incoming} />
+      {genOpen ? <GeneratorPanel answers={req.answers} name={a.full_name} onClose={() => setGenOpen(false)} onUse={(p) => { setIncoming(p); toast.show("الجدول صار في الخطوة ٢. راجعيه وأرسليه"); }} /> : null}
 
       <section className="card stack">
         <div className="row between wrap">
