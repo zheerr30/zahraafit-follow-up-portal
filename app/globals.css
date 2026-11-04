@@ -1,18 +1,18 @@
 /* ZahraaFit app. Layout: one phone-width column for subscribers (sticky top bar,
    fixed bottom tabs), a wider single column for the coach. */
-/* Brand: the coach's plan design (navy + orange, her logo and photos). Light only, like her printed plans. */
+/* Brand: the coach's store zahraafit.com (Salla theme): near-black navy, white, orange buttons. Light only, like the store. */
 :root {
-  --bg: #EEF1F7;
+  --bg: #F5F6F8;
   --surface: #FFFFFF;
-  --sunken: #F3F5FA;
-  --line: #E3E7F0;
-  --line-2: #CFD6E4;
-  --ink: #13213F;
-  --ink-2: #4E5B74;
-  --ink-3: #7A869C;
-  --clay: #F26539;
-  --clay-ink: #C94A22;
-  --clay-tint: #FFF0EA;
+  --sunken: #F2F3F6;
+  --line: #E6E8EE;
+  --line-2: #D3D7E0;
+  --ink: #010816;
+  --ink-2: #4A5163;
+  --ink-3: #767D8E;
+  --clay: #FA5A02;
+  --clay-ink: #C84700;
+  --clay-tint: #FFF0E6;
   --on-clay: #FFFFFF;
   --green: #1C8C55;
   --green-tint: #E6F5EC;
@@ -22,8 +22,8 @@
   --red-tint: #FCEBEA;
   --blue: #2563B8;
   --blue-tint: #E8F0FB;
-  --navy: #10295C;
-  --navy-2: #1B3C7E;
+  --navy: #050F2C;
+  --navy-2: #0D1F4F;
   --on-navy: #FFFFFF;
   --protein: #1C8C55;
   --carb: #2563B8;
@@ -32,7 +32,7 @@
   --f-num: "IBM Plex Sans Arabic", -apple-system, system-ui, sans-serif;
   --r: 14px;
   --r-lg: 20px;
-  --shadow: 0 6px 22px rgba(16, 41, 92, .07);
+  --shadow: 0 6px 22px rgba(5, 15, 44, .07);
   --ease: cubic-bezier(.2, .8, .2, 1);
   color-scheme: light;
 }
@@ -103,7 +103,7 @@ h1, h2, h3 { font-weight: 700; text-wrap: balance; }
 .sec-h h2 { font-size: 17px; }
 
 .hero {
-  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%); color: var(--on-navy); box-shadow: 0 12px 30px rgba(16, 41, 92, .22); border-radius: var(--r-lg); padding: 20px;
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%); color: var(--on-navy); box-shadow: 0 12px 30px rgba(5, 15, 44, .22); border-radius: var(--r-lg); padding: 20px;
   display: flex; flex-direction: column; gap: 14px; position: relative; overflow: hidden;
 }
 .hero .label { color: rgba(255, 255, 255, .72); }
@@ -293,7 +293,7 @@ pre.copy-box { white-space: pre-wrap; margin: 0; padding: 14px; border-radius: v
 .macro-tile .bar i { display: block; height: 100%; width: 0; margin: 0; border-radius: 0; }
 
 /* ---------- brand layer (matches the coach's printed plans) ---------- */
-.appbar { position: sticky; top: 0; z-index: 5; background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%); color: #fff; padding-block: calc(12px + env(safe-area-inset-top, 0px)) 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: 0 4px 18px rgba(16, 41, 92, .18); }
+.appbar { position: sticky; top: 0; z-index: 5; background: #010B1F; color: #fff; padding-block: calc(12px + env(safe-area-inset-top, 0px)) 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: 0 4px 18px rgba(5, 15, 44, .18); }
 .appbar .t { font-weight: 700; font-size: 18px; }
 .appbar .s { font-size: 12.5px; color: rgba(255, 255, 255, .72); }
 .appbar .btn-g { border-color: rgba(255, 255, 255, .35); color: #fff; }
@@ -302,10 +302,10 @@ pre.copy-box { white-space: pre-wrap; margin: 0; padding: 14px; border-radius: v
 .logo-w { height: 30px; width: auto; display: block; }
 .app-body { background: var(--bg); }
 
-.photo-hero { position: relative; overflow: hidden; border-radius: var(--r-lg); color: #fff; padding: 20px; display: flex; flex-direction: column; gap: 12px; min-height: 190px; justify-content: flex-end; background: var(--navy) url(/brand/cover.jpg) center / cover no-repeat; box-shadow: 0 12px 30px rgba(16, 41, 92, .22); }
-.photo-hero::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(16, 41, 92, .25) 0%, rgba(16, 41, 92, .92) 70%); }
+.photo-hero { position: relative; overflow: hidden; border-radius: var(--r-lg); color: #fff; padding: 20px; display: flex; flex-direction: column; gap: 12px; min-height: 190px; justify-content: flex-end; background: var(--navy) url(/brand/cover.jpg) center / cover no-repeat; box-shadow: 0 12px 30px rgba(5, 15, 44, .22); }
+.photo-hero::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5, 15, 44, .25) 0%, rgba(5, 15, 44, .92) 70%); }
 .photo-hero > * { position: relative; }
-.photo-hero .kicker { font-size: 12px; font-weight: 600; color: #FFB596; letter-spacing: .3px; }
+.photo-hero .kicker { font-size: 12px; font-weight: 600; color: #FFB27F; letter-spacing: .3px; }
 .photo-hero h2 { font-size: 24px; line-height: 1.3; }
 .photo-hero p { color: rgba(255, 255, 255, .85); font-size: 14px; }
 
@@ -359,7 +359,7 @@ pre.copy-box { white-space: pre-wrap; margin: 0; padding: 14px; border-radius: v
 .yt svg { width: 18px; height: 18px; }
 @media (max-width: 400px) { .xstats { gap: 6px; } .xrow img { width: 46px; height: 46px; } }
 
-.nav { box-shadow: 0 -4px 18px rgba(16, 41, 92, .08); border-top: 0; }
+.nav { box-shadow: 0 -4px 18px rgba(5, 15, 44, .08); border-top: 0; }
 .nav a[aria-current="page"] { color: var(--clay); font-weight: 700; }
 .appbar .tab-link { color: rgba(255, 255, 255, .82); }
 .appbar .tab-link[aria-current="page"] { background: var(--clay); color: #fff; }
