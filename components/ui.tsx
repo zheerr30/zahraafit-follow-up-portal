@@ -89,8 +89,9 @@ export function ClientShell({ title, sub, action, children }: { title: ReactNode
         </div>
         <div className="row" style={{ gap: 8 }}>
           {action}
-          <Link className="icon-btn" href="/app/account" aria-label="حسابي" aria-current={path === "/app/account" ? "page" : undefined}>
+          <Link className="acc-btn" href="/app/account" aria-current={path === "/app/account" ? "page" : undefined}>
             <UserRound />
+            <span>حسابي</span>
           </Link>
           <LogoWhite height={34} />
         </div>

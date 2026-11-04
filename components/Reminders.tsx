@@ -58,10 +58,7 @@ export function Reminders({ profileId, mealsPerDay }: { profileId: string; meals
 
   return (
     <section id="reminders" className="card stack">
-      <div className="row between">
-        <b style={{ fontSize: 16 }}>🔔 التذكيرات</b>
-        {state === "on" ? <span className="chip green">شغالة</span> : null}
-      </div>
+      {state === "on" ? <span className="chip green" style={{ alignSelf: "flex-start" }}>🔔 شغالة على هالجوال</span> : null}
 
       {state === "install" ? (
         <div className="small stack" style={{ gap: 6 }}>
