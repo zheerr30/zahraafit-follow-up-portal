@@ -6,7 +6,7 @@
 import { normalizeAnswers, type IntakeAnswers } from "@/lib/intake";
 
 /** Values for the generator's own form fields, from the subscriber's answers. */
-export function mealGeneratorFields(raw: unknown): Record<string, string> {
+export function mealGeneratorFields(raw: unknown, rated?: { liked: string[]; disliked: string[] }): Record<string, string> {
   const a: IntakeAnswers = normalizeAnswers(raw);
   const goal = a.goal === "lose" ? "تخسيس" : a.goal === "muscle" ? "تضخيم" : a.goal === "shape" ? "ريكومب" : "";
   const days = a.workout.days || 0;
@@ -21,7 +21,9 @@ export function mealGeneratorFields(raw: unknown): Record<string, string> {
     a.nutrition.dislikes && `ما تحب: ${a.nutrition.dislikes}`,
     a.nutrition.notes && `ملاحظات الأكل: ${a.nutrition.notes}`,
     health && `حالتها الصحية: ${health}`,
-    a.comments && `تعليقات: ${a.comments}`
+    a.comments && `تعليقات: ${a.comments}`,
+    rated?.disliked.length && `وجبات ما عجبتها في خطتها السابقة (لا تكررها): ${rated.disliked.join("، ")}`,
+    rated?.liked.length && `وجبات عجبتها في خطتها السابقة: ${rated.liked.join("، ")}`
   ]
     .filter(Boolean)
     .join("\n");

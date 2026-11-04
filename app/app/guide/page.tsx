@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
 import type { Article } from "@/lib/types";
 import { ClientShell, Loading } from "@/components/ui";
+import { Calculator } from "@/components/Calculator";
 import { NUTRITION_GUIDE, WORKOUT_GUIDE, type GuideSection } from "@/lib/guide-content";
 import { useAuthGuard } from "@/lib/use-auth";
 
@@ -55,10 +56,11 @@ function Section({ s, open }: { s: GuideSection; open?: boolean }) {
 
 export default function GuidePage() {
   const auth = useAuthGuard("client");
-  const [tab, setTab] = useState<"food" | "workout" | "articles">("food");
+  const [tab, setTab] = useState<"food" | "workout" | "articles" | "calc">("food");
   const [articles, setArticles] = useState<Article[] | null>(null);
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("tab") === "articles") setTab("articles");
+    const t = new URLSearchParams(window.location.search).get("tab");
+    if (t === "articles" || t === "calc") setTab(t);
   }, []);
   useEffect(() => {
     if (tab !== "articles" || articles || !auth.profile) return;
@@ -74,6 +76,7 @@ export default function GuidePage() {
         <button type="button" role="tab" aria-selected={tab === "food"} onClick={() => setTab("food")}>🥗 التغذية</button>
         <button type="button" role="tab" aria-selected={tab === "workout"} onClick={() => setTab("workout")}>🏋️‍♀️ التمارين</button>
         <button type="button" role="tab" aria-selected={tab === "articles"} onClick={() => setTab("articles")}>📰 مقالات</button>
+        <button type="button" role="tab" aria-selected={tab === "calc"} onClick={() => setTab("calc")}>🧮 حاسبة</button>
       </div>
       {tab === "articles" ? (
         articles === null ? (
@@ -92,6 +95,7 @@ export default function GuidePage() {
           <p className="alert info">ما فيه مقالات للحين. المدربة بتنزل مقال كل أسبوع.</p>
         )
       ) : null}
+      {tab === "calc" ? <Calculator profileId={auth.profile.id} /> : null}
       {list.map((s, i) => (
         <Section key={`${tab}-${s.title}`} s={s} open={i === 0} />
       ))}

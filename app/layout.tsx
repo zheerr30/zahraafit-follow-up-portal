@@ -3,7 +3,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "ZahraaFit",
-  description: "خطتك الغذائية والرياضية من المدربة زهراء، ومتابعة تقدمك في مكان واحد."
+  description: "خطتك الغذائية والرياضية من المدربة زهراء، ومتابعة تقدمك في مكان واحد.",
+  manifest: "/manifest.webmanifest",
+  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "ZahraaFit", statusBarStyle: "black-translucent" }
 };
 
 export const viewport: Viewport = {

@@ -16,6 +16,7 @@ type Daily = { log_date: string; meals: Record<string, unknown>; water: number }
 type WLog = { id: string; day_title: string | null; created_at: string; performed_on: string; duration_sec: number | null; items: { name: string; sets: { w: number; r: number }[] }[] };
 type Body = { log_date: string; weight_kg: number | null; waist_cm: number | null; hips_cm: number | null };
 type DayNote = { steps?: string; sleep?: string; notes?: string };
+type OffItem = { t: string; cal?: number; at: string };
 
 const short = (d: string) => new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { weekday: "short", day: "numeric", month: "short" }).format(new Date(d + "T12:00:00"));
 
@@ -41,6 +42,7 @@ export default function SubscriberPage() {
   const [wlogs, setWlogs] = useState<WLog[]>([]);
   const [body, setBody] = useState<Body[]>([]);
   const [checks, setChecks] = useState(0);
+  const [rates, setRates] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -64,6 +66,10 @@ export default function SubscriberPage() {
       setReq((r.data as PlanRequest | null) || null);
       const mp = ((pl.data as Plan[] | null) || []).find((x) => x.data);
       setMealPlan((mp?.data as MealPlanData | undefined) || null);
+      if (mp) {
+        const { data: ch } = await supabase.from("plan_choices").select("data").eq("plan_id", mp.id).maybeSingle();
+        setRates(((ch?.data as { rates?: Record<string, number> } | null)?.rates) || {});
+      }
       setDaily((d.data as Daily[] | null) || []);
       setWlogs((w.data as WLog[] | null) || []);
       setBody((b.data as Body[] | null) || []);
@@ -95,9 +101,13 @@ export default function SubscriberPage() {
   const workoutsWeek = week.filter((d) => workoutDates.has(d)).length;
   const weights = body.filter((b) => b.weight_kg);
   const wFirst = weights[0], wLast = weights[weights.length - 1];
+  const offOf = (x?: Daily) => (Array.isArray(x?.meals?._off) ? (x!.meals._off as OffItem[]) : []);
   const notes = days
-    .map((d) => ({ d, n: (byDate.get(d)?.meals?._day as DayNote | undefined) || null }))
-    .filter((x) => x.n && (x.n.notes || x.n.steps || x.n.sleep));
+    .map((d) => ({ d, n: ((byDate.get(d)?.meals?._day as DayNote | undefined) || {}) as DayNote, off: offOf(byDate.get(d)) }))
+    .filter((x) => x.n.notes || x.n.steps || x.n.sleep || x.off.length);
+  const liked = Object.keys(rates).filter((k) => rates[k] === 1);
+  const disliked = Object.keys(rates).filter((k) => rates[k] === -1);
+  const offWeek = week.reduce((a, d) => a + offOf(byDate.get(d)).length, 0);
 
   return (
     <CoachShell>
@@ -126,6 +136,7 @@ export default function SubscriberPage() {
         <div className="stat"><span>💧 متوسط الماء</span><b>{waterAvg} <small style={{ fontSize: 13 }}>أكواب</small></b></div>
         <div className="stat"><span>📅 أيام سجلت فيها</span><b>{loggedDays} / 7</b></div>
       </div>
+      {offWeek ? <p className="small" style={{ color: "var(--clay-ink)" }}>🍔 أكلت برا الخطة {offWeek} مرات هالأسبوع، التفاصيل تحت في ملاحظاتها.</p> : null}
 
       <div className="sec-title">
         <span className="em" aria-hidden="true">🗓️</span>
@@ -146,7 +157,7 @@ export default function SubscriberPage() {
               return (
                 <tr key={d} style={{ opacity: x || w ? 1 : 0.45 }}>
                   <td style={{ paddingInlineStart: 16, whiteSpace: "nowrap" }}>{short(d)}</td>
-                  <td>{x ? `${eaten}${perDay ? ` / ${perDay}` : ""}` : "—"}</td>
+                  <td>{x ? `${eaten}${perDay ? ` / ${perDay}` : ""}${offOf(x).length ? " 🍔" : ""}` : "—"}</td>
                   <td>{x?.water || "—"}</td>
                   <td>{n.steps || "—"}</td>
                   <td>{n.sleep || "—"}</td>
@@ -165,13 +176,30 @@ export default function SubscriberPage() {
             <h2>ملاحظاتها</h2>
           </div>
           <section className="card stack">
-            {notes.map(({ d, n }) => (
+            {notes.map(({ d, n, off }) => (
               <div key={d} className="gitem">
                 <b>{short(d)}</b>
-                {n!.notes || ""}
-                {n!.steps || n!.sleep ? <span className="note" style={{ display: "block" }}>{[n!.steps && `👟 ${n!.steps} خطوة`, n!.sleep && `😴 ${n!.sleep} ساعات`].filter(Boolean).join(" · ")}</span> : null}
+                {n.notes || ""}
+                {off.map((o, i) => (
+                  <span key={i} style={{ display: "block", color: "var(--clay-ink)" }}>🍔 {o.t}{o.cal ? ` (≈ ${o.cal} سعرة)` : ""} · {o.at}</span>
+                ))}
+                {n.steps || n.sleep ? <span className="note" style={{ display: "block" }}>{[n.steps && `👟 ${n.steps} خطوة`, n.sleep && `😴 ${n.sleep} ساعات`].filter(Boolean).join(" · ")}</span> : null}
               </div>
             ))}
+          </section>
+        </>
+      ) : null}
+
+      {liked.length || disliked.length ? (
+        <>
+          <div className="sec-title">
+            <span className="em" aria-hidden="true">⭐</span>
+            <h2>رأيها في الوجبات</h2>
+            <span className="aside">للخطة الجاية</span>
+          </div>
+          <section className="card stack">
+            {disliked.length ? <div><b className="small">👎 ما عجبتها</b><p className="small" style={{ lineHeight: 1.9 }}>{disliked.join("، ")}</p></div> : null}
+            {liked.length ? <div><b className="small">👍 عجبتها</b><p className="small" style={{ lineHeight: 1.9 }}>{liked.join("، ")}</p></div> : null}
           </section>
         </>
       ) : null}

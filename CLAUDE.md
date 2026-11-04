@@ -14,6 +14,8 @@ The platform drives this file from the outside (see `lib/generator.ts`, `compone
 - Global `sw(page)` with page `"gen"`, and `updateMacros()`.
 - Form field ids: `g-name g-phone g-gender g-age g-weight g-height g-goal g-act g-meals g-snacks g-excl g-health g-notes g-aitext`, and the option values of `g-goal` (`تخسيس`, `تضخيم`, `صيانة`, `ريكومب`) and `g-act`.
 
+The subscriber calculator (`lib/macros.ts`) is a copy of `updateMacros()`. If she changes calorie or macro rules in the generator, make the same change in `lib/macros.ts`.
+
 If a requested change needs one of these renamed or restructured, update `lib/generator.ts` (`FILL_SCRIPT`, `READ_PLANS_SCRIPT`, `mealGeneratorFields`) in the same change.
 
 Before committing a generator edit, check the file still parses and generates:

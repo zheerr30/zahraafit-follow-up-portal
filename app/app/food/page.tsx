@@ -10,10 +10,12 @@ import { useAuthGuard } from "@/lib/use-auth";
 import { useClientPlans } from "@/lib/use-client";
 
 type MealRef = { d: number; m: number } | { e: "snacks" | "salads"; i: number };
-type Choices = { meals: Record<string, MealRef>; ings: Record<string, string>; shop: Record<string, boolean> };
+type Choices = { meals: Record<string, MealRef>; ings: Record<string, string>; shop: Record<string, boolean>; rates: Record<string, 1 | -1> };
+/** Something she ate outside the plan (meals._off). */
+type OffItem = { t: string; cal?: number; at: string };
 /** Day check-in kept inside the day's log (meals._day). */
 type DayNote = { steps?: string; sleep?: string; notes?: string };
-type Log = { meals: Record<string, boolean | DayNote>; water: number };
+type Log = { meals: Record<string, boolean | DayNote | OffItem[]>; water: number };
 type Sheet = { type: "meal"; key: string; slot: string } | { type: "ing"; key: string; original: string; options: string[] } | null;
 type Tab = "meals" | "extras" | "shop";
 
@@ -58,10 +60,11 @@ export default function FoodPage() {
   const toast = useToast();
   const [tab, setTab] = useState<Tab>("meals");
   const [day, setDay] = useState<number | null>(null);
-  const [choices, setChoices] = useState<Choices>({ meals: {}, ings: {}, shop: {} });
+  const [choices, setChoices] = useState<Choices>({ meals: {}, ings: {}, shop: {}, rates: {} });
   const [log, setLog] = useState<Log>({ meals: {}, water: 0 });
   const [dayNote, setDayNote] = useState<DayNote>({});
   const [sheet, setSheet] = useState<Sheet>(null);
+  const [off, setOff] = useState({ t: "", cal: "" });
   const [ready, setReady] = useState(false);
   const today = todayKey();
 
@@ -82,7 +85,7 @@ export default function FoodPage() {
         supabase.from("daily_logs").select("meals, water").eq("client_id", cp.client!.id).eq("log_date", today).maybeSingle()
       ]);
       const c = (ch?.data || {}) as Partial<Choices>;
-      setChoices({ meals: c.meals || {}, ings: c.ings || {}, shop: c.shop || {} });
+      setChoices({ meals: c.meals || {}, ings: c.ings || {}, shop: c.shop || {}, rates: c.rates || {} });
       if (lg) {
         const meals = (lg.meals as Log["meals"]) || {};
         setLog({ meals, water: lg.water || 0 });
@@ -166,6 +169,8 @@ export default function FoodPage() {
     ["🫒 دهون", total.f, plan.target.f, "var(--fat)"]
   ];
   const eatenCount = meals.filter((x) => log.meals[x.key] === true).length;
+  const offItems = Array.isArray(log.meals._off) ? (log.meals._off as OffItem[]) : [];
+  const offCal = offItems.reduce((a, x) => a + (x.cal || 0), 0);
   const extrasEaten = Object.entries(log.meals).filter(([k, v]) => k.startsWith("x-") && v === true).length;
   const open = Math.round(plan.target.cal - total.cal);
   const pdf = cp.pdfs.find((f) => /غذائي/.test(f.title)) || cp.pdfs.find((f) => f.kind === "nutrition");
@@ -224,6 +229,21 @@ export default function FoodPage() {
             <ol>{steps.map((st, n) => <li key={n}>{st}</li>)}</ol>
           </details>
         ) : null}
+        <div className="rate-row">
+          <span>عجبتك؟</span>
+          {([[1, "👍", "عجبتني"], [-1, "👎", "ما عجبتني"]] as [1 | -1, string, string][]).map(([v, em, l]) => {
+            const on = choices.rates[meal.name] === v;
+            return (
+              <button key={v} type="button" aria-pressed={on} aria-label={l} onClick={() => {
+                const rates = { ...choices.rates };
+                if (on) delete rates[meal.name];
+                else rates[meal.name] = v;
+                saveChoices({ ...choices, rates });
+                if (!on) toast.show(v === 1 ? "حلو! بتعرف المدربة إنها عجبتك" : "وصلت ملاحظتك، المدربة بتشوفها بالخطة الجاية");
+              }}>{em}</button>
+            );
+          })}
+        </div>
         <div className="mfoot">
           <button type="button" className="eat" aria-pressed={eaten} onClick={() => saveLog({ ...log, meals: { ...log.meals, [key]: !eaten } })} style={{ marginInlineStart: 0 }}>
             <Check />
@@ -270,6 +290,7 @@ export default function FoodPage() {
               </div>
               <span className="chip green">✅ {eatenCount} من {meals.length} وجبات</span>
             </div>
+            {offItems.length ? <p className="small" style={{ color: "var(--clay-ink)" }}>🍔 + {offCal ? `${offCal} سعرة` : `${offItems.length} أكلات`} برا الخطة اليوم</p> : null}
             <div className="grid3">
               {MACROS.map(([label, v, target, color]) => (
                 <div key={label} className="mtile" style={{ "--c": color, textAlign: "start" } as React.CSSProperties}>
@@ -300,6 +321,50 @@ export default function FoodPage() {
           </div>
 
           {meals.map(({ key, meal, swapped, slot }) => mealCard(key, meal, slot || meal.slot, { swapped, swapMeal: true }))}
+
+          <div className="sec-title">
+            <span className="em" aria-hidden="true">🍔</span>
+            <h2>أكلت شي برا الخطة؟</h2>
+          </div>
+          <section className="card stack">
+            <p className="small muted">عادي يصير! سجليه بصراحة عشان المدربة تفهم وش صار وتساعدك.</p>
+            {offItems.map((x, i) => (
+              <div key={i} className="row between" style={{ borderTop: "1px solid var(--line)", paddingTop: 8 }}>
+                <span style={{ minWidth: 0 }}>
+                  {x.t}
+                  <span className="note" style={{ display: "block" }}>{x.at}{x.cal ? ` · تقريبًا ${x.cal} سعرة` : ""}</span>
+                </span>
+                <button type="button" className="icon-btn" aria-label={`احذفي ${x.t}`} onClick={() => saveLog({ ...log, meals: { ...log.meals, _off: offItems.filter((_, j) => j !== i) } })}>
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+            <form
+              className="stack"
+              style={{ gap: 8 }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                const t = off.t.trim();
+                if (!t) return;
+                const cal = Math.round(Number(off.cal)) || undefined;
+                const at = new Intl.DateTimeFormat("ar-SA-u-nu-latn", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Riyadh" }).format(new Date());
+                saveLog({ ...log, meals: { ...log.meals, _off: [...offItems, { t: t.slice(0, 200), cal: cal && cal > 0 && cal < 5000 ? cal : undefined, at }] } }, "سجلناها، ولا يهمك كملي يومك عادي 💪");
+                setOff({ t: "", cal: "" });
+              }}
+            >
+              <div className="field">
+                <label htmlFor="off-t">وش أكلتي؟</label>
+                <input id="off-t" className="inp" value={off.t} onChange={(e) => setOff({ ...off, t: e.target.value })} placeholder="مثلًا: برقر وبطاطس صغير من مطعم" />
+              </div>
+              <div className="row" style={{ gap: 8, alignItems: "flex-end" }}>
+                <div className="field" style={{ flex: 1 }}>
+                  <label htmlFor="off-cal">كم سعرة تقريبًا؟ (لو تعرفين)</label>
+                  <input id="off-cal" className="inp num" inputMode="numeric" value={off.cal} onChange={(e) => setOff({ ...off, cal: e.target.value.replace(/\D/g, "") })} placeholder="600" />
+                </div>
+                <button className="btn btn-s" type="submit" disabled={!off.t.trim()}>سجّلي</button>
+              </div>
+            </form>
+          </section>
 
           <div className="sec-title">
             <span className="em" aria-hidden="true">💧</span>

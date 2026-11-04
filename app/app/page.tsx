@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { CheckCircle2, ClipboardEdit, Clock3, Dumbbell, FileText, PenLine, Utensils } from "lucide-react";
 import { HomeExtras } from "@/components/HomeExtras";
 import { HomeToday } from "@/components/HomeToday";
+import { WeekSummary } from "@/components/WeekSummary";
+import { ReminderNudge } from "@/components/ReminderNudge";
 import { ClientShell, Loading } from "@/components/ui";
 import { deliveryWindow, formatDay } from "@/lib/business-days";
 import { formatDate } from "@/lib/format";
@@ -157,6 +159,8 @@ export default function ClientHome() {
           })}
         </section>
         {client && plans.some((x) => x.kind !== "other" && x.data) ? <HomeToday clientId={client.id} plans={plans} /> : null}
+        {client && plans.length ? <ReminderNudge /> : null}
+        {client ? <WeekSummary clientId={client.id} plans={plans} /> : null}
         <section className="card row between wrap">
           <span className="row small">
             <CheckCircle2 size={20} color="var(--green)" />

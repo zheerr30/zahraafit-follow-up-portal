@@ -153,7 +153,7 @@ export default function CoachRequestPage() {
       ) : null}
 
       <PlanDelivery req={req} onDelivered={setReq} toast={toast.show} incoming={incoming} />
-      {genOpen ? <GeneratorPanel answers={req.answers} name={a.full_name} onClose={() => setGenOpen(false)} onUse={(p) => { setIncoming(p); toast.show("الجدول صار في الخطوة ٢. راجعيه وأرسليه"); }} /> : null}
+      {genOpen ? <GeneratorPanel answers={req.answers} name={a.full_name} clientId={req.client_id} onClose={() => setGenOpen(false)} onUse={(p) => { setIncoming(p); toast.show("الجدول صار في الخطوة ٢. راجعيه وأرسليه"); }} /> : null}
 
       <section className="card stack">
         <div className="row between wrap">

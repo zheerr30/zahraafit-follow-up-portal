@@ -10,7 +10,8 @@ import { supabase } from "@/lib/supabase";
 type GenWindow = Window & { eval: (code: string) => unknown };
 
 /** Full-screen meal generator, filled with the subscriber's answers. */
-export function GeneratorPanel({ answers, name, onClose, onUse }: { answers: unknown; name: string; onClose: () => void; onUse: (p: ParsedPlan) => void }) {
+export function GeneratorPanel({ answers, name, clientId, onClose, onUse }: { answers: unknown; name: string; clientId?: string; onClose: () => void; onUse: (p: ParsedPlan) => void }) {
+  const rated = useRef<{ liked: string[]; disliked: string[] } | undefined>(undefined);
   const frame = useRef<HTMLIFrameElement>(null);
   const [html, setHtml] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,9 +26,18 @@ export function GeneratorPanel({ answers, name, onClose, onUse }: { answers: unk
         setError(res.status === 401 || res.status === 403 ? "المولّد يفتح لحساب المدربة بس. سجلي خروج وادخلي مرة ثانية." : "ما قدرنا نفتح المولّد. حدّثي الصفحة وجربي مرة ثانية.");
         return;
       }
+      if (clientId) {
+        // Her 👍/👎 on the current plan's meals, so the next plan avoids what she disliked.
+        const { data: pl } = await supabase.from("plans").select("id").eq("client_id", clientId).eq("kind", "nutrition").order("created_at", { ascending: false }).limit(1).maybeSingle();
+        if (pl) {
+          const { data: ch } = await supabase.from("plan_choices").select("data").eq("plan_id", pl.id).maybeSingle();
+          const r = ((ch?.data as { rates?: Record<string, number> } | null)?.rates) || {};
+          rated.current = { liked: Object.keys(r).filter((k) => r[k] === 1), disliked: Object.keys(r).filter((k) => r[k] === -1) };
+        }
+      }
       setHtml(await res.text());
     })();
-  }, []);
+  }, [clientId]);
 
   function win(): GenWindow | null {
     return (frame.current?.contentWindow as GenWindow | null) || null;
@@ -37,7 +47,7 @@ export function GeneratorPanel({ answers, name, onClose, onUse }: { answers: unk
     const w = win();
     if (!w) return;
     try {
-      w.eval(FILL_SCRIPT(mealGeneratorFields(answers)));
+      w.eval(FILL_SCRIPT(mealGeneratorFields(answers, rated.current)));
     } catch {
       // The generator still opens; she can fill it by hand.
     }

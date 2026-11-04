@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { BookOpen, ClipboardList, Newspaper, Dumbbell, Home, Inbox, LineChart, Loader2, LogOut, UserRound, Utensils, Wrench } from "lucide-react";
 import { signOut } from "@/lib/use-auth";
+import { supabase } from "@/lib/supabase";
 
 /** Her logo, dark, for light pages. */
 export function Brand({ height = 44 }: { height?: number }) {
@@ -112,6 +113,16 @@ export function ClientShell({ title, sub, action, children }: { title: ReactNode
 /** Coach screens: wider column, section links in the top bar. */
 export function CoachShell({ children }: { children: ReactNode }) {
   const path = usePathname();
+  useEffect(() => {
+    // Tell the reminders job this site's address (only the coach can set it).
+    const origin = window.location.origin;
+    if (!origin.startsWith("https://") || process.env.NEXT_PUBLIC_VERCEL_ENV === "preview") return;
+    try {
+      if (sessionStorage.getItem("zf-push-site") === origin) return;
+      sessionStorage.setItem("zf-push-site", origin);
+    } catch {}
+    supabase.rpc("set_push_site", { url: origin }).then(() => undefined, () => undefined);
+  }, []);
   const links = [
     { href: "/coach", label: "خطط تنتظرك", icon: <Inbox size={17} />, match: (p: string) => p === "/coach" || p.startsWith("/coach/requests") },
     { href: "/coach/subscribers", label: "المشتركات", icon: <ClipboardList size={17} />, match: (p: string) => p.startsWith("/coach/subscribers") },
