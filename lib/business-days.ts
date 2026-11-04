@@ -36,7 +36,7 @@ export function businessDaysBetween(from: Date | string, to: Date | string = new
 }
 
 export function formatDay(d: Date) {
-  return new Intl.DateTimeFormat("ar-SA", { weekday: "long", day: "numeric", month: "long" }).format(d);
+  return new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { weekday: "long", day: "numeric", month: "long" }).format(d);
 }
 
 /** "between Sunday 9 Nov and Monday 10 Nov" for a request submitted at `submittedAt`. */

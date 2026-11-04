@@ -5,7 +5,17 @@ if (process.platform === "darwin" && !process.env.CI && !process.env.VERCEL) {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true
+  reactStrictMode: true,
+  async redirects() {
+    // Old portal addresses go to the new screens.
+    return [
+      { source: "/admin", destination: "/coach", permanent: false },
+      { source: "/admin/:path*", destination: "/coach", permanent: false },
+      { source: "/client/intake", destination: "/app/intake", permanent: false },
+      { source: "/client/:path*", destination: "/app", permanent: false },
+      { source: "/debug", destination: "/", permanent: false }
+    ];
+  }
 };
 
 export default nextConfig;

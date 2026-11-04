@@ -1,7 +1,7 @@
 export function formatDate(value?: string | null) {
   if (!value) return "-";
 
-  return new Intl.DateTimeFormat("ar-SA", {
+  return new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", {
     year: "numeric",
     month: "long",
     day: "numeric"
@@ -10,7 +10,7 @@ export function formatDate(value?: string | null) {
 
 export function formatNumber(value?: number | null, suffix = "") {
   if (value === null || value === undefined) return "غير محدد";
-  return `${value.toLocaleString("ar-SA")}${suffix}`;
+  return `${value.toString()}${suffix}`;
 }
 
 export function commitmentLabel(value?: number | null) {
