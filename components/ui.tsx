@@ -14,6 +14,12 @@ export function Brand() {
   );
 }
 
+/** White logo for navy bars. */
+export function LogoWhite({ height = 30 }: { height?: number }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img className="logo-w" src="/brand/logo-white.png" alt="ZahraaFit" style={{ height }} />;
+}
+
 export function Loading({ label = "لحظة..." }: { label?: string }) {
   return (
     <div className="loading" role="status">
@@ -77,12 +83,15 @@ export function ClientShell({ title, sub, action, children }: { title: ReactNode
   ];
   return (
     <div className="app">
-      <header className="top gutter">
+      <header className="appbar gutter">
         <div style={{ minWidth: 0 }}>
-          <div className="top-title">{title}</div>
-          <div className="top-sub">{sub ?? <Brand />}</div>
+          <div className="t">{title}</div>
+          {sub ? <div className="s">{sub}</div> : null}
         </div>
-        {action}
+        <div className="row" style={{ gap: 8 }}>
+          {action}
+          <LogoWhite height={34} />
+        </div>
       </header>
       <main className="screen gutter">{children}</main>
       <nav className="nav" aria-label="الأقسام">
@@ -109,9 +118,9 @@ export function CoachShell({ children }: { children: ReactNode }) {
   ];
   return (
     <div className="app wide">
-      <header className="top gutter wrap">
-        <div className="row" style={{ gap: 16 }}>
-          <Brand />
+      <header className="appbar gutter wrap" style={{ borderRadius: "0 0 18px 18px" }}>
+        <div className="row wrap" style={{ gap: 16 }}>
+          <LogoWhite height={34} />
           <nav className="tabs-top" aria-label="أقسام اللوحة">
             {links.map((l) => (
               <Link key={l.href} className="tab-link" href={l.href} aria-current={l.match(path) ? "page" : undefined}>

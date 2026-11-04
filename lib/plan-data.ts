@@ -144,7 +144,7 @@ const MUSCLE_IMG = new Set(["chest", "upperback", "midback", "frontdelt", "reard
 /** Muscle picture from the workout generator's public images. */
 export function muscleImage(muscle: string) {
   const m = muscle === "lats" ? "upperback" : muscle;
-  return MUSCLE_IMG.has(m) ? `https://zahraafit.vercel.app/img/${m}.png` : null;
+  return MUSCLE_IMG.has(m) ? `/muscles/${m}.png` : null;
 }
 
 export function todayKey() {

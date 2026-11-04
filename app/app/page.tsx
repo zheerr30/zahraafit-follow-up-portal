@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CheckCircle2, ClipboardEdit, Clock3, Dumbbell, FileText, PenLine, Utensils } from "lucide-react";
-import { ClientShell, Loading, Rings } from "@/components/ui";
+import { HomeToday } from "@/components/HomeToday";
+import { ClientShell, Loading } from "@/components/ui";
 import { deliveryWindow, formatDay } from "@/lib/business-days";
 import { formatDate } from "@/lib/format";
 import { planTypeLabel } from "@/lib/intake";
@@ -64,9 +65,9 @@ export default function ClientHome() {
     main = <p className="alert err">حسابك ما انربط بملف مشتركة. تواصلي مع المدربة.</p>;
   } else if (!request && !plan) {
     main = (
-      <section className="hero">
-        <Rings />
-        <span className="label">أول خطوة</span>
+      <section className="photo-hero">
+
+        <span className="kicker">✨ أول خطوة</span>
         <h2>عبّي معلومات خطتك عشان تبدأ المدربة زهراء تجهزها</h2>
         <p>تاخذ ٥ دقايق تقريبًا. وتوصلك خطتك خلال ٢-٣ أيام عمل.</p>
         <Link className="btn btn-p btn-block" href="/app/intake">
@@ -80,9 +81,9 @@ export default function ClientHome() {
     const win = deliveryWindow(request.submitted_at);
     main = (
       <>
-        <section className="hero" aria-live="polite">
-          <Rings />
-          <span className="label">{justSent ? "وصلتنا معلوماتك، شكرًا لك" : planTypeLabel(request)}</span>
+        <section className="photo-hero" aria-live="polite">
+
+          <span className="kicker">{justSent ? "💌 وصلتنا معلوماتك، شكرًا لك" : `📋 ${planTypeLabel(request)}`}</span>
           <h2>{stage === 0 ? "خطتك بالطريق" : "المدربة تجهز خطتك الحين"}</h2>
           {Date.now() > win.to.getTime() + 864e5 / 2 ? (
             <p>تأخرت شوي عن موعدها. المدربة عليها وبتوصلك بأقرب وقت.</p>
@@ -118,9 +119,9 @@ export default function ClientHome() {
   } else {
     main = (
       <>
-        <section className="hero">
-          <Rings />
-          <span className="label">{plan ? `وصلتك ${formatDate(plan.created_at)}` : "خطتك"}</span>
+        <section className="photo-hero">
+
+          <span className="kicker">{plan ? `🎉 وصلتك ${formatDate(plan.created_at)}` : "🎉 خطتك"}</span>
           <h2>خطتك جاهزة</h2>
           {!plan ? <p>المدربة أرسلت خطتك. إذا ما وصلتك تواصلي معها.</p> : null}
           {plan?.content ? <p style={{ whiteSpace: "pre-line" }}>{plan.content}</p> : null}
@@ -154,6 +155,7 @@ export default function ClientHome() {
             );
           })}
         </section>
+        {client && plans.some((x) => x.kind !== "other" && x.data) ? <HomeToday clientId={client.id} plans={plans} /> : null}
         <section className="card row between wrap">
           <span className="row small">
             <CheckCircle2 size={20} color="var(--green)" />

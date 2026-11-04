@@ -22,6 +22,21 @@ function resolve(plan: MealPlanData, ref: MealRef | undefined, d: number, m: num
   return plan.days[d].meals[m];
 }
 
+function slotEmoji(slot: string) {
+  if (/فطور/.test(slot)) return "🌅";
+  if (/غداء/.test(slot)) return "☀️";
+  if (/عشاء/.test(slot)) return "🌙";
+  if (/سناك|سناك/.test(slot)) return "🍎";
+  return "🍽️";
+}
+
+/** "1. … 2. …" → steps. */
+function prepSteps(prep: string) {
+  if (!prep.trim()) return [];
+  const parts = prep.split(/\s*\d+\.\s+/).map((x) => x.trim()).filter(Boolean);
+  return parts.length ? parts : [prep.trim()];
+}
+
 function subsFor(meal: Meal, ingName: string) {
   const n = ingName.toLowerCase();
   const s = meal.subs.find((x) => {
@@ -106,9 +121,9 @@ export default function FoodPage() {
 
   const total = meals.reduce((t, x) => ({ cal: t.cal + x.meal.cal, p: t.p + x.meal.p, c: t.c + x.meal.c, f: t.f + x.meal.f }), { cal: 0, p: 0, c: 0, f: 0 });
   const MACROS: [string, number, number, string][] = [
-    ["بروتين", total.p, plan.target.p, "var(--clay)"],
-    ["كارب", total.c, plan.target.c, "var(--blue)"],
-    ["دهون", total.f, plan.target.f, "var(--amber)"]
+    ["بروتين", total.p, plan.target.p, "var(--protein)"],
+    ["كارب", total.c, plan.target.c, "var(--carb)"],
+    ["دهون", total.f, plan.target.f, "var(--fat)"]
   ];
   const eatenCount = meals.filter((x) => log.meals[x.key]).length;
   const open = Math.round(plan.target.cal - total.cal);
@@ -125,88 +140,117 @@ export default function FoodPage() {
         ))}
       </div>
 
-      <section className="card stack" style={{ gap: 10 }}>
-        <div className="row between" style={{ alignItems: "baseline" }}>
-          <span>
-            <span className="label">سعرات اليوم {day + 1}</span>
-            <br />
-            <b className="num" style={{ fontSize: 34, lineHeight: 1.1 }}>{Math.round(total.cal)}</b> <span className="muted small">سعرة{plan.target.cal ? ` من ${plan.target.cal}` : ""}</span>
-          </span>
-          <span className="small muted">{eatenCount} من {meals.length}</span>
+      <section className="card stack" style={{ gap: 12 }}>
+        <div className="row between" style={{ alignItems: "center" }}>
+          <div>
+            <span className="label">🔥 سعرات اليوم {day + 1}</span>
+            <div className="row" style={{ alignItems: "baseline", gap: 6 }}>
+              <b className="num" style={{ fontSize: 32, lineHeight: 1.1, color: "var(--navy)" }}>{Math.round(total.cal)}</b>
+              <span className="muted small">{plan.target.cal ? `من ${plan.target.cal} سعرة` : "سعرة"}</span>
+            </div>
+          </div>
+          <span className="chip green">✅ {eatenCount} من {meals.length} وجبات</span>
         </div>
         <div className="grid3">
           {MACROS.map(([label, v, target, color]) => (
-            <div key={label} className="macro-tile">
-              <span className="small"><i style={{ background: color }} />{label}</span>
-              <b className="num">{Math.round(v)}<small> جم</small></b>
+            <div key={label} className="mtile" style={{ "--c": color, textAlign: "start" } as React.CSSProperties}>
+              <span>{label}</span>
+              <b>{Math.round(v)}g</b>
               {target ? (
                 <>
-                  <span className="bar" aria-hidden="true"><i style={{ width: `${Math.min(100, (v / target) * 100)}%`, background: color }} /></span>
-                  <span className="note">هدفك {Math.round(target)}</span>
+                  <span className="bar" aria-hidden="true" style={{ display: "block", height: 5, borderRadius: 99, background: "var(--line)", overflow: "hidden", margin: "4px 0 2px" }}>
+                    <i style={{ display: "block", height: "100%", width: `${Math.min(100, (v / target) * 100)}%`, background: color }} />
+                  </span>
+                  <span>هدفك {Math.round(target)}g</span>
                 </>
               ) : null}
             </div>
           ))}
         </div>
-        {open > 40 ? <p className="note">عندك {open} سعرة مفتوحة اليوم. خذيها كيف ما تبين: قهوة بحليب، فاكهة، أو قطعة شوكولاتة.</p> : null}
+        {open > 40 ? (
+          <div className="tip-card">
+            <span className="em" aria-hidden="true">🔓</span>
+            <span>عندك <b>{open} سعرة مفتوحة</b> اليوم. خذيها كيف ما تبين: قهوة بحليب، فاكهة، أو قطعة شوكولاتة.</span>
+          </div>
+        ) : null}
       </section>
 
-      <div className="hint">
-        <ArrowLeftRight />
+      <div className="tip-card">
+        <span className="em" aria-hidden="true">🔁</span>
         <span>ما تبين صنف؟ اضغطي <b>بدّلي</b> جنبه. وتقدرين تبدلين الوجبة كاملة بوجبة من نفس الخانة.</span>
       </div>
 
-      {meals.map(({ key, meal, swapped, slot }) => (
-        <section key={key} className={`meal ${log.meals[key] ? "eaten" : ""}`} aria-label={meal.name}>
-          <div className="meal-h">
-            <div style={{ minWidth: 0 }}>
-              <span className="label">{slot || meal.slot}{swapped ? " · بدلتيها" : ""}</span>
-              <h3>{meal.name}</h3>
-              <span className="small muted">{meal.cal} سعرة · بروتين {Math.round(meal.p)} · كارب {Math.round(meal.c)} · دهون {Math.round(meal.f)} جم</span>
-            </div>
-            <button type="button" className="eat" aria-pressed={Boolean(log.meals[key])} onClick={() => saveLog({ ...log, meals: { ...log.meals, [key]: !log.meals[key] } })}>
-              <Check />
-              {log.meals[key] ? "أكلتها" : "أكلتها؟"}
-            </button>
-          </div>
-          {meal.ingredients.map((ing) => {
-            const ik = `${key}-${meal.name}-${ing.n}`;
-            const opts = subsFor(meal, ing.n);
-            const chosen = choices.ings[ik];
-            return (
-              <div key={ing.n} className="food">
-                <span style={{ minWidth: 0 }}>
-                  {chosen || ingredientText(ing)}
-                  {chosen ? <span className="swapped"> · بديل</span> : null}
+      {meals.map(({ key, meal, swapped, slot }) => {
+        const steps = prepSteps(meal.prep);
+        const eaten = Boolean(log.meals[key]);
+        return (
+          <section key={key} className={`mcard ${eaten ? "eaten" : ""}`} aria-label={meal.name}>
+            <div className="mcard-h">
+              <div style={{ minWidth: 0 }}>
+                <span className="slot">
+                  <span aria-hidden="true">{slotEmoji(slot || meal.slot)}</span>
+                  {slot || meal.slot}
+                  {swapped ? " · بدلتيها" : ""}
                 </span>
-                {opts.length ? (
-                  <button type="button" className="swap" onClick={() => setSheet({ type: "ing", key: ik, original: ingredientText(ing), options: opts })}>
-                    <ArrowLeftRight />
-                    بدّلي
-                  </button>
-                ) : null}
+                <h3>{meal.name}</h3>
               </div>
-            );
-          })}
-          {meal.note ? <p className="note" style={{ padding: "0 16px 10px" }}>{meal.note}</p> : null}
-          {meal.prep ? (
-            <details>
-              <summary>طريقة التحضير</summary>
-              <p style={{ whiteSpace: "pre-line", lineHeight: 1.8 }}>{meal.prep.replace(/\s(\d+)\.\s/g, "\n$1. ")}</p>
-            </details>
-          ) : null}
-          <div style={{ padding: "0 16px 14px" }}>
-            <button type="button" className="link" onClick={() => setSheet({ type: "meal", key, slot })}>
-              <ArrowLeftRight />
-              بدّلي الوجبة كاملة
-            </button>
-          </div>
-        </section>
-      ))}
+              <span className="kcal">
+                <b>{meal.cal}</b>
+                <span>سعرة</span>
+              </span>
+            </div>
+            <div className="mrow">
+              <div className="mtile" style={{ "--c": "var(--protein)" } as React.CSSProperties}><b>{Math.round(meal.p)}g</b><span>بروتين</span></div>
+              <div className="mtile" style={{ "--c": "var(--carb)" } as React.CSSProperties}><b>{Math.round(meal.c)}g</b><span>كارب</span></div>
+              <div className="mtile" style={{ "--c": "var(--fat)" } as React.CSSProperties}><b>{Math.round(meal.f)}g</b><span>دهون</span></div>
+            </div>
+            <div className="ings">
+              {meal.ingredients.map((ing) => {
+                const ik = `${key}-${meal.name}-${ing.n}`;
+                const opts = subsFor(meal, ing.n);
+                const chosen = choices.ings[ik];
+                const toTaste = ing.u === "حسب الذوق" || ing.a === 0 || ing.a === "";
+                return (
+                  <div key={ing.n} className="ing">
+                    <span className="nm">
+                      {chosen ? <>{chosen} <span className="swapped">· بديل</span></> : ing.n}
+                    </span>
+                    {chosen ? null : toTaste ? <span className="note">حسب الذوق</span> : <span className="amt">{ing.a}<small>{ing.u}</small></span>}
+                    {opts.length ? (
+                      <button type="button" className="swap" aria-label={`بدّلي ${ing.n}`} onClick={() => setSheet({ type: "ing", key: ik, original: ingredientText(ing), options: opts })}>
+                        <ArrowLeftRight />
+                        بدّلي
+                      </button>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+            {meal.note ? <p className="note" style={{ padding: "0 16px 10px" }}>{meal.note}</p> : null}
+            {steps.length ? (
+              <details className="prep-box">
+                <summary>👩‍🍳 طريقة التحضير</summary>
+                <ol>{steps.map((st, n) => <li key={n}>{st}</li>)}</ol>
+              </details>
+            ) : null}
+            <div className="mfoot">
+              <button type="button" className="eat" aria-pressed={eaten} onClick={() => saveLog({ ...log, meals: { ...log.meals, [key]: !eaten } })} style={{ marginInlineStart: 0 }}>
+                <Check />
+                {eaten ? "أكلتها" : "علّمي إنك أكلتيها"}
+              </button>
+              <button type="button" className="link" style={{ marginInlineStart: "auto" }} onClick={() => setSheet({ type: "meal", key, slot })}>
+                <ArrowLeftRight />
+                بدّلي الوجبة
+              </button>
+            </div>
+          </section>
+        );
+      })}
 
-      <div className="sec-h">
+      <div className="sec-title">
+        <span className="em" aria-hidden="true">💧</span>
         <h2>الماء</h2>
-        <span className="small muted num">{log.water} / {CUPS}</span>
+        <span className="aside num">{log.water} / {CUPS} أكواب</span>
       </div>
       <section className="card stack">
         <div className="cups">

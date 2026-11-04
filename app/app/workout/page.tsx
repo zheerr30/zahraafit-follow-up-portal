@@ -160,41 +160,52 @@ export default function WorkoutPage() {
 
   return (
     <ClientShell title="تماريني" action={pdf ? <a className="btn btn-g btn-sm" href={pdf.href} target={pdf.external ? "_blank" : undefined} rel="noreferrer"><FileText />PDF</a> : undefined}>
-      <section className="hero">
-        <Rings />
-        <span className="label">تمرينك الجاي · تمارين هالأسبوع {thisWeek}</span>
+      <section className="photo-hero">
+        <span className="kicker">💪 تمرينك الجاي · تمارين هالأسبوع {thisWeek}</span>
         <h2>{plan.days[nextIdx].title}</h2>
-        <p>{plan.days[nextIdx].exercises.length} تمارين</p>
+        <p>{plan.days[nextIdx].exercises.length} تمارين · خذي وقتك بين الجولات</p>
         <button type="button" className="btn btn-p btn-block" onClick={() => start(nextIdx)}>
           <Play />
           ابدئي التمرين
         </button>
       </section>
 
+      <div className="sec-title">
+        <span className="em" aria-hidden="true">📅</span>
+        <h2>جدولك</h2>
+        <span className="aside">{plan.days.length} أيام بالأسبوع</span>
+      </div>
+
       {plan.days.map((d, i) => (
-        <section key={i} className="card stack" style={{ gap: 4 }}>
-          <div className="row between" style={{ alignItems: "flex-start" }}>
-            <div>
-              <span className="label">اليوم {d.n}{i === nextIdx ? " · التمرين الجاي" : ""}</span>
-              <h3 style={{ fontSize: 17 }}>{d.title}</h3>
+        <section key={i} className="dcard" aria-label={d.title}>
+          <div className="dcard-h">
+            <span className="dnum">{d.n}</span>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <h3>{d.title}</h3>
+              <span className="s">{d.exercises.length} تمارين{i === nextIdx ? " · التمرين الجاي" : ""}</span>
             </div>
-            <button type="button" className={`btn btn-sm ${i === nextIdx ? "btn-p" : "btn-s"}`} onClick={() => start(i)}>
+            <button type="button" className={`btn btn-sm ${i === nextIdx ? "btn-p" : "btn-on-navy"}`} onClick={() => start(i)}>
+              <Play />
               ابدئي
             </button>
           </div>
           {d.exercises.map((e, k) => {
             const img = muscleImage(e.muscle);
             return (
-              <div key={k} className="row" style={{ padding: "10px 0", borderTop: "1px solid var(--line)" }}>
-                {img ? <img src={img} alt="" width={44} height={44} onError={(e) => { e.currentTarget.style.display = "none"; }} style={{ borderRadius: 10, background: "#fff", border: "1px solid var(--line)", objectFit: "contain", flexShrink: 0 }} /> : null}
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <b style={{ fontWeight: 600, fontSize: 14.5 }}>{e.name}</b>
-                  <div className="small muted">{e.sets} جولات × {e.reps} · راحة {e.rest}</div>
-                  {e.alt ? <div className="note">بديل: {e.alt.name}</div> : null}
+              <div key={k} className="xrow">
+                {img ? <img src={img} alt="" onError={(ev) => { ev.currentTarget.style.visibility = "hidden"; }} /> : null}
+                <div className="nm">
+                  <b>{e.name}</b>
+                  {e.en ? <div className="en">{e.en}</div> : null}
+                  {e.alt ? <div className="note">↔ بديل: {e.alt.name}</div> : null}
+                </div>
+                <div className="xstats">
+                  <div><b>{e.sets}</b><span>جولات</span></div>
+                  <div><b>{e.reps}</b><span>عدة</span></div>
                 </div>
                 {e.video ? (
-                  <a className="icon-btn" href={e.video} target="_blank" rel="noreferrer" aria-label={`فيديو ${e.name}`} style={{ color: "#E03A2F" }}>
-                    <PlayCircle />
+                  <a className="yt" href={e.video} target="_blank" rel="noreferrer" aria-label={`فيديو ${e.name}`}>
+                    <Play />
                   </a>
                 ) : null}
               </div>
