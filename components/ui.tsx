@@ -120,9 +120,17 @@ export function CoachShell({ children }: { children: ReactNode }) {
     if (!origin.startsWith("https://") || process.env.NEXT_PUBLIC_VERCEL_ENV === "preview") return;
     try {
       if (sessionStorage.getItem("zf-push-site") === origin) return;
-      sessionStorage.setItem("zf-push-site", origin);
     } catch {}
-    supabase.rpc("set_push_site", { url: origin }).then(() => undefined, () => undefined);
+    // Remember only after it worked, so it retries if the database wasn't ready yet.
+    supabase.rpc("set_push_site", { url: origin }).then(
+      ({ error }) => {
+        if (error) return;
+        try {
+          sessionStorage.setItem("zf-push-site", origin);
+        } catch {}
+      },
+      () => undefined
+    );
   }, []);
   const links = [
     { href: "/coach", label: "خطط تنتظرك", icon: <Inbox size={17} />, match: (p: string) => p === "/coach" || p.startsWith("/coach/requests") },
