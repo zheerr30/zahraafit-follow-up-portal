@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Dumbbell, LogOut, UserRound, UsersRound } from "lucide-react";
+import { Dumbbell, Inbox, LogOut, UserRound, UsersRound } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { Profile } from "@/lib/types";
 
@@ -39,6 +39,10 @@ export function AppHeader({ profile, title }: AppHeaderProps) {
               <Link className="nav-pill" href="/admin">
                 <UserRound size={18} />
                 لوحة المدربة
+              </Link>
+              <Link className="nav-pill" href="/admin/requests">
+                <Inbox size={18} />
+                خطط تنتظرك
               </Link>
               <Link className="nav-pill" href="/admin/clients">
                 <UsersRound size={18} />

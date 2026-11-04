@@ -6,12 +6,13 @@ import { CalendarDays, FileText, Footprints, Plus, Ruler, Scale, Sparkles, Stick
 import { AppHeader } from "@/components/AppHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/Feedback";
 import { GoalProgressTracker } from "@/components/GoalProgressTracker";
+import { RequestStatusCard } from "@/components/RequestStatusCard";
 import { ProgressLineChart } from "@/components/ProgressLineChart";
 import { StatCard } from "@/components/StatCard";
 import { formatDate, formatNumber } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
 import { useAuthGuard } from "@/lib/use-auth";
-import type { Client, CoachNote, Plan, WeeklyFollowup } from "@/lib/types";
+import type { Client, CoachNote, Plan, PlanRequest, WeeklyFollowup } from "@/lib/types";
 
 export default function ClientDashboardPage() {
   const auth = useAuthGuard("client");
@@ -20,6 +21,8 @@ export default function ClientDashboardPage() {
   const [planUrl, setPlanUrl] = useState<string | null>(null);
   const [followups, setFollowups] = useState<WeeklyFollowup[]>([]);
   const [notes, setNotes] = useState<CoachNote[]>([]);
+  const [request, setRequest] = useState<PlanRequest | null>(null);
+  const [justSent, setJustSent] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,7 +50,9 @@ export default function ClientDashboardPage() {
       const typedClient = clientData as Client;
       setClient(typedClient);
 
-      const [planResult, followupsResult, notesResult] = await Promise.all([
+      setJustSent(new URLSearchParams(window.location.search).get("sent") === "1");
+
+      const [planResult, followupsResult, notesResult, requestResult] = await Promise.all([
         supabase
           .from("plans")
           .select("*")
@@ -68,8 +73,18 @@ export default function ClientDashboardPage() {
           .select("*")
           .eq("client_id", typedClient.id)
           .order("created_at", { ascending: false })
-          .limit(5)
+          .limit(5),
+        supabase
+          .from("plan_requests")
+          .select("*")
+          .eq("client_id", typedClient.id)
+          .neq("status", "cancelled")
+          .order("submitted_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
       ]);
+
+      setRequest((requestResult.data as PlanRequest | null) || null);
 
       const currentPlan = (planResult.data as Plan | null) || null;
       setPlan(currentPlan);
@@ -112,6 +127,8 @@ export default function ClientDashboardPage() {
           <ErrorState message={error || "تعذر تحميل ملف العميلة."} />
         ) : (
           <div className="space-y-6">
+            <RequestStatusCard request={request} hasPlan={Boolean(plan)} justSent={justSent} />
+
             <section className="dashboard-hero reveal-card">
               <div className="hero-orb -right-16 top-8 h-52 w-52 bg-zahraa-coral/35" />
               <div className="hero-orb left-10 -top-20 h-60 w-60 bg-white/12" />

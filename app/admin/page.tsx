@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ClipboardList, Sparkles, UsersRound } from "lucide-react";
+import { ArrowLeft, ClipboardList, Inbox, Sparkles, UsersRound } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { ErrorState, LoadingState } from "@/components/Feedback";
 import { StatCard } from "@/components/StatCard";
@@ -14,6 +14,7 @@ import type { WeeklyFollowup } from "@/lib/types";
 export default function AdminDashboardPage() {
   const auth = useAuthGuard("admin");
   const [clientsCount, setClientsCount] = useState(0);
+  const [waitingCount, setWaitingCount] = useState(0);
   const [latestFollowups, setLatestFollowups] = useState<WeeklyFollowup[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
@@ -21,16 +22,21 @@ export default function AdminDashboardPage() {
     async function loadAdminDashboard() {
       if (!auth.profile) return;
 
-      const [clientsResult, followupsResult] = await Promise.all([
+      const [clientsResult, followupsResult, waitingResult] = await Promise.all([
         supabase.from("clients").select("id", { count: "exact", head: true }),
         supabase
           .from("weekly_followups")
           .select("*")
           .order("created_at", { ascending: false })
-          .limit(5)
+          .limit(5),
+        supabase
+          .from("plan_requests")
+          .select("id", { count: "exact", head: true })
+          .in("status", ["submitted", "in_progress"])
       ]);
 
       setClientsCount(clientsResult.count || 0);
+      setWaitingCount(waitingResult.count || 0);
       setLatestFollowups((followupsResult.data as WeeklyFollowup[] | null) || []);
       setLoadingData(false);
     }
@@ -70,10 +76,16 @@ export default function AdminDashboardPage() {
               <p className="mt-4 max-w-2xl text-base leading-8 text-white/78">
                 مكان واحد لمراجعة المتابعات، الصور، الخطط، وملاحظات كل عميلة بسرعة ووضوح.
               </p>
-              <Link className="primary-button mt-7" href="/admin/clients">
-                <UsersRound size={18} />
-                فتح قائمة العميلات
-              </Link>
+              <div className="mt-7 flex flex-wrap gap-3">
+                <Link className="primary-button" href="/admin/requests">
+                  <Inbox size={18} />
+                  خطط تنتظرك ({formatNumber(waitingCount)})
+                </Link>
+                <Link className="secondary-button border-white/20 bg-white/10 text-white hover:bg-white/15" href="/admin/clients">
+                  <UsersRound size={18} />
+                  قائمة العميلات
+                </Link>
+              </div>
             </div>
             <div className="glass-card p-6">
               <div className="flex items-center gap-2 text-white/75">
@@ -90,6 +102,7 @@ export default function AdminDashboardPage() {
           <section className="panel p-5">
             <h2 className="section-title">نظرة سريعة</h2>
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+              <StatCard label="خطط تنتظرك" value={formatNumber(waitingCount)} icon={<Inbox size={20} />} />
               <StatCard label="عدد العميلات" value={formatNumber(clientsCount)} icon={<UsersRound size={20} />} />
               <StatCard label="آخر المتابعات" value={formatNumber(latestFollowups.length)} icon={<ClipboardList size={20} />} />
             </div>

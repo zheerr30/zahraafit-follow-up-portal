@@ -73,6 +73,30 @@ export type CoachNote = {
   created_at: string;
 };
 
+export type PlanRequestStatus = "submitted" | "in_progress" | "delivered" | "cancelled";
+
+export type PlanRequest = {
+  id: string;
+  client_id: string;
+  profile_id: string;
+  order_number: string;
+  wants_nutrition: boolean;
+  wants_workout: boolean;
+  wants_followup: boolean;
+  order_verified: boolean;
+  verified_at: string | null;
+  status: PlanRequestStatus;
+  answers: unknown;
+  inbody_path: string | null;
+  submitted_at: string;
+  due_date: string | null;
+  started_at: string | null;
+  delivered_at: string | null;
+  coach_note: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ClientWithProfile = Client & {
   profile?: Profile | null;
 };
