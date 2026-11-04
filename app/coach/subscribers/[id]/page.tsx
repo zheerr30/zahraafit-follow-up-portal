@@ -43,6 +43,7 @@ export default function SubscriberPage() {
   const [body, setBody] = useState<Body[]>([]);
   const [checks, setChecks] = useState(0);
   const [rates, setRates] = useState<Record<string, number>>({});
+  const [foodCal, setFoodCal] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -74,6 +75,10 @@ export default function SubscriberPage() {
       setWlogs((w.data as WLog[] | null) || []);
       setBody((b.data as Body[] | null) || []);
       setChecks(k.count || 0);
+      const { data: fe } = await supabase.from("food_entries").select("log_date, cal").eq("client_id", id).gte("log_date", since);
+      const fc = new Map<string, number>();
+      ((fe as { log_date: string; cal: number }[] | null) || []).forEach((x) => fc.set(x.log_date, (fc.get(x.log_date) || 0) + Number(x.cal)));
+      setFoodCal(fc);
       setLoading(false);
     })();
   }, [auth.profile, params?.id]);
@@ -105,6 +110,17 @@ export default function SubscriberPage() {
   const notes = days
     .map((d) => ({ d, n: ((byDate.get(d)?.meals?._day as DayNote | undefined) || {}) as DayNote, off: offOf(byDate.get(d)) }))
     .filter((x) => x.n.notes || x.n.steps || x.n.sleep || x.off.length);
+  /** Calories of ticked plan meals plus her diary entries for a day. */
+  const dayCal = (d: string, x?: Daily) => {
+    let t = foodCal.get(d) || 0;
+    if (x && mealPlan) {
+      Object.entries(x.meals || {}).forEach(([k, v]) => {
+        const m = v === true ? k.match(/^(\d+)-(\d+)$/) : null;
+        if (m) t += mealPlan.days[Number(m[1])]?.meals[Number(m[2])]?.cal || 0;
+      });
+    }
+    return Math.round(t);
+  };
   const liked = Object.keys(rates).filter((k) => rates[k] === 1);
   const disliked = Object.keys(rates).filter((k) => rates[k] === -1);
   const offWeek = week.reduce((a, d) => a + offOf(byDate.get(d)).length, 0);
@@ -144,9 +160,9 @@ export default function SubscriberPage() {
         <span className="aside">آخر ١٤ يوم</span>
       </div>
       <section className="card" style={{ padding: 0, overflowX: "auto" }}>
-        <table className="gtable" style={{ minWidth: 520 }}>
+        <table className="gtable" style={{ minWidth: 580 }}>
           <thead>
-            <tr><th style={{ paddingInlineStart: 16 }}>اليوم</th><th>🍽️ وجبات</th><th>💧 ماء</th><th>👟 خطوات</th><th>😴 نوم</th><th>💪 تمرين</th></tr>
+            <tr><th style={{ paddingInlineStart: 16 }}>اليوم</th><th>🍽️ وجبات</th><th>🔥 سعرات</th><th>💧 ماء</th><th>👟 خطوات</th><th>😴 نوم</th><th>💪 تمرين</th></tr>
           </thead>
           <tbody>
             {days.map((d) => {
@@ -155,9 +171,10 @@ export default function SubscriberPage() {
               const w = workoutDates.get(d);
               const eaten = eatenOf(x);
               return (
-                <tr key={d} style={{ opacity: x || w ? 1 : 0.45 }}>
+                <tr key={d} style={{ opacity: x || w || foodCal.has(d) ? 1 : 0.45 }}>
                   <td style={{ paddingInlineStart: 16, whiteSpace: "nowrap" }}>{short(d)}</td>
                   <td>{x ? `${eaten}${perDay ? ` / ${perDay}` : ""}${offOf(x).length ? " 🍔" : ""}` : "—"}</td>
+                  <td>{dayCal(d, x) || "—"}</td>
                   <td>{x?.water || "—"}</td>
                   <td>{n.steps || "—"}</td>
                   <td>{n.sleep || "—"}</td>

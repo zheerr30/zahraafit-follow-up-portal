@@ -12,6 +12,7 @@ The platform drives this file from the outside (see `lib/generator.ts`, `compone
 - Plan shape: `plan.meta` (`name`, `phone`, `cal`, `prot`, `carb`, `fat`), `plan.daysData[].meals[]` with `name`, `slotLabel`, `scaledIng[]` (`n`, `a`, `sa`, `u`), `cal`, `p`, `c`, `f`, `prep`, `subs[]` (`i`, `o[]`), and `plan.extras.snacks/salads`.
 - Global `ALT_INGREDIENTS` and `altAmountText(name, amount, unit, alt)`.
 - Global `sw(page)` with page `"gen"`, and `updateMacros()`.
+- Global `const DEFAULT_INGR=[...]` (objects with `name`, `cat`, `cal`, `prot`, `carb`, `fat`, `note`; values per 100 g, notes like `حبة≈50g`): the subscriber food diary reads it via `lib/food-list.ts`.
 - Form field ids: `g-name g-phone g-gender g-age g-weight g-height g-goal g-act g-meals g-snacks g-excl g-health g-notes g-aitext`, and the option values of `g-goal` (`تخسيس`, `تضخيم`, `صيانة`, `ريكومب`) and `g-act`.
 
 The subscriber calculator (`lib/macros.ts`) is a copy of `updateMacros()`. If she changes calorie or macro rules in the generator, make the same change in `lib/macros.ts`.

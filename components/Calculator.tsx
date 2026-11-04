@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ACTIVITY, CALC_GOALS, calcMacros, type CalcGoal } from "@/lib/macros";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui";
 import type { IntakeAnswers } from "@/lib/intake";
 
 type Form = { gender: "female" | "male"; age: string; weight: string; height: string; act: number; goal: CalcGoal };
@@ -11,6 +12,7 @@ const GOAL_FROM_INTAKE: Record<string, CalcGoal> = { lose: "تخسيس", muscle:
 
 /** Calorie and macro calculator, same rules as the coach's generator. */
 export function Calculator({ profileId }: { profileId: string }) {
+  const toast = useToast();
   const [f, setF] = useState<Form>({ gender: "female", age: "", weight: "", height: "", act: 1.375, goal: "تخسيس" });
 
   useEffect(() => {
@@ -89,10 +91,17 @@ export function Calculator({ profileId }: { profileId: string }) {
           </div>
           <p className="small">🌿 ألياف {res.fiber} جم · 🎯 {res.note}</p>
           <p className="note">أرقام تقريبية تساعدك تتابعين نفسك. لو عندك خطة من المدربة، خطتك هي المعتمدة.</p>
+          <button type="button" className="btn btn-s" onClick={async () => {
+            const { data: c } = await supabase.from("clients").select("id").eq("profile_id", profileId).maybeSingle();
+            if (!c) return toast.show("ما قدرنا نحفظ. جربي مرة ثانية.");
+            const { error } = await supabase.from("food_targets").upsert({ client_id: c.id, cal: res.cal, p: res.p, c: res.c, f: res.f }, { onConflict: "client_id" });
+            toast.show(error ? "ما انحفظ. تأكدي من الاتصال." : "🎯 صار هدفك في «يومياتي»");
+          }}>🎯 احفظيها هدفي اليومي</button>
         </section>
       ) : (
         <p className="alert info">عبّي العمر والوزن والطول وتطلع لك الأرقام.</p>
       )}
+      {toast.node}
     </>
   );
 }

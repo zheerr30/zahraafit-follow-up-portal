@@ -7,7 +7,7 @@ if (process.platform === "darwin" && !process.env.CI && !process.env.VERCEL) {
 const nextConfig = {
   reactStrictMode: true,
   // Ship the generator files with the route that serves them.
-  outputFileTracingIncludes: { "/api/generators/[name]": ["./generators/**"], "/api/generators/asset/[hash]": ["./generators/**"] },
+  outputFileTracingIncludes: { "/api/generators/[name]": ["./generators/**"], "/api/generators/asset/[hash]": ["./generators/**"], "/api/foods": ["./generators/**"] },
   async redirects() {
     // Old portal addresses go to the new screens.
     return [

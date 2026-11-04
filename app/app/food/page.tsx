@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeftRight, Check, FileText, Utensils, X } from "lucide-react";
 import { ClientShell, Empty, Loading, useToast } from "@/components/ui";
+import { FoodDiary } from "@/components/FoodDiary";
 import { ingredientText, todayKey, type Meal, type MealPlanData } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 import { useAuthGuard } from "@/lib/use-auth";
@@ -17,7 +18,7 @@ type OffItem = { t: string; cal?: number; at: string };
 type DayNote = { steps?: string; sleep?: string; notes?: string };
 type Log = { meals: Record<string, boolean | DayNote | OffItem[]>; water: number };
 type Sheet = { type: "meal"; key: string; slot: string } | { type: "ing"; key: string; original: string; options: string[] } | null;
-type Tab = "meals" | "extras" | "shop";
+type Tab = "meals" | "extras" | "shop" | "diary";
 
 const CUPS = 10;
 
@@ -64,7 +65,6 @@ export default function FoodPage() {
   const [log, setLog] = useState<Log>({ meals: {}, water: 0 });
   const [dayNote, setDayNote] = useState<DayNote>({});
   const [sheet, setSheet] = useState<Sheet>(null);
-  const [off, setOff] = useState({ t: "", cal: "" });
   const [ready, setReady] = useState(false);
   const today = todayKey();
 
@@ -143,8 +143,38 @@ export default function FoodPage() {
     return { items, taste: Array.from(taste).sort((a, b) => a.localeCompare(b, "ar")) };
   }, [plan, choices.meals, choices.ings]);
 
+  /** A ticked key → the meal she ate (with her swaps), for the diary. */
+  const planMeal = useCallback(
+    (key: string): Meal | null => {
+      if (!plan) return null;
+      const x = key.match(/^x-(snacks|salads)-(\d+)$/);
+      if (x) {
+        const m = plan.extras[x[1] as "snacks" | "salads"][Number(x[2])];
+        return m ? { ...m, slot: "سناك" } : null;
+      }
+      const dm = key.match(/^(\d+)-(\d+)$/);
+      if (!dm || !plan.days[Number(dm[1])]?.meals[Number(dm[2])]) return null;
+      const d = Number(dm[1]), m = Number(dm[2]);
+      return { ...resolve(plan, choices.meals[key], d, m), slot: plan.days[d].meals[m].slot };
+    },
+    [plan, choices.meals]
+  );
+
   if (auth.loading || cp.loading || !ready) return <Loading />;
   if (!auth.profile) return null;
+
+  if ((!plan || day === null) && cp.client) {
+    return (
+      <ClientShell title="أكلي" sub="سجلي أكلك واحسبي سعراتك">
+        <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={null} planMeal={null} />
+        {cp.files.length ? (
+          <p className="note" style={{ textAlign: "center" }}>
+            خطتك من المدربة وصلت كملف. <Link className="link" href="/app">افتحيها من الرئيسية</Link>
+          </p>
+        ) : null}
+      </ClientShell>
+    );
+  }
 
   if (!plan || day === null) {
     return (
@@ -263,7 +293,7 @@ export default function FoodPage() {
   return (
     <ClientShell title="أكلي" action={pdf ? <a className="btn btn-g btn-sm" href={pdf.href} target={pdf.external ? "_blank" : undefined} rel="noreferrer"><FileText />PDF</a> : undefined}>
       <div className="seg-tabs" role="tablist" aria-label="أقسام أكلي">
-        {([["meals", "🍽️ وجباتي"], ["extras", "🍎 إضافي"], ["shop", "🛒 التسوق"]] as [Tab, string][]).map(([k, l]) => (
+        {([["meals", "🍽️ وجباتي"], ["extras", "🍎 إضافي"], ["shop", "🛒 تسوق"], ["diary", "📒 يومياتي"]] as [Tab, string][]).map(([k, l]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
@@ -322,49 +352,10 @@ export default function FoodPage() {
 
           {meals.map(({ key, meal, swapped, slot }) => mealCard(key, meal, slot || meal.slot, { swapped, swapMeal: true }))}
 
-          <div className="sec-title">
+          <button type="button" className="tip-card" style={{ width: "100%", textAlign: "start" }} onClick={() => { setTab("diary"); window.scrollTo(0, 0); }}>
             <span className="em" aria-hidden="true">🍔</span>
-            <h2>أكلت شي برا الخطة؟</h2>
-          </div>
-          <section className="card stack">
-            <p className="small muted">عادي يصير! سجليه بصراحة عشان المدربة تفهم وش صار وتساعدك.</p>
-            {offItems.map((x, i) => (
-              <div key={i} className="row between" style={{ borderTop: "1px solid var(--line)", paddingTop: 8 }}>
-                <span style={{ minWidth: 0 }}>
-                  {x.t}
-                  <span className="note" style={{ display: "block" }}>{x.at}{x.cal ? ` · تقريبًا ${x.cal} سعرة` : ""}</span>
-                </span>
-                <button type="button" className="icon-btn" aria-label={`احذفي ${x.t}`} onClick={() => saveLog({ ...log, meals: { ...log.meals, _off: offItems.filter((_, j) => j !== i) } })}>
-                  <X size={16} />
-                </button>
-              </div>
-            ))}
-            <form
-              className="stack"
-              style={{ gap: 8 }}
-              onSubmit={(e) => {
-                e.preventDefault();
-                const t = off.t.trim();
-                if (!t) return;
-                const cal = Math.round(Number(off.cal)) || undefined;
-                const at = new Intl.DateTimeFormat("ar-SA-u-nu-latn", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Riyadh" }).format(new Date());
-                saveLog({ ...log, meals: { ...log.meals, _off: [...offItems, { t: t.slice(0, 200), cal: cal && cal > 0 && cal < 5000 ? cal : undefined, at }] } }, "سجلناها، ولا يهمك كملي يومك عادي 💪");
-                setOff({ t: "", cal: "" });
-              }}
-            >
-              <div className="field">
-                <label htmlFor="off-t">وش أكلتي؟</label>
-                <input id="off-t" className="inp" value={off.t} onChange={(e) => setOff({ ...off, t: e.target.value })} placeholder="مثلًا: برقر وبطاطس صغير من مطعم" />
-              </div>
-              <div className="row" style={{ gap: 8, alignItems: "flex-end" }}>
-                <div className="field" style={{ flex: 1 }}>
-                  <label htmlFor="off-cal">كم سعرة تقريبًا؟ (لو تعرفين)</label>
-                  <input id="off-cal" className="inp num" inputMode="numeric" value={off.cal} onChange={(e) => setOff({ ...off, cal: e.target.value.replace(/\D/g, "") })} placeholder="600" />
-                </div>
-                <button className="btn btn-s" type="submit" disabled={!off.t.trim()}>سجّلي</button>
-              </div>
-            </form>
-          </section>
+            <span><b>أكلتي شي برا الخطة؟</b> عادي يصير! سجليه في <b>📒 يومياتي</b> ونحسب لك سعراته.</span>
+          </button>
 
           <div className="sec-title">
             <span className="em" aria-hidden="true">💧</span>
@@ -408,6 +399,10 @@ export default function FoodPage() {
             <button className="btn btn-s" type="submit">حفظ</button>
           </form>
         </>
+      ) : null}
+
+      {tab === "diary" && cp.client ? (
+        <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={plan.target.cal ? plan.target : null} planMeal={planMeal} />
       ) : null}
 
       {tab === "extras" ? (

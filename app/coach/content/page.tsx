@@ -6,6 +6,7 @@ import { CoachShell, Loading, useToast } from "@/components/ui";
 import { formatDate } from "@/lib/format";
 import { todayKey } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
+import { CoachDishes } from "@/components/CoachDishes";
 import { useAuthGuard } from "@/lib/use-auth";
 import type { Article, Challenge } from "@/lib/types";
 
@@ -252,6 +253,7 @@ export default function ContentPage() {
       ) : !ch ? (
         <p className="note">ما سويتي تحديات للحين. التحدي الشغال يطلع للمشتركات في الرئيسية، ويعلّمون على كل يوم يكملونه.</p>
       ) : null}
+      <CoachDishes />
       {toast.node}
     </CoachShell>
   );
