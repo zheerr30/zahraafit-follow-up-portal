@@ -81,11 +81,7 @@ export default function SubscribersPage() {
             );
             return (
               <li key={client.id}>
-                {latest ? (
-                  <Link className="list-row" href={`/coach/requests/${latest.id}`}>{inner}</Link>
-                ) : (
-                  <div className="list-row">{inner}</div>
-                )}
+                <Link className="list-row" href={`/coach/subscribers/${client.id}`}>{inner}</Link>
               </li>
             );
           })}

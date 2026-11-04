@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CheckCircle2, ClipboardEdit, Clock3, Dumbbell, FileText, PenLine, Utensils } from "lucide-react";
+import { HomeExtras } from "@/components/HomeExtras";
 import { HomeToday } from "@/components/HomeToday";
 import { ClientShell, Loading } from "@/components/ui";
 import { deliveryWindow, formatDay } from "@/lib/business-days";
@@ -172,6 +173,7 @@ export default function ClientHome() {
   return (
     <ClientShell title={`${greeting()}، ${firstName}`}>
       {main}
+      {client ? <HomeExtras clientId={client.id} /> : null}
       {request || plan ? null : (
         <div className="card row" style={{ alignItems: "flex-start" }}>
           <Clock3 size={20} color="var(--clay)" style={{ flexShrink: 0, marginTop: 2 }} />

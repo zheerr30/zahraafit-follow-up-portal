@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { BookOpen, ClipboardList, Dumbbell, Home, Inbox, LineChart, Loader2, LogOut, UserRound, Utensils, Wrench } from "lucide-react";
+import { BookOpen, ClipboardList, Newspaper, Dumbbell, Home, Inbox, LineChart, Loader2, LogOut, UserRound, Utensils, Wrench } from "lucide-react";
 import { signOut } from "@/lib/use-auth";
 
 /** Her logo, dark, for light pages. */
@@ -115,6 +115,7 @@ export function CoachShell({ children }: { children: ReactNode }) {
   const links = [
     { href: "/coach", label: "خطط تنتظرك", icon: <Inbox size={17} />, match: (p: string) => p === "/coach" || p.startsWith("/coach/requests") },
     { href: "/coach/subscribers", label: "المشتركات", icon: <ClipboardList size={17} />, match: (p: string) => p.startsWith("/coach/subscribers") },
+    { href: "/coach/content", label: "المحتوى", icon: <Newspaper size={17} />, match: (p: string) => p.startsWith("/coach/content") },
     { href: "/coach/tools", label: "المولّدات", icon: <Wrench size={17} />, match: (p: string) => p.startsWith("/coach/tools") }
   ];
   return (

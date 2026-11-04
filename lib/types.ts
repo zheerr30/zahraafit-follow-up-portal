@@ -99,6 +99,29 @@ export type PlanRequest = {
   updated_at: string;
 };
 
+export type Article = {
+  id: string;
+  title: string;
+  emoji: string | null;
+  body: string;
+  published: boolean;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Challenge = {
+  id: string;
+  title: string;
+  emoji: string | null;
+  description: string;
+  starts_on: string;
+  ends_on: string;
+  created_at: string;
+};
+
+export type ChallengeCheckin = { id: string; challenge_id: string; client_id: string; day: string };
+
 export type ClientWithProfile = Client & {
   profile?: Profile | null;
 };
