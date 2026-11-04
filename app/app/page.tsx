@@ -21,8 +21,7 @@ export default function ClientHome() {
   const auth = useAuthGuard("client");
   const [client, setClient] = useState<Client | null>(null);
   const [request, setRequest] = useState<PlanRequest | null>(null);
-  const [plan, setPlan] = useState<Plan | null>(null);
-  const [planUrl, setPlanUrl] = useState<string | null>(null);
+  const [plans, setPlans] = useState<(Plan & { url?: string })[]>([]);
   const [justSent, setJustSent] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -35,15 +34,19 @@ export default function ClientHome() {
       if (c) {
         const [{ data: r }, { data: p }] = await Promise.all([
           supabase.from("plan_requests").select("*").eq("client_id", c.id).neq("status", "cancelled").order("submitted_at", { ascending: false }).limit(1).maybeSingle(),
-          supabase.from("plans").select("*").eq("client_id", c.id).eq("is_current", true).order("created_at", { ascending: false }).limit(1).maybeSingle()
+          supabase.from("plans").select("*").eq("client_id", c.id).eq("is_current", true).order("created_at", { ascending: true })
         ]);
         setRequest((r as PlanRequest | null) || null);
-        const currentPlan = (p as Plan | null) || null;
-        setPlan(currentPlan);
-        if (currentPlan?.file_path) {
-          const { data: signed } = await supabase.storage.from("client-plans").createSignedUrl(currentPlan.file_path, 60 * 60);
-          setPlanUrl(signed?.signedUrl || null);
-        }
+        const current = (p as Plan[] | null) || [];
+        setPlans(
+          await Promise.all(
+            current.map(async (x) => {
+              if (!x.file_path) return x;
+              const { data: signed } = await supabase.storage.from("client-plans").createSignedUrl(x.file_path, 60 * 60);
+              return { ...x, url: signed?.signedUrl };
+            })
+          )
+        );
       }
       setLoading(false);
     }
@@ -51,6 +54,7 @@ export default function ClientHome() {
   }, [auth.profile]);
 
   if (auth.loading || loading) return <Loading />;
+  const plan = plans[0] || null;
   if (!auth.profile) return null;
 
   const firstName = (auth.profile.full_name || "").split(" ")[0];
@@ -116,16 +120,18 @@ export default function ClientHome() {
       <>
         <section className="hero">
           <Rings />
-          <span className="label">{plan ? `أضيفت ${formatDate(plan.created_at)}` : "خطتك"}</span>
-          <h2>{plan ? plan.title : "خطتك جاهزة"}</h2>
+          <span className="label">{plan ? `وصلتك ${formatDate(plan.created_at)}` : "خطتك"}</span>
+          <h2>خطتك جاهزة</h2>
           {!plan ? <p>المدربة أرسلت خطتك. إذا ما وصلتك تواصلي معها.</p> : null}
           {plan?.content ? <p style={{ whiteSpace: "pre-line" }}>{plan.content}</p> : null}
-          {planUrl ? (
-            <a className="btn btn-p btn-block" href={planUrl} target="_blank" rel="noreferrer">
-              <FileText />
-              افتحي خطتك
-            </a>
-          ) : null}
+          {plans.map((x) =>
+            x.url ? (
+              <a key={x.id} className="btn btn-p btn-block" href={x.url} target="_blank" rel="noreferrer">
+                <FileText />
+                افتحي {x.title}
+              </a>
+            ) : null
+          )}
         </section>
         <section className="card row between wrap">
           <span className="row small">

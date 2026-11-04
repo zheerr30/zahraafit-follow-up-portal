@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Check, ChevronRight, ClipboardCopy, FileText, Loader2, PlayCircle, ShieldCheck, Undo2 } from "lucide-react";
+import { ChevronRight, ClipboardCopy, FileText, ShieldCheck, Undo2 } from "lucide-react";
+import { PlanDelivery } from "@/components/PlanDelivery";
 import { CoachShell, Loading, useToast } from "@/components/ui";
 import { businessDaysBetween, deliveryWindow, formatDay } from "@/lib/business-days";
 import { formatDate } from "@/lib/format";
@@ -114,38 +115,34 @@ export default function CoachRequestPage() {
 
       {error ? <p className="alert err" role="alert">{error}</p> : null}
 
-      <section className="card stack">
-        <p className="small muted">
-          المشتركة تنتظرها بين <b>{formatDay(win.from)}</b> و<b>{formatDay(win.to)}</b>.
-        </p>
-        <button type="button" className="btn btn-p btn-block" onClick={copy}>
-          <ClipboardCopy />
-          انسخي معلوماتها للمولّد
-        </button>
-        <div className="row wrap">
-          {req.status === "submitted" ? (
-            <button type="button" className="btn btn-s" style={{ flex: 1 }} disabled={busy} onClick={() => update({ status: "in_progress", started_at: new Date().toISOString() }, "صارت في «شغالة عليها»")}>
-              {busy ? <Loader2 className="spin" /> : <PlayCircle />}
-              بدأت عليها
-            </button>
-          ) : null}
+      {req.status !== "delivered" ? (
+        <section className="card stack">
+          <div className="stack" style={{ gap: 4 }}>
+            <span className="label">الخطوة ١</span>
+            <h2 style={{ fontSize: 17 }}>انسخي معلوماتها للمولّد</h2>
+            <p className="note">
+              الصقيها في محادثة المولّد عشان يطلع لك الجدول. المشتركة تنتظره بين <b>{formatDay(win.from)}</b> و<b>{formatDay(win.to)}</b>.
+            </p>
+          </div>
+          <button type="button" className="btn btn-p btn-block" onClick={() => { copy(); if (req.status === "submitted") update({ status: "in_progress", started_at: new Date().toISOString() }, "نسخت معلوماتها، وصارت في «شغالة عليها»"); }}>
+            <ClipboardCopy />
+            انسخي معلوماتها
+          </button>
           {req.status === "in_progress" ? (
-            <>
-              <button type="button" className="btn btn-s" style={{ flex: 1 }} disabled={busy} onClick={() => update({ status: "delivered", delivered_at: new Date().toISOString() }, "خلصت. طلعت من القائمة")}>
-                <Check />
-                خلصت وأرسلت الخطة
-              </button>
-              <button type="button" className="btn btn-g" disabled={busy} onClick={() => update({ status: "submitted", started_at: null }, "رجعت لـ «ما بديت»")}>
+            <div className="row between wrap small">
+              <span className="chip blue">شغالة عليها</span>
+              <button type="button" className="link" disabled={busy} onClick={() => update({ status: "submitted", started_at: null }, "رجعت لـ «ما بديت»")}>
                 <Undo2 />
-                تراجعي
+                رجعيها لـ «ما بديت»
               </button>
-            </>
-          ) : null}
-          {req.status === "delivered" ? (
-            <p className="alert ok" style={{ flex: 1 }}>أرسلتيها {req.delivered_at ? formatDate(req.delivered_at) : ""}</p>
-          ) : null}
-        </div>
-      </section>
+            </div>
+          ) : (
+            <p className="note">لما تنسخين معلوماتها تنتقل لـ «شغالة عليها»، وما تقدر تعدل معلوماتها بعدها.</p>
+          )}
+        </section>
+      ) : null}
+
+      <PlanDelivery req={req} onDelivered={setReq} toast={toast.show} />
 
       <section className="card stack">
         <div className="row between wrap">
