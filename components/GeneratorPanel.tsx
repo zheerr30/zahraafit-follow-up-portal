@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Check, Loader2, Send, X } from "lucide-react";
-import { FILL_SCRIPT, MEAL_GENERATOR_PATH, READ_PLANS_SCRIPT, mealGeneratorFields } from "@/lib/generator";
+import { FILL_SCRIPT, READ_PLANS_SCRIPT, mealGeneratorFields } from "@/lib/generator";
 import { parsePlanFile, type MealPlanData, type ParsedPlan } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 
@@ -19,12 +18,13 @@ export function GeneratorPanel({ answers, name, onClose, onUse }: { answers: unk
 
   useEffect(() => {
     (async () => {
-      const { data, error: err } = await supabase.storage.from("generators").download(MEAL_GENERATOR_PATH);
-      if (err || !data) {
-        setError("ما لقينا ملف مولّد الأكل. ارفعيه من صفحة «المولّدات» مرة وحدة.");
+      const { data: s } = await supabase.auth.getSession();
+      const res = await fetch("/api/generators/meal", { headers: { Authorization: `Bearer ${s.session?.access_token || ""}` }, cache: "no-store" });
+      if (!res.ok) {
+        setError(res.status === 401 || res.status === 403 ? "المولّد يفتح لحساب المدربة بس. سجلي خروج وادخلي مرة ثانية." : "ما قدرنا نفتح المولّد. حدّثي الصفحة وجربي مرة ثانية.");
         return;
       }
-      setHtml(await data.text());
+      setHtml(await res.text());
     })();
   }, []);
 
@@ -91,8 +91,7 @@ export function GeneratorPanel({ answers, name, onClose, onUse }: { answers: unk
       {error ? (
         <div className="gutter" style={{ paddingTop: 10 }}>
           <p className="alert err" role="alert">
-            {error}{" "}
-            {error.includes("المولّدات") ? <Link className="link" href="/coach/tools">افتحي المولّدات</Link> : null}
+            {error}
           </p>
         </div>
       ) : null}

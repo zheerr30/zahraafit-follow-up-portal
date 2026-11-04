@@ -1,10 +1,9 @@
 // The coach's meal generator runs inside the platform, unchanged: its HTML file
-// is stored in the private "generators" bucket and shown in a same-origin
-// iframe, so the platform can fill the form and read the finished plan.
+// lives in generators/meal.html, is served to the coach only by
+// /api/generators/meal, and is shown in a same-origin iframe so the platform
+// can fill the form and read the finished plan. See CLAUDE.md before editing it.
 
 import { normalizeAnswers, type IntakeAnswers } from "@/lib/intake";
-
-export const MEAL_GENERATOR_PATH = "meal.html";
 
 /** Values for the generator's own form fields, from the subscriber's answers. */
 export function mealGeneratorFields(raw: unknown): Record<string, string> {
