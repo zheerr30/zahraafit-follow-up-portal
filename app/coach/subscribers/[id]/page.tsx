@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { CoachShell, Loading } from "@/components/ui";
+import { FollowupSettings } from "@/components/FollowupSettings";
 import { formatDate } from "@/lib/format";
 import { planTypeLabel } from "@/lib/intake";
 import { todayKey, type MealPlanData } from "@/lib/plan-data";
@@ -141,6 +142,8 @@ export default function SubscriberPage() {
         </div>
         {req ? <Link className="btn btn-g btn-sm" href={`/coach/requests/${req.id}`}>طلبها ومعلوماتها</Link> : null}
       </div>
+
+      <FollowupSettings client={client} wantsFollowup={Boolean(req?.wants_followup)} onChange={setClient} />
 
       <div className="sec-title">
         <span className="em" aria-hidden="true">📊</span>

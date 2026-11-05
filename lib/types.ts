@@ -21,6 +21,8 @@ export type Client = {
   target_weight: number | null;
   status: "active" | "paused";
   notes: string | null;
+  followup_start?: string | null;
+  followup_weeks?: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -53,6 +55,9 @@ export type WeeklyFollowup = {
   menstrual_cycle: string | null;
   client_notes: string | null;
   coach_notes: string | null;
+  feeling?: number | null;
+  changes_requested?: string | null;
+  coach_replied_at?: string | null;
   created_at: string;
   updated_at: string;
 };

@@ -6,6 +6,7 @@ import { CheckCircle2, ClipboardEdit, Clock3, Dumbbell, FileText, PenLine, Utens
 import { HomeExtras } from "@/components/HomeExtras";
 import { HomeToday } from "@/components/HomeToday";
 import { WeekSummary } from "@/components/WeekSummary";
+import { CheckinCard } from "@/components/CheckinCard";
 import { ReminderNudge } from "@/components/ReminderNudge";
 import { ClientShell, Loading } from "@/components/ui";
 import { deliveryWindow, formatDay } from "@/lib/business-days";
@@ -158,6 +159,7 @@ export default function ClientHome() {
             );
           })}
         </section>
+        {client ? <CheckinCard client={client} /> : null}
         {client && plans.some((x) => x.kind !== "other" && x.data) ? <HomeToday clientId={client.id} plans={plans} /> : null}
         {client && plans.length ? <ReminderNudge /> : null}
         {client ? <WeekSummary clientId={client.id} plans={plans} /> : null}
