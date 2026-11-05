@@ -47,7 +47,7 @@ const AI_ERRORS: Record<string, string> = {
 };
 
 /** Sends a photo to /api/ai/{kind}. Returns the parsed answer or an Arabic error. */
-export async function aiRead<T>(kind: "label" | "meal", file: File): Promise<{ data?: T; error?: string }> {
+export async function aiRead<T>(kind: "label" | "meal" | "menu", file: File): Promise<{ data?: T; error?: string }> {
   try {
     const blob = await shrinkPhoto(file);
     const b64 = await new Promise<string>((res, rej) => {

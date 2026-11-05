@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui";
 import { SLOTS, SLOT_EMOJI, defaultSlot, fromBarcode, fromBase, fromCustom, scaled, search, type BarcodeProduct, type BaseFood, type CustomFood, type FoodEntry, type Pickable, type Slot } from "@/lib/foods";
 import { aiRead, lookupBarcode } from "@/lib/food-scan";
 import { BarcodeScanner, MealPhoto } from "@/components/FoodScan";
+import { Restaurants } from "@/components/Restaurants";
 import { todayKey, type Meal } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 
@@ -17,7 +18,8 @@ type Sheet =
   | { mode: "new"; slot: Slot; name: string; barcode?: string }
   | { mode: "barcode"; slot: Slot }
   | { mode: "photo"; slot: Slot }
-  | { mode: "saveMeal"; slot: Slot };
+  | { mode: "saveMeal"; slot: Slot }
+  | { mode: "rest"; slot: Slot };
 type EntryRow = Omit<FoodEntry, "id" | "client_id" | "log_date" | "slot" | "created_at">;
 type Saved = { id: string; kind: "item" | "meal"; name: string; data: { food?: Pickable; items?: EntryRow[] } };
 
@@ -267,6 +269,7 @@ export function FoodDiary({
           <button type="button" onClick={() => { setQ(""); setSheet({ mode: "search", slot: defaultSlot() }); }}>🔍 ابحثي عن أكل</button>
           <button type="button" onClick={() => setSheet({ mode: "barcode", slot: defaultSlot() })}>📷 باركود</button>
           <button type="button" onClick={() => setSheet({ mode: "photo", slot: defaultSlot() })}>🤖 صوري صحنك</button>
+          <button type="button" onClick={() => setSheet({ mode: "rest", slot: defaultSlot() })}>🍔 مطاعم</button>
         </div>
       </section>
 
@@ -328,7 +331,7 @@ export function FoodDiary({
         <div className="sheet-bg" onClick={(e) => e.target === e.currentTarget && setSheet(null)}>
           <div className="sheet" role="dialog" aria-modal="true" aria-label="أضيفي أكل" style={{ maxHeight: "88vh", overflowY: "auto" }}>
             <div className="row between">
-              <h2 style={{ fontSize: 18 }}>{SLOT_EMOJI[sheet.slot]} {sheet.mode === "new" ? (sheet.barcode ? "منتج جديد" : "صنف جديد") : sheet.mode === "barcode" ? "امسحي الباركود" : sheet.mode === "photo" ? "صوري وجبتك" : sheet.mode === "saveMeal" ? `احفظي ${sheet.slot} كوجبة` : `أضيفي لـ${sheet.slot}`}</h2>
+              <h2 style={{ fontSize: 18 }}>{SLOT_EMOJI[sheet.slot]} {sheet.mode === "new" ? (sheet.barcode ? "منتج جديد" : "صنف جديد") : sheet.mode === "barcode" ? "امسحي الباركود" : sheet.mode === "photo" ? "صوري وجبتك" : sheet.mode === "saveMeal" ? `احفظي ${sheet.slot} كوجبة` : sheet.mode === "rest" ? `مطاعم · ${sheet.slot}` : `أضيفي لـ${sheet.slot}`}</h2>
               <button type="button" className="icon-btn" aria-label="إغلاق" onClick={() => setSheet(null)}>
                 <X />
               </button>
@@ -339,6 +342,7 @@ export function FoodDiary({
                 <div className="scan-btns">
                   <button type="button" onClick={() => setSheet({ mode: "barcode", slot: sheet.slot })}><span aria-hidden="true">📷</span>باركود</button>
                   <button type="button" onClick={() => setSheet({ mode: "photo", slot: sheet.slot })}><span aria-hidden="true">🤖</span>صوري وجبتك</button>
+                  <button type="button" onClick={() => setSheet({ mode: "rest", slot: sheet.slot })}><span aria-hidden="true">🍔</span>مطاعم</button>
                   <button type="button" onClick={() => setSheet({ mode: "new", slot: sheet.slot, name: q.trim() })}><span aria-hidden="true">✍️</span>صنف جديد</button>
                 </div>
                 <div className="unit">
@@ -414,6 +418,8 @@ export function FoodDiary({
                 const v = scaled(sheet.food, amount, unit);
                 add(sheet.slot, { name: sheet.food.name, amount, unit: unit.label, ...v });
               }} onBack={() => setSheet({ mode: "search", slot: sheet.slot })} />
+            ) : sheet.mode === "rest" ? (
+              <Restaurants profileId={profileId} onAdd={(row) => add(sheet.slot, row)} onBack={() => setSheet({ mode: "search", slot: sheet.slot })} />
             ) : sheet.mode === "saveMeal" ? (
               <div className="stack">
                 <p className="small muted">تحفظينها وبعدين تضيفينها كلها بضغطة من «أضيفي أكل».</p>

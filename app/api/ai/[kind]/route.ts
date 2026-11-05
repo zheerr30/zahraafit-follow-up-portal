@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 // Photo helpers for the food diary, using Claude vision:
 //   label: read the nutrition facts panel of a product
 //   meal:  estimate what is on the plate and its calories
+//   menu:  read items and printed calories from a restaurant menu
 // Needs ANTHROPIC_API_KEY in the Vercel environment. Each person has a daily
 // limit (public.ai_take in phase8-food-tools.sql).
 
@@ -74,6 +75,31 @@ If the photo is not food, return an empty items list and say so in note.`,
         note: { type: ["string", "null"] }
       },
       required: ["items", "note"],
+      additionalProperties: false
+    }
+  }
+,
+  menu: {
+    prompt: `This photo shows a restaurant menu (board, printed menu or app screenshot), probably in Saudi Arabia where menus list calories.
+List each food or drink item that has a calorie number printed next to it. Return:
+- restaurant: the restaurant name if visible, else null.
+- items: name as printed (keep Arabic if printed in Arabic; if both, prefer Arabic), and cal exactly as printed for that item. If a size is part of the item (small/medium/large, 6 pieces), include it in the name.
+Only include items whose calories are printed; never estimate or invent calories. If no calories are visible, return an empty list.`,
+    schema: {
+      type: "object",
+      properties: {
+        restaurant: { type: ["string", "null"] },
+        items: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: { name: { type: "string" }, cal: { type: "number" } },
+            required: ["name", "cal"],
+            additionalProperties: false
+          }
+        }
+      },
+      required: ["restaurant", "items"],
       additionalProperties: false
     }
   }
