@@ -9,7 +9,7 @@ import type { Plan } from "@/lib/types";
 const DAYS = 14;
 const short = (d: string) => new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { weekday: "short", day: "numeric" }).format(new Date(d + "T12:00:00"));
 
-/** «تقدّمي»: calories she logged each day for two weeks, against her target. */
+/** «تقدمي»: calories she logged each day for two weeks, against her target. */
 export function CaloriesChart({ clientId, mealRow }: { clientId: string; mealRow: Plan | null }) {
   const [rows, setRows] = useState<{ d: string; cal: number; p: number }[] | null>(null);
   const [target, setTarget] = useState<number | null>(null);
@@ -93,7 +93,7 @@ export function CaloriesChart({ clientId, mealRow }: { clientId: string; mealRow
           </>
         ) : null}
       </svg>
-      <p className="note">آخر {DAYS} يوم: وجبات خطتك اللي علّمتيها + اللي سجلتيه في يومياتي. الغامق = زدتي عن هدفك بأكثر من ١٠٪.</p>
+      <p className="note">آخر {DAYS} يوم: وجبات خطتك اللي علمتيها + اللي سجلتيه في يومياتي. الغامق = زدتي عن هدفك بأكثر من ١٠٪.</p>
     </section>
     </>
   );

@@ -159,7 +159,7 @@ export default function CheckinPage() {
       const ins = await supabase.from("followup_photos").insert({ followup_id: saved.id, client_id: client.id, photo_type: type, file_path: path }).select("*").single();
       if (ins.data) newPhotos.push({ ...(ins.data as FollowupPhoto), url: p.preview });
     }
-    // Weight and measurements also go to «تقدّمي».
+    // Weight and measurements also go to «تقدمي».
     if (row.weight_kg || row.waist_cm || row.hips_cm) {
       await supabase.from("body_logs").upsert({ client_id: client.id, log_date: todayKey(), weight_kg: row.weight_kg, waist_cm: row.waist_cm, hips_cm: row.hips_cm }, { onConflict: "client_id,log_date" });
     }
@@ -254,7 +254,7 @@ export default function CheckinPage() {
 
           <section className="card stack">
             <b>🍽️ كم التزمتي بالأكل؟</b>
-            {hint?.meals !== null && hint?.meals !== undefined ? <span className="note">حسب تسجيلك: علّمتي على {hint.meals}٪ من وجباتك</span> : null}
+            {hint?.meals !== null && hint?.meals !== undefined ? <span className="note">حسب تسجيلك: علمتي على {hint.meals}٪ من وجباتك</span> : null}
             <Scale name="التزامك بالأكل" value={form.nutrition} onChange={(v) => setForm({ ...form, nutrition: v })} labels={COMMIT_LABEL} />
             <b style={{ marginTop: 6 }}>💪 وبالتمرين؟</b>
             {hint ? <span className="note">حسب تسجيلك: {hint.workouts} تمارين هالأسبوع</span> : null}
@@ -263,7 +263,7 @@ export default function CheckinPage() {
 
           <section className="card stack">
             <b>⚖️ وزنك وقياساتك</b>
-            <span className="note">قيسي الصبح على الريق بعد الحمام. عبّيناها من آخر تسجيل لك، عدليها.</span>
+            <span className="note">قيسي الصبح على الريق بعد الحمام. عبيناها من آخر تسجيل لك، عدليها.</span>
             <div className="grid3">
               {([["weight", "الوزن (كجم)"], ["waist", "الخصر (سم)"], ["hips", "الأرداف (سم)"]] as [keyof Form, string][]).map(([k, l]) => (
                 <div key={k} className="field">
@@ -359,7 +359,7 @@ export default function CheckinPage() {
 
       {info.has ? (
         <p className="note" style={{ textAlign: "center" }}>
-          تبين تشوفين تطور وزنك؟ <Link className="link" href="/app/progress">تقدّمي</Link>
+          تبين تشوفين تطور وزنك؟ <Link className="link" href="/app/progress">تقدمي</Link>
         </p>
       ) : null}
       {toast.node}

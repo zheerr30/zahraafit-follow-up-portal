@@ -44,7 +44,7 @@ export function HomeToday({ clientId, plans }: { clientId: string; plans: Plan[]
     meal && { href: "/app/food", em: "🍽️", label: "أكل اليوم", value: `${eaten} من ${mealsToday}`, sub: "وجبات أكلتيها" },
     work && { href: "/app/workout", em: "💪", label: "تمرينك الجاي", value: nextDay || "—", sub: "اضغطي وابدئي" },
     meal && { href: "/app/food", em: "💧", label: "الماء", value: `${water} من ${waterCups(weight)}`, sub: "أكواب ماء اليوم" },
-    { href: "/app/progress", em: "⚖️", label: "وزنك", value: weight ? `${weight} كجم` : "سجّليه", sub: weight ? "آخر وزن" : "من «تقدّمي»" }
+    { href: "/app/progress", em: "⚖️", label: "وزنك", value: weight ? `${weight} كجم` : "سجليه", sub: weight ? "آخر وزن" : "من «تقدمي»" }
   ].filter(Boolean) as { href: string; em: string; label: string; value: string; sub: string }[];
 
   return (

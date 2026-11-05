@@ -155,8 +155,8 @@ export default function CheckinDetail() {
       </div>
       <form className="card stack" onSubmit={send}>
         <textarea className="inp" rows={6} value={reply} onChange={(e) => setReply(e.target.value)} placeholder="شجعيها، وقولي لها وش بتعدلين في خطتها للأسبوع الجاي..." aria-label="ردك" />
-        <button className="btn btn-p" type="submit" disabled={busy || !reply.trim() || reply.trim() === (f.coach_notes || "")}>{busy ? "لحظة..." : f.coach_notes ? "حدّثي الرد" : "📤 أرسلي ردك"}</button>
-        <p className="note">لو تبين تعدلين خطتها، افتحي <Link className="link" href={`/coach/subscribers/${client.id}`}>صفحتها</Link> ثم طلبها وولّدي جدول جديد.</p>
+        <button className="btn btn-p" type="submit" disabled={busy || !reply.trim() || reply.trim() === (f.coach_notes || "")}>{busy ? "لحظة..." : f.coach_notes ? "حدثي الرد" : "📤 أرسلي ردك"}</button>
+        <p className="note">لو تبين تعدلين خطتها، افتحي <Link className="link" href={`/coach/subscribers/${client.id}`}>صفحتها</Link> ثم طلبها وولدي جدول جديد.</p>
       </form>
       {toast.node}
     </CoachShell>

@@ -41,7 +41,7 @@ export default function CoachQueue() {
         .select("*")
         .in("status", ["submitted", "in_progress"])
         .order("submitted_at", { ascending: true });
-      if (err) setError("ما قدرنا نحمّل الطلبات. جربي تحدّثين الصفحة.");
+      if (err) setError("ما قدرنا نحمل الطلبات. جربي تحدثين الصفحة.");
       setRows((data as PlanRequest[] | null) || []);
       setLoading(false);
     }

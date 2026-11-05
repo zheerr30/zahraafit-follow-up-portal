@@ -100,7 +100,7 @@ export default function ProgressPage() {
     e.preventDefault();
     const w = toNum(weight);
     if (!w || w < 30 || w > 250) return toast.show("اكتبي وزنك بالكيلو، مثلًا 67.5");
-    if (await upsert({ weight_kg: w }, "سجّلنا وزنك")) setWeight("");
+    if (await upsert({ weight_kg: w }, "سجلنا وزنك")) setWeight("");
   }
 
   async function saveMeasures(e: FormEvent) {
@@ -127,7 +127,7 @@ export default function ProgressPage() {
   const vol = (l: WLog) => Math.round(l.items.reduce((a, it) => a + it.sets.reduce((b, s) => b + s.w * s.r, 0), 0));
 
   return (
-    <ClientShell title="تقدّمي">
+    <ClientShell title="تقدمي">
       <section className="card stack">
         <div className="row between" style={{ alignItems: "flex-start" }}>
           <div>
@@ -146,7 +146,7 @@ export default function ProgressPage() {
             <input id="w" className="inp num" inputMode="decimal" placeholder="وزن اليوم" value={weight} onChange={(e) => setWeight(e.target.value)} />
             <span>كجم</span>
           </div>
-          <button className="btn btn-p" type="submit">سجّلي</button>
+          <button className="btn btn-p" type="submit">سجلي</button>
         </form>
         <p className="note">وزني نفسك الصبح بعد الحمام وقبل الأكل، وقارني أسبوع بأسبوع مو يوم بيوم.</p>
       </section>

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { BookOpen, CalendarCheck, ClipboardList, Newspaper, Dumbbell, Home, Inbox, LineChart, Loader2, LogOut, UserRound, Utensils, Wrench } from "lucide-react";
 import { signOut } from "@/lib/use-auth";
 import { supabase } from "@/lib/supabase";
+import { getGender, useGenderText } from "@/lib/gender";
 
 /** Her logo, dark, for light pages. */
 export function Brand({ height = 44 }: { height?: number }) {
@@ -73,15 +74,17 @@ export function useToast() {
 /** Subscriber screens: sticky top bar and bottom tabs. */
 export function ClientShell({ title, sub, action, children }: { title: ReactNode; sub?: ReactNode; action?: ReactNode; children: ReactNode }) {
   const path = usePathname();
+  const root = useRef<HTMLDivElement>(null);
+  useGenderText(root, getGender());
   const tabs = [
     { href: "/app", label: "الرئيسية", icon: <Home /> },
     { href: "/app/food", label: "أكلي", icon: <Utensils /> },
     { href: "/app/workout", label: "تماريني", icon: <Dumbbell /> },
-    { href: "/app/progress", label: "تقدّمي", icon: <LineChart /> },
+    { href: "/app/progress", label: "تقدمي", icon: <LineChart /> },
     { href: "/app/guide", label: "دليلك", icon: <BookOpen /> }
   ];
   return (
-    <div className="app">
+    <div className="app" ref={root}>
       <header className="appbar gutter">
         <div style={{ minWidth: 0 }}>
           <div className="t">{title}</div>
@@ -137,7 +140,7 @@ export function CoachShell({ children }: { children: ReactNode }) {
     { href: "/coach/subscribers", label: "المشتركات", icon: <ClipboardList size={17} />, match: (p: string) => p.startsWith("/coach/subscribers") },
     { href: "/coach/checkins", label: "المتابعات", icon: <CalendarCheck size={17} />, match: (p: string) => p.startsWith("/coach/checkins") },
     { href: "/coach/content", label: "المحتوى", icon: <Newspaper size={17} />, match: (p: string) => p.startsWith("/coach/content") },
-    { href: "/coach/tools", label: "المولّدات", icon: <Wrench size={17} />, match: (p: string) => p.startsWith("/coach/tools") }
+    { href: "/coach/tools", label: "المولدات", icon: <Wrench size={17} />, match: (p: string) => p.startsWith("/coach/tools") }
   ];
   return (
     <div className="app wide">

@@ -72,11 +72,11 @@ export default function ClientHome() {
       <section className="photo-hero">
 
         <span className="kicker">✨ أول خطوة</span>
-        <h2>عبّي معلومات خطتك عشان تبدأ المدربة زهراء تجهزها</h2>
+        <h2>عبي معلومات خطتك عشان تبدأ المدربة زهراء تجهزها</h2>
         <p>تاخذ ٥ دقايق تقريبًا. وتوصلك خطتك خلال ٢-٣ أيام عمل.</p>
         <Link className="btn btn-p btn-block" href="/app/intake">
           <ClipboardEdit />
-          عبّي معلوماتي
+          عبي معلوماتي
         </Link>
       </section>
     );
@@ -110,7 +110,7 @@ export default function ClientHome() {
             <div className="row wrap">
               <Link className="btn btn-g btn-sm" href={`/app/intake?edit=${request.id}`}>
                 <PenLine />
-                عدّلي معلوماتك
+                عدلي معلوماتك
               </Link>
               <span className="note">تقدرين تعدلين لين تبدأ المدربة على خطتك.</span>
             </div>
@@ -169,7 +169,7 @@ export default function ClientHome() {
             اشتريتي خطة جديدة من المتجر؟
           </span>
           <Link className="btn btn-g btn-sm" href="/app/intake">
-            عبّي معلوماتها
+            عبي معلوماتها
           </Link>
         </section>
       </>

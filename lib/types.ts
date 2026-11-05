@@ -6,6 +6,7 @@ export type Profile = {
   email: string;
   role: UserRole;
   phone: string | null;
+  gender?: "female" | "male" | null;
   created_at: string;
   updated_at: string;
 };

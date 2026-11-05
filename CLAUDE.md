@@ -29,6 +29,8 @@ Then commit to `main` and push: Vercel publishes it within minutes. Tell her in 
 
 ## Rest of the app
 
+- Subscriber text is written addressing a woman, without shadda (ّ). For male subscribers (`profiles.gender`) it is switched on screen by the dictionary in `lib/gender.ts`: when you add subscriber text with a new feminine verb or adjective, add its masculine form there. Push notification texts have both forms in SQL (`push_due`).
+
 - Subscriber screens: `app/app/*` (home, intake, food, workout, progress, account). Coach screens: `app/coach/*`.
 - Database changes go in a new `supabase/phaseN-*.sql` file (idempotent, RLS on every table). She runs it herself in the Supabase SQL Editor: tell her exactly which file and that it is safe to run twice.
 - Build check: `NEXT_PUBLIC_SUPABASE_URL=https://x.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=x npm run build`.

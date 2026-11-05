@@ -26,7 +26,7 @@ export function CheckinCard({ client }: { client: Client }) {
   if (info.ended) {
     em = "🌟"; title = "انتهت مدة متابعتك"; text = "تبين تكملين؟ جددي اشتراكك من المتجر.";
   } else if (info.openDate && !doneNow) {
-    em = "📝"; title = `وقت متابعة الأسبوع ${info.openWeek}!`; text = "عبّيها عشان المدربة تشوف أسبوعك وتعدل لك."; cls = "hot";
+    em = "📝"; title = `وقت متابعة الأسبوع ${info.openWeek}!`; text = "عبيها عشان المدربة تشوف أسبوعك وتعدل لك."; cls = "hot";
   } else if (freshReply) {
     em = "💬"; title = "المدربة ردت على متابعتك"; text = latest!.coach_notes!.slice(0, 90);
   } else if (doneNow) {

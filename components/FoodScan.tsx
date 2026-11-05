@@ -50,7 +50,7 @@ export function BarcodeScanner({ onCode, onCancel }: { onCode: (code: string) =>
           <span className="scan-line" aria-hidden="true" />
         </div>
       )}
-      <p className="note" style={{ textAlign: "center" }}>وجّهي الكاميرا على الباركود وانتظري ثانية.</p>
+      <p className="note" style={{ textAlign: "center" }}>وجهي الكاميرا على الباركود وانتظري ثانية.</p>
       <form className="row" style={{ gap: 8 }} onSubmit={(e) => { e.preventDefault(); const c = typed.replace(/\D/g, ""); if (c.length >= 6 && c.length <= 14) onCode(c); }}>
         <label htmlFor="bc-typed" className="sr-only">رقم الباركود</label>
         <input id="bc-typed" className="inp num" dir="ltr" inputMode="numeric" value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="أو اكتبي رقم الباركود" style={{ flex: 1 }} />
@@ -97,11 +97,11 @@ export function MealPhoto({ onAdd, onCancel }: { onAdd: (items: { name: string; 
       {preview ? <img src={preview} alt="صورة وجبتك" style={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 14 }} /> : null}
       {!rows ? (
         <>
-          <p className="small muted">صوّري صحنك من فوق وكل الأكل باين، ونقدّر لك السعرات تقريبًا. بعدها تراجعين الكميات قبل ما تضيفينها.</p>
+          <p className="small muted">صوري صحنك من فوق وكل الأكل باين، ونقدر لك السعرات تقريبًا. بعدها تراجعين الكميات قبل ما تضيفينها.</p>
           <label className="btn btn-p" style={{ cursor: busy ? "wait" : "pointer" }}>
             <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={busy} onChange={(e) => pick(e.target.files?.[0])} />
             <Camera size={18} />
-            {busy ? "لحظة... نقرأ صحنك 🔍" : preview ? "صوّري مرة ثانية" : "📸 صوّري وجبتك"}
+            {busy ? "لحظة... نقرأ صحنك 🔍" : preview ? "صوري مرة ثانية" : "📸 صوري وجبتك"}
           </label>
         </>
       ) : rows.length ? (

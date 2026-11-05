@@ -73,11 +73,11 @@ export function Reminders({ profileId, mealsPerDay }: { profileId: string; meals
       ) : state === "unsupported" ? (
         <p className="small muted">هالمتصفح ما يدعم الإشعارات. جربي من Chrome أو Safari على جوالك.</p>
       ) : state === "denied" ? (
-        <p className="small muted">الإشعارات مقفلة لهالموقع. افتحي إعدادات الجوال ← الإشعارات ← ZahraaFit وفعّليها، وبعدين ارجعي هنا.</p>
+        <p className="small muted">الإشعارات مقفلة لهالموقع. افتحي إعدادات الجوال ← الإشعارات ← ZahraaFit وفعليها، وبعدين ارجعي هنا.</p>
       ) : state === "off" ? (
         <>
           <p className="small muted">نذكرك بوقت وجباتك، وبشرب الماء، وبتمرينك. تختارين الأوقات اللي تناسبك.</p>
-          <button type="button" className="btn btn-p btn-block" onClick={on} disabled={busy}>{busy ? "لحظة..." : "🔔 شغّلي التذكيرات"}</button>
+          <button type="button" className="btn btn-p btn-block" onClick={on} disabled={busy}>{busy ? "لحظة..." : "🔔 شغلي التذكيرات"}</button>
         </>
       ) : null}
       {err ? <p className="alert err">{err}</p> : null}

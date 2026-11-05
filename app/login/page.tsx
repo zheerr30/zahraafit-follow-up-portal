@@ -79,7 +79,7 @@ export default function LoginPage() {
       </form>
 
       <p className="auth-foot">
-        أول مرة؟ <Link className="link" href="/signup">سوّي حسابك</Link>
+        أول مرة؟ <Link className="link" href="/signup">سوي حسابك</Link>
       </p>
     </div>
   );

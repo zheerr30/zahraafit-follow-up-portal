@@ -83,7 +83,7 @@ export function parsePlanFile(text: string): ParsedPlan {
   try {
     raw = JSON.parse(text);
   } catch {
-    throw new Error("الملف هذا مو ملف بيانات خطة. نزّليه من زر «تصدير» في شريط المفضلة.");
+    throw new Error("الملف هذا مو ملف بيانات خطة. نزليه من زر «تصدير» في شريط المفضلة.");
   }
   if (raw.format === "zahraafit-meal-plan") {
     const days = arr<{ n: number; meals: Partial<Meal>[] }>(raw.days).map((d, i) => ({ n: num(d.n) || i + 1, meals: arr<Partial<Meal>>(d.meals).map(cleanMeal) }));
@@ -123,7 +123,7 @@ export function parsePlanFile(text: string): ParsedPlan {
     if (!days.length || !days.some((d) => d.exercises.length)) throw new Error("ملف الجدول الرياضي فاضي.");
     return { kind: "workout", title: "الجدول الرياضي", data: { format: "zahraafit-workout-plan", v: num(raw.v) || 1, name: str(raw.name), env: str(raw.env), days } };
   }
-  throw new Error("الملف هذا مو ملف بيانات خطة. نزّليه من زر «تصدير» في شريط المفضلة.");
+  throw new Error("الملف هذا مو ملف بيانات خطة. نزليه من زر «تصدير» في شريط المفضلة.");
 }
 
 /** "10-12" → [10, 12]; "15" → [15, 15]. */

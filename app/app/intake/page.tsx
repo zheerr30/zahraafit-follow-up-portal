@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { getGender, useGenderText } from "@/lib/gender";
 import { ArrowLeft, Check, ChevronRight, FileUp, Loader2, Send } from "lucide-react";
 import { Brand, Loading } from "@/components/ui";
 import { safeFileName } from "@/lib/format";
@@ -76,6 +77,9 @@ export default function IntakePage() {
   const [blocked, setBlocked] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  // Text follows the gender picked in the form (or the profile's).
+  useGenderText(root, draft?.answers.gender || getGender());
 
   const draftKey = auth.profile ? `zf-intake-draft-${auth.profile.id}` : null;
 
@@ -160,7 +164,7 @@ export default function IntakePage() {
   if (!auth.profile) return null;
 
   const frame = (body: React.ReactNode) => (
-    <div className="app">
+    <div className="app" ref={root}>
       <header className="top gutter">
         <Link className="icon-btn" href="/app" aria-label="رجوع للرئيسية">
           <ChevronRight />
@@ -168,7 +172,7 @@ export default function IntakePage() {
         <Brand height={34} />
         <span style={{ width: 44 }} />
       </header>
-      <main className="screen gutter" style={{ paddingBottom: 40 }}>
+      <main key={a.gender || "none"} className="screen gutter" style={{ paddingBottom: 40 }}>
         {body}
       </main>
     </div>
@@ -177,7 +181,7 @@ export default function IntakePage() {
   if (blocked || !draft) {
     return frame(
       <>
-        <p className="alert info">{blocked || "ما قدرنا نحمّل النموذج."}</p>
+        <p className="alert info">{blocked || "ما قدرنا نحمل النموذج."}</p>
         <Link className="btn btn-g" href="/app">
           رجوع للرئيسية
         </Link>
@@ -214,7 +218,7 @@ export default function IntakePage() {
       if (!a.workout.place) return "اختاري وين بتتمرنين.";
       if (!a.workout.level) return "اختاري مستواك.";
     }
-    if (s === "final" && !a.consent) return "علّمي على التأكيد قبل الإرسال.";
+    if (s === "final" && !a.consent) return "علمي على التأكيد قبل الإرسال.";
     return null;
   }
 
@@ -336,7 +340,7 @@ export default function IntakePage() {
 
       {step === "basics" ? (
         <>
-          <h1 style={{ fontSize: 24 }}>عرّفينا عليك</h1>
+          <h1 style={{ fontSize: 24 }}>عرفينا عليك</h1>
           <div className="field">
             <label htmlFor="name">الاسم</label>
             <input id="name" className="inp" value={a.full_name} onChange={(e) => setA({ full_name: e.target.value })} />
@@ -385,7 +389,7 @@ export default function IntakePage() {
           <div className="field">
             <span className="flabel">عندك أي حالة صحية؟ (اختياري)</span>
             <div className="picks">
-              {HEALTH_OPTIONS.map((h) => (
+              {HEALTH_OPTIONS.filter((h) => a.gender !== "male" || (h !== "حامل" && h !== "مرضعة")).map((h) => (
                 <Pick key={h} on={a.health.includes(h)} label={h} onClick={() => setA({ health: toggle(a.health, h) })} />
               ))}
             </div>

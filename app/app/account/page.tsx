@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/format";
 import { GOALS, normalizeAnswers, planTypeLabel } from "@/lib/intake";
 import { supabase } from "@/lib/supabase";
 import { signOut, useAuthGuard } from "@/lib/use-auth";
+import { setGender } from "@/lib/gender";
 import { useClientPlans } from "@/lib/use-client";
 import type { PlanRequest } from "@/lib/types";
 
@@ -98,6 +99,21 @@ export default function AccountPage() {
           <div className="inp" dir="ltr" style={{ background: "var(--sunken)", color: "var(--ink-2)", display: "flex", alignItems: "center", overflowWrap: "anywhere" }}>{p.email}</div>
           <span className="note">الإيميل هو اللي تدخلين فيه، ولو تبين تغيرينه تواصلي مع المدربة.</span>
         </div>
+        <div className="field">
+          <span className="label">الجنس</span>
+          <div className="seg-tabs" role="radiogroup" aria-label="الجنس">
+            {([["female", "👩 أنثى"], ["male", "👨 ذكر"]] as const).map(([g, l]) => (
+              <button key={g} type="button" role="radio" aria-checked={(p.gender || "female") === g} aria-selected={(p.gender || "female") === g} onClick={async () => {
+                if ((p.gender || "female") === g) return;
+                const { error } = await supabase.rpc("set_my_gender", { p_gender: g });
+                if (error) return setErr({ info: "ما انحفظ. جربي مرة ثانية." });
+                setGender(g);
+                window.location.reload();
+              }}>{l}</button>
+            ))}
+          </div>
+          <span className="note">عشان الكلام في التطبيق يطلع لك بالصيغة الصح.</span>
+        </div>
         {err.info ? <p className="alert err">{err.info}</p> : null}
         <button className="btn btn-s" type="submit" disabled={!changed || busy === "info"}>{busy === "info" ? "لحظة..." : "احفظي التعديل"}</button>
       </form>
@@ -143,7 +159,7 @@ export default function AccountPage() {
           <input id="pw-b" className="inp" type="password" dir="ltr" value={pw.b} onChange={(e) => setPw({ ...pw, b: e.target.value })} autoComplete="new-password" />
         </div>
         {err.pw ? <p className="alert err">{err.pw}</p> : null}
-        <button className="btn btn-s" type="submit" disabled={!pw.a || busy === "pw"}>{busy === "pw" ? "لحظة..." : "غيّري كلمة المرور"}</button>
+        <button className="btn btn-s" type="submit" disabled={!pw.a || busy === "pw"}>{busy === "pw" ? "لحظة..." : "غيري كلمة المرور"}</button>
       </form>
 
       {confirmOut ? (

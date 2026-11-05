@@ -63,7 +63,7 @@ export default function SignupPage() {
     <div className="auth gutter">
       <Brand />
       <div className="stack" style={{ gap: 6 }}>
-        <h1>هلا فيك! سوّي حسابك</h1>
+        <h1>هلا فيك! سوي حسابك</h1>
         <p className="muted">من حسابك تعبين معلومات خطتك، وتوصلك خطتك وتتابعين تقدمك.</p>
       </div>
 
@@ -91,7 +91,7 @@ export default function SignupPage() {
           {message ? <p className="alert err" role="alert">{message}</p> : null}
           <button className="btn btn-p btn-block" type="submit" disabled={loading}>
             {loading ? <Loader2 className="spin" /> : null}
-            سوّي حسابي
+            سوي حسابي
           </button>
         </form>
       )}

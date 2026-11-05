@@ -147,7 +147,7 @@ export default function ContentPage() {
           </div>
           <label className="consent">
             <input type="checkbox" checked={art.published} onChange={(e) => setArt({ ...art, published: e.target.checked })} />
-            <span>انشريه للمشتركات الحين (إذا ما علّمتي، ينحفظ مسودة ما يشوفونها)</span>
+            <span>انشريه للمشتركات الحين (إذا ما علمتي، ينحفظ مسودة ما يشوفونها)</span>
           </label>
           <button className="btn btn-p" type="submit" disabled={busy}>{busy ? <Loader2 className="spin" /> : null}حفظ</button>
         </form>
@@ -170,7 +170,7 @@ export default function ContentPage() {
               ) : (
                 <span className="row" style={{ gap: 2 }}>
                   <button type="button" className="icon-btn" aria-label={a.published ? "خفي المقال" : "انشري المقال"} title={a.published ? "خفي" : "انشري"} onClick={() => togglePublish(a)}>{a.published ? <Eye /> : <EyeOff />}</button>
-                  <button type="button" className="icon-btn" aria-label="عدّلي" onClick={() => { setError(null); setArt({ id: a.id, emoji: a.emoji || "", title: a.title, body: a.body, published: a.published }); window.scrollTo({ top: 0 }); }}><Pencil /></button>
+                  <button type="button" className="icon-btn" aria-label="عدلي" onClick={() => { setError(null); setArt({ id: a.id, emoji: a.emoji || "", title: a.title, body: a.body, published: a.published }); window.scrollTo({ top: 0 }); }}><Pencil /></button>
                   <button type="button" className="icon-btn" aria-label="احذفي" onClick={() => setConfirmDel(a.id)}><Trash2 /></button>
                 </span>
               )}
@@ -208,7 +208,7 @@ export default function ContentPage() {
           </div>
           <div className="field">
             <label htmlFor="c-desc">التفاصيل (اختياري)</label>
-            <textarea id="c-desc" className="inp" value={ch.description} onChange={(e) => setCh({ ...ch, description: e.target.value })} placeholder="مثلًا: امشي بعد العشاء ٣٠ دقيقة، وعلّمي على اليوم اللي تكملين فيه." />
+            <textarea id="c-desc" className="inp" value={ch.description} onChange={(e) => setCh({ ...ch, description: e.target.value })} placeholder="مثلًا: امشي بعد العشاء ٣٠ دقيقة، وعلمي على اليوم اللي تكملين فيه." />
           </div>
           <div className="grid2">
             <div className="field">
@@ -242,7 +242,7 @@ export default function ContentPage() {
                   </span>
                 ) : (
                   <span className="row" style={{ gap: 2 }}>
-                    <button type="button" className="icon-btn" aria-label="عدّلي" onClick={() => { setError(null); setCh({ id: c.id, emoji: c.emoji || "", title: c.title, description: c.description, starts_on: c.starts_on, ends_on: c.ends_on }); }}><Pencil /></button>
+                    <button type="button" className="icon-btn" aria-label="عدلي" onClick={() => { setError(null); setCh({ id: c.id, emoji: c.emoji || "", title: c.title, description: c.description, starts_on: c.starts_on, ends_on: c.ends_on }); }}><Pencil /></button>
                     <button type="button" className="icon-btn" aria-label="احذفي" onClick={() => setConfirmDel(c.id)}><Trash2 /></button>
                   </span>
                 )}
@@ -251,7 +251,7 @@ export default function ContentPage() {
           })}
         </div>
       ) : !ch ? (
-        <p className="note">ما سويتي تحديات للحين. التحدي الشغال يطلع للمشتركات في الرئيسية، ويعلّمون على كل يوم يكملونه.</p>
+        <p className="note">ما سويتي تحديات للحين. التحدي الشغال يطلع للمشتركات في الرئيسية، ويعلمون على كل يوم يكملونه.</p>
       ) : null}
       <CoachDishes />
       {toast.node}

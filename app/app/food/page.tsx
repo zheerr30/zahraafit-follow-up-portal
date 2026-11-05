@@ -168,7 +168,7 @@ export default function FoodPage() {
               المدربة أرسلت خطتك كملف. <Link className="link" href="/app">افتحيها من الرئيسية</Link>
             </>
           ) : (
-            "أول ما ترسل المدربة خطتك، تشوفين وجباتك هنا يوم بيوم، وتبدلين الأصناف، وتعلّمين على اللي أكلتيه."
+            "أول ما ترسل المدربة خطتك، تشوفين وجباتك هنا يوم بيوم، وتبدلين الأصناف، وتعلمين على اللي أكلتيه."
           )}
         </Empty>
       </ClientShell>
@@ -226,9 +226,9 @@ export default function FoodPage() {
                 <span className="nm">{chosen ? <>{chosen} <span className="swapped">· بديل</span></> : ing.n}</span>
                 {chosen ? null : toTaste(ing.a, ing.u) ? <span className="note">حسب الذوق</span> : <span className="amt">{ing.a}<small>{ing.u}</small></span>}
                 {subs.length ? (
-                  <button type="button" className="swap" aria-label={`بدّلي ${ing.n}`} onClick={() => setSheet({ type: "ing", key: ik, original: ingredientText(ing), options: subs })}>
+                  <button type="button" className="swap" aria-label={`بدلي ${ing.n}`} onClick={() => setSheet({ type: "ing", key: ik, original: ingredientText(ing), options: subs })}>
                     <ArrowLeftRight />
-                    بدّلي
+                    بدلي
                   </button>
                 ) : null}
               </div>
@@ -260,12 +260,12 @@ export default function FoodPage() {
         <div className="mfoot">
           <button type="button" className="eat" aria-pressed={eaten} onClick={() => saveLog({ ...log, meals: { ...log.meals, [key]: !eaten } })} style={{ marginInlineStart: 0 }}>
             <Check />
-            {eaten ? "أكلتها" : "علّمي إنك أكلتيها"}
+            {eaten ? "أكلتها" : "علمي إنك أكلتيها"}
           </button>
           {opts.swapMeal ? (
             <button type="button" className="link" style={{ marginInlineStart: "auto" }} onClick={() => setSheet({ type: "meal", key, slot })}>
               <ArrowLeftRight />
-              بدّلي الوجبة
+              بدلي الوجبة
             </button>
           ) : null}
         </div>
@@ -336,7 +336,7 @@ export default function FoodPage() {
 
           <div className="tip-card">
             <span className="em" aria-hidden="true">🔁</span>
-            <span>ما تبين صنف؟ اضغطي <b>بدّلي</b> جنبه. وتقدرين تبدلين الوجبة كاملة بوجبة من نفس الخانة.</span>
+            <span>ما تبين صنف؟ اضغطي <b>بدلي</b> جنبه. وتقدرين تبدلين الوجبة كاملة بوجبة من نفس الخانة.</span>
           </div>
 
           {meals.map(({ key, meal, swapped, slot }) => mealCard(key, meal, slot || meal.slot, { swapped, swapMeal: true }))}
@@ -412,7 +412,7 @@ export default function FoodPage() {
         <>
           <div className="tip-card">
             <span className="em" aria-hidden="true">🛒</span>
-            <span>كل اللي تحتاجينه لأيام جدولك ({plan.days.length} أيام)، بعد تبديلاتك. علّمي على اللي اشتريتيه. الكميات بالوزن النيء.</span>
+            <span>كل اللي تحتاجينه لأيام جدولك ({plan.days.length} أيام)، بعد تبديلاتك. علمي على اللي اشتريتيه. الكميات بالوزن النيء.</span>
           </div>
           <section className="card" style={{ padding: "6px 16px" }}>
             {shopping.items.map((it) => {
@@ -445,9 +445,9 @@ export default function FoodPage() {
 
       {sheet ? (
         <div className="sheet-bg" onClick={(e) => e.target === e.currentTarget && setSheet(null)}>
-          <div className="sheet" role="dialog" aria-modal="true" aria-label="بدّلي">
+          <div className="sheet" role="dialog" aria-modal="true" aria-label="بدلي">
             <div className="row between">
-              <h2 style={{ fontSize: 18 }}>{sheet.type === "meal" ? `بدّلي ${sheet.slot || "الوجبة"}` : "بدّلي الصنف"}</h2>
+              <h2 style={{ fontSize: 18 }}>{sheet.type === "meal" ? `بدلي ${sheet.slot || "الوجبة"}` : "بدلي الصنف"}</h2>
               <button type="button" className="icon-btn" aria-label="إغلاق" onClick={() => setSheet(null)}>
                 <X />
               </button>

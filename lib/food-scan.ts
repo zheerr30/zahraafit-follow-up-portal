@@ -39,7 +39,7 @@ export async function lookupBarcode(code: string, profileId: string): Promise<Ba
 }
 
 const AI_ERRORS: Record<string, string> = {
-  not_configured: "قراءة الصور بالذكاء الاصطناعي لسا ما تفعّلت. المدربة بتفعلها قريب.",
+  not_configured: "قراءة الصور بالذكاء الاصطناعي لسا ما تفعلت. المدربة بتفعلها قريب.",
   limit: "وصلتي حدك اليوم من قراءة الصور. جربي بكرا أو اكتبيها بنفسك.",
   refused: "ما قدرنا نقرأ هالصورة. جربي صورة ثانية.",
   busy: "الخدمة مشغولة الحين، جربي بعد دقيقة.",

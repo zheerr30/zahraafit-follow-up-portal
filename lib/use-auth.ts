@@ -1,5 +1,6 @@
 "use client";
 
+import { setGender } from "@/lib/gender";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
@@ -39,7 +40,7 @@ export function useAuthGuard(requiredRole?: UserRole) {
       const { data: profile, error } = await supabase.from("profiles").select("*").eq("id", session.user.id).single<Profile>();
       if (!mounted) return;
       if (error || !profile) {
-        setState({ loading: false, session, profile: null, error: "ما قدرنا نحمّل حسابك. سجلي خروج وادخلي مرة ثانية." });
+        setState({ loading: false, session, profile: null, error: "ما قدرنا نحمل حسابك. سجلي خروج وادخلي مرة ثانية." });
         return;
       }
 
@@ -48,6 +49,7 @@ export function useAuthGuard(requiredRole?: UserRole) {
         return;
       }
 
+      setGender(profile.gender);
       setState({ loading: false, session, profile, error: null });
     }
 

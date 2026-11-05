@@ -23,7 +23,7 @@ export function GeneratorPanel({ answers, name, clientId, onClose, onUse }: { an
       const { data: s } = await supabase.auth.getSession();
       const res = await fetch("/api/generators/meal", { headers: { Authorization: `Bearer ${s.session?.access_token || ""}` }, cache: "no-store" });
       if (!res.ok) {
-        setError(res.status === 401 || res.status === 403 ? "المولّد يفتح لحساب المدربة بس. سجلي خروج وادخلي مرة ثانية." : "ما قدرنا نفتح المولّد. حدّثي الصفحة وجربي مرة ثانية.");
+        setError(res.status === 401 || res.status === 403 ? "المولد يفتح لحساب المدربة بس. سجلي خروج وادخلي مرة ثانية." : "ما قدرنا نفتح المولد. حدثي الصفحة وجربي مرة ثانية.");
         return;
       }
       if (clientId) {
@@ -60,13 +60,13 @@ export function GeneratorPanel({ answers, name, clientId, onClose, onUse }: { an
     try {
       const list = JSON.parse(String(w.eval(READ_PLANS_SCRIPT))) as MealPlanData[];
       const usable = list.filter((p) => p.days?.length);
-      if (!usable.length) setError("ما فيه جدول للحين. ولّدي الجدول في المولّد، بعدها اضغطي «أرسلي هذا الجدول».");
+      if (!usable.length) setError("ما فيه جدول للحين. ولدي الجدول في المولد، بعدها اضغطي «أرسلي هذا الجدول».");
       else {
         setError(null);
         setPlans(usable);
       }
     } catch {
-      setError("ما قدرنا نقرأ الجدول من المولّد. إذا عدلتي على طريقة حفظ الجداول فيه، أرسليه لي أشوفه.");
+      setError("ما قدرنا نقرأ الجدول من المولد. إذا عدلتي على طريقة حفظ الجداول فيه، أرسليه لي أشوفه.");
     }
     setReading(false);
   }
@@ -92,14 +92,14 @@ export function GeneratorPanel({ answers, name, clientId, onClose, onUse }: { an
   const sorted = plans ? [...plans].sort((a, b) => Number(Boolean(b.name && first && b.name.includes(first))) - Number(Boolean(a.name && first && a.name.includes(first)))) : null;
 
   return (
-    <div className="overlay" role="dialog" aria-modal="true" aria-label="مولّد الأكل" style={{ display: "flex", flexDirection: "column" }}>
+    <div className="overlay" role="dialog" aria-modal="true" aria-label="مولد الأكل" style={{ display: "flex", flexDirection: "column" }}>
       <div className="s-top gutter" style={{ flexWrap: "wrap" }}>
-        <button type="button" className="icon-btn" aria-label="إغلاق المولّد" onClick={onClose}>
+        <button type="button" className="icon-btn" aria-label="إغلاق المولد" onClick={onClose}>
           <X />
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <b style={{ display: "block" }}>مولّد الأكل · {name || "مشتركة"}</b>
-          <span className="small muted">معلوماتها معبّاة. ولّدي الجدول وعدلي عليه زي العادة.</span>
+          <b style={{ display: "block" }}>مولد الأكل · {name || "مشتركة"}</b>
+          <span className="small muted">معلوماتها معباة. ولدي الجدول وعدلي عليه زي العادة.</span>
         </div>
         <button type="button" className="btn btn-p btn-sm" disabled={!html || reading} onClick={read}>
           {reading ? <Loader2 className="spin" /> : <Send />}
@@ -144,12 +144,12 @@ export function GeneratorPanel({ answers, name, clientId, onClose, onUse }: { an
 
       <div style={{ flex: 1, minHeight: 0 }}>
         {html ? (
-          <iframe ref={frame} title="مولّد الأكل" srcDoc={html} onLoad={() => setTimeout(fill, 400)} style={{ width: "100%", height: "100%", border: 0, background: "#fff" }} />
+          <iframe ref={frame} title="مولد الأكل" srcDoc={html} onLoad={() => setTimeout(fill, 400)} style={{ width: "100%", height: "100%", border: 0, background: "#fff" }} />
         ) : !error ? (
           <div className="loading">
             <span className="row small">
               <Loader2 className="spin" size={18} />
-              نفتح المولّد...
+              نفتح المولد...
             </span>
           </div>
         ) : null}

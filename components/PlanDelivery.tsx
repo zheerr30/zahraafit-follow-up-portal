@@ -26,7 +26,7 @@ export function PlanDelivery({ req, onDelivered, toast, incoming }: { req: PlanR
 
   useEffect(() => {
     if (!incoming) return;
-    setPending((prev) => [...prev.filter((p) => !(p.parsed && p.parsed.kind === incoming.kind)), { name: "من المولّد", title: incoming.title, parsed: incoming }]);
+    setPending((prev) => [...prev.filter((p) => !(p.parsed && p.parsed.kind === incoming.kind)), { name: "من المولد", title: incoming.title, parsed: incoming }]);
   }, [incoming]);
 
   useEffect(() => {
@@ -161,7 +161,7 @@ export function PlanDelivery({ req, onDelivered, toast, incoming }: { req: PlanR
         <span className="label">الخطوة ٢</span>
         <h2 style={{ fontSize: 17 }}>ارفعي الخطة</h2>
         <p className="note">
-          الجدول اللي ترسلينه من المولّد يطلع هنا. وتقدرين تضيفين PDF لو تبين.
+          الجدول اللي ترسلينه من المولد يطلع هنا. وتقدرين تضيفين PDF لو تبين.
         </p>
       </div>
 
@@ -202,7 +202,7 @@ export function PlanDelivery({ req, onDelivered, toast, incoming }: { req: PlanR
         <span>{pending.length ? "أضيفي ملف ثاني (PDF)" : "أو ارفعي PDF"}</span>
         <input type="file" className="sr-only" accept="application/pdf,image/*,application/json,.json" multiple onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
       </label>
-      {pending.length && !hasData ? <p className="note">بالـPDF بس، المشتركة تقرأ خطتها، بس ما تقدر تعلّم على وجباتها أو تبدل الأصناف. ولّدي الجدول من الخطوة ١ عشان تصير تفاعلية.</p> : null}
+      {pending.length && !hasData ? <p className="note">بالـPDF بس، المشتركة تقرأ خطتها، بس ما تقدر تعلم على وجباتها أو تبدل الأصناف. ولدي الجدول من الخطوة ١ عشان تصير تفاعلية.</p> : null}
 
       <div className="stack" style={{ gap: 4, marginTop: 6 }}>
         <span className="label">الخطوة ٣</span>

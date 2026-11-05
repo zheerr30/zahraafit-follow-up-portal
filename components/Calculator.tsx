@@ -46,7 +46,7 @@ export function Calculator({ profileId }: { profileId: string }) {
     <>
       <div className="tip-card">
         <span className="em" aria-hidden="true">🧮</span>
-        <span>احسبي سعراتك وماكروزك بنفس طريقة المدربة. عبّينا معلوماتك من طلبك وآخر وزن سجلتيه، وتقدرين تغيرينها.</span>
+        <span>احسبي سعراتك وماكروزك بنفس طريقة المدربة. عبينا معلوماتك من طلبك وآخر وزن سجلتيه، وتقدرين تغيرينها.</span>
       </div>
       <section className="card stack">
         <div className="grid3">
@@ -99,7 +99,7 @@ export function Calculator({ profileId }: { profileId: string }) {
           }}>🎯 احفظيها هدفي اليومي</button>
         </section>
       ) : (
-        <p className="alert info">عبّي العمر والوزن والطول وتطلع لك الأرقام.</p>
+        <p className="alert info">عبي العمر والوزن والطول وتطلع لك الأرقام.</p>
       )}
       {toast.node}
     </>

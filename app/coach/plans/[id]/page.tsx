@@ -72,7 +72,7 @@ export default function PlanEditor() {
 
   if (auth.loading || loading) return <Loading />;
   if (!auth.profile) return null;
-  if (!plan || !row) return <CoachShell><p className="alert err">هذي الخطة ما تنعدل هنا (لازم تكون مرسلة من المولّد داخل المنصة).</p></CoachShell>;
+  if (!plan || !row) return <CoachShell><p className="alert err">هذي الخطة ما تنعدل هنا (لازم تكون مرسلة من المولد داخل المنصة).</p></CoachShell>;
 
   function setMeal(d: number, m: number, meal: Meal) {
     const next = { ...plan!, days: plan!.days.map((x, i) => (i === d ? { ...x, meals: x.meals.map((y, j) => (j === m ? meal : y)) } : x)) };
@@ -101,7 +101,7 @@ export default function PlanEditor() {
       <div className="row between wrap">
         <div>
           <h1 style={{ fontSize: 22 }}>✏️ تعديل خطتها الغذائية</h1>
-          <p className="small muted">بدّلي وجبة، أو كبّري وصغّري الكمية، أو اكتبي ملاحظة. التعديل يوصلها على طول بدون ما تولّدين جدول جديد.</p>
+          <p className="small muted">بدلي وجبة، أو كبري وصغري الكمية، أو اكتبي ملاحظة. التعديل يوصلها على طول بدون ما تولدين جدول جديد.</p>
         </div>
       </div>
 
@@ -136,7 +136,7 @@ export default function PlanEditor() {
           <p className="small muted">💪 {Math.round(meal.p)} · 🌾 {Math.round(meal.c)} · 🫒 {Math.round(meal.f)} — {meal.ingredients.map((i) => `${i.n} ${typeof i.a === "number" && i.a ? `${i.a}${i.u}` : ""}`).join("، ")}</p>
           {meal.note ? <p className="note">📝 {meal.note}</p> : null}
           <div className="row wrap" style={{ gap: 6 }}>
-            <button type="button" className="btn btn-g btn-sm" onClick={() => setSheet({ type: "swap", d: day, m })}>🔁 بدّليها</button>
+            <button type="button" className="btn btn-g btn-sm" onClick={() => setSheet({ type: "swap", d: day, m })}>🔁 بدليها</button>
             <button type="button" className="btn btn-g btn-sm" onClick={() => { setCustom(""); setSheet({ type: "size", d: day, m }); }}>⚖️ الكمية</button>
             <button type="button" className="btn btn-g btn-sm" onClick={() => { setNoteText(meal.note || ""); setSheet({ type: "note", d: day, m }); }}>📝 ملاحظة</button>
           </div>
@@ -151,7 +151,7 @@ export default function PlanEditor() {
         <div className="sheet-bg" onClick={(e) => e.target === e.currentTarget && setSheet(null)}>
           <div className="sheet" role="dialog" aria-modal="true" aria-label="تعديل الوجبة" style={{ maxHeight: "85vh", overflowY: "auto" }}>
             <div className="row between">
-              <h2 style={{ fontSize: 17 }}>{sheet.type === "swap" ? `بدّلي «${cur.name}»` : sheet.type === "size" ? "كبّري أو صغّري الكمية" : "ملاحظة على الوجبة"}</h2>
+              <h2 style={{ fontSize: 17 }}>{sheet.type === "swap" ? `بدلي «${cur.name}»` : sheet.type === "size" ? "كبري أو صغري الكمية" : "ملاحظة على الوجبة"}</h2>
               <button type="button" className="icon-btn" aria-label="إغلاق" onClick={() => setSheet(null)}><X /></button>
             </div>
             {sheet.type === "swap" ? (
@@ -180,7 +180,7 @@ export default function PlanEditor() {
                     <label htmlFor="cal-target">أو حطي السعرات اللي تبينها</label>
                     <input id="cal-target" className="inp num" inputMode="numeric" value={custom} onChange={(e) => setCustom(e.target.value.replace(/\D/g, ""))} placeholder={String(cur.cal)} />
                   </div>
-                  <button type="button" className="btn btn-p" disabled={!Number(custom) || !cur.cal} onClick={() => setMeal(sheet.d, sheet.m, scaleMeal(cur, Number(custom) / cur.cal))}>طبّقي</button>
+                  <button type="button" className="btn btn-p" disabled={!Number(custom) || !cur.cal} onClick={() => setMeal(sheet.d, sheet.m, scaleMeal(cur, Number(custom) / cur.cal))}>طبقي</button>
                 </div>
                 <p className="note">كميات البدائل داخل الوجبة ما تتغير، راجعيها لو تحتاج.</p>
               </div>

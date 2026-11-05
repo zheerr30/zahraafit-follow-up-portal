@@ -145,7 +145,7 @@ export default function WorkoutPage() {
     const items: LogItem[] = session.exercises
       .map((e, i) => ({ id: e.id, name: e.name, sets: session.sets[i].filter((x) => x.done).map((x) => ({ w: Number(x.w) || 0, r: Number(x.r) || 0 })) }))
       .filter((x) => x.sets.length);
-    if (!items.length) return toast.show("علّمي على جولة وحدة على الأقل قبل ما تخلصين");
+    if (!items.length) return toast.show("علمي على جولة وحدة على الأقل قبل ما تخلصين");
     setSaving(true);
     const dur = Math.round((Date.now() - session.t0) / 1000);
     const { error } = await supabase.from("workout_logs").insert({ client_id: cp.client.id, plan_id: row!.id, day_index: session.dayIndex, day_title: session.title, duration_sec: dur, items });
@@ -237,7 +237,7 @@ export default function WorkoutPage() {
                 <div className="alert info stack">
                   <b>تطلعين بدون ما تحفظين؟ الجولات اللي سجلتيها بتروح.</b>
                   <div className="row">
-                    <button type="button" className="btn btn-s btn-sm" style={{ flex: 1 }} onClick={() => setSession({ ...session, quitAsk: false })}>كمّلي التمرين</button>
+                    <button type="button" className="btn btn-s btn-sm" style={{ flex: 1 }} onClick={() => setSession({ ...session, quitAsk: false })}>كملي التمرين</button>
                     <button type="button" className="btn btn-p btn-sm" style={{ flex: 1 }} onClick={() => { setSession(null); setRest(null); }}>اطلعي</button>
                   </div>
                 </div>
@@ -294,7 +294,7 @@ export default function WorkoutPage() {
               })}
               <button type="button" className="btn btn-p btn-block" disabled={saving} onClick={finish}>
                 <Check />
-                خلّصت التمرين
+                خلصت التمرين
               </button>
             </div>
           </div>
@@ -305,7 +305,7 @@ export default function WorkoutPage() {
                 <span className="t">{clk(Math.max(0, Math.ceil((rest.end - now) / 1000)))}</span>
                 <span className="l"><b>وقت الراحة</b>{rest.next}</span>
                 <button type="button" aria-label="زيدي ١٥ ثانية" onClick={() => setRest({ ...rest, end: rest.end + 15000, total: rest.total + 15 })}>+15</button>
-                <button type="button" onClick={() => setRest(null)}>تخطّي</button>
+                <button type="button" onClick={() => setRest(null)}>تخطي</button>
               </div>
             </div>
           ) : null}
@@ -317,7 +317,7 @@ export default function WorkoutPage() {
           <div className="app screen gutter" style={{ paddingTop: 60, alignItems: "center", textAlign: "center" }}>
             <span className="avatar" style={{ width: 84, height: 84, background: "var(--clay)", color: "var(--on-clay)" }}><Check size={40} /></span>
             <h1 style={{ fontSize: 26 }}>عاشت يدك</h1>
-            <p className="muted">خلّصتي {done.title}. المدربة تشوف أوزانك.</p>
+            <p className="muted">خلصتي {done.title}. المدربة تشوف أوزانك.</p>
             <div className="grid3" style={{ width: "100%" }}>
               <div className="stat"><b>{done.min}</b><span>دقيقة</span></div>
               <div className="stat"><b>{done.sets}</b><span>جولة</span></div>

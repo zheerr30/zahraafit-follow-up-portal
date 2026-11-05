@@ -58,7 +58,7 @@ export function FollowupSettings({ client, wantsFollowup, onChange }: { client: 
           <>
             {!info.has ? (
               <p className="small muted">
-                {wantsFollowup ? "⚠️ اشتركت بالمتابعة. حددي متى تبدأ وكم أسبوع، وبيوصلها تذكير كل أسبوع تعبي متابعتها." : "فعّليها لو اشتركت بالمتابعة. بيوصلها تذكير كل أسبوع تعبي متابعتها."}
+                {wantsFollowup ? "⚠️ اشتركت بالمتابعة. حددي متى تبدأ وكم أسبوع، وبيوصلها تذكير كل أسبوع تعبي متابعتها." : "فعليها لو اشتركت بالمتابعة. بيوصلها تذكير كل أسبوع تعبي متابعتها."}
               </p>
             ) : null}
             <div className="grid2">
@@ -76,7 +76,7 @@ export function FollowupSettings({ client, wantsFollowup, onChange }: { client: 
             <p className="note">أول متابعة لها بعد أسبوع من البداية ({dayName(new Date(new Date(start + "T12:00:00").getTime() + 7 * 864e5).toISOString().slice(0, 10))})، وبعدها كل أسبوع بنفس اليوم.</p>
             <div className="row" style={{ gap: 8 }}>
               {edit ? <button type="button" className="btn btn-g" onClick={() => setEdit(false)}>إلغاء</button> : null}
-              <button type="button" className="btn btn-p" style={{ flex: 1 }} disabled={busy || !start} onClick={() => save({ followup_start: start, followup_weeks: weeks })}>{info.has ? "احفظي" : "✅ فعّلي المتابعة"}</button>
+              <button type="button" className="btn btn-p" style={{ flex: 1 }} disabled={busy || !start} onClick={() => save({ followup_start: start, followup_weeks: weeks })}>{info.has ? "احفظي" : "✅ فعلي المتابعة"}</button>
             </div>
             {info.has && edit ? (
               <button type="button" className="link" style={{ color: "var(--clay-ink)" }} disabled={busy} onClick={() => save({ followup_start: null, followup_weeks: null })}>شيلي المتابعة عنها</button>

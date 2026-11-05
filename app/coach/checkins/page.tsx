@@ -88,7 +88,7 @@ export default function CheckinsPage() {
         <>
           <div className="sec-title">
             <span className="em" aria-hidden="true">⏰</span>
-            <h2>ما سلّمت متابعة هالأسبوع</h2>
+            <h2>ما سلمت متابعة هالأسبوع</h2>
           </div>
           <section className="card" style={{ padding: "4px 16px" }}>
             {late.map((r) => (
@@ -104,7 +104,7 @@ export default function CheckinsPage() {
         <>
           <div className="sec-title">
             <span className="em" aria-hidden="true">⚙️</span>
-            <h2>اشتركت بالمتابعة وما فعّلتيها</h2>
+            <h2>اشتركت بالمتابعة وما فعلتيها</h2>
           </div>
           <section className="card" style={{ padding: "4px 16px" }}>
             {needSetup.map((r) => (

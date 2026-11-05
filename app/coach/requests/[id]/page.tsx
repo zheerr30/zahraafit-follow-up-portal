@@ -76,9 +76,9 @@ export default function CoachRequestPage() {
     if (!req) return;
     try {
       await navigator.clipboard.writeText(answersToGeneratorText(normalizeAnswers(req.answers), req));
-      toast.show("نسخت معلوماتها. الصقيها في المولّد");
+      toast.show("نسخت معلوماتها. الصقيها في المولد");
     } catch {
-      setError("المتصفح منع النسخ. افتحي «النص اللي ينسخ للمولّد» تحت وانسخيه.");
+      setError("المتصفح منع النسخ. افتحي «النص اللي ينسخ للمولد» تحت وانسخيه.");
     }
   }
 
@@ -123,20 +123,20 @@ export default function CoachRequestPage() {
         <section className="card stack">
           <div className="stack" style={{ gap: 4 }}>
             <span className="label">الخطوة ١</span>
-            <h2 style={{ fontSize: 17 }}>ولّدي الجدول</h2>
+            <h2 style={{ fontSize: 17 }}>ولدي الجدول</h2>
             <p className="note">
-              يفتح لك المولّد ومعلوماتها معبّاة فيه. المشتركة تنتظره بين <b>{formatDay(win.from)}</b> و<b>{formatDay(win.to)}</b>.
+              يفتح لك المولد ومعلوماتها معباة فيه. المشتركة تنتظره بين <b>{formatDay(win.from)}</b> و<b>{formatDay(win.to)}</b>.
             </p>
           </div>
           {req.wants_nutrition ? (
             <button type="button" className="btn btn-p btn-block" onClick={() => { setGenOpen(true); if (req.status === "submitted") update({ status: "in_progress", started_at: new Date().toISOString() }, "صارت في «شغالة عليها»"); }}>
               <Utensils />
-              ولّدي الجدول الغذائي
+              ولدي الجدول الغذائي
             </button>
           ) : null}
           <button type="button" className={`btn btn-block ${req.wants_nutrition ? "btn-g" : "btn-p"}`} onClick={() => { copy(); if (req.status === "submitted") update({ status: "in_progress", started_at: new Date().toISOString() }, "نسخت معلوماتها، وصارت في «شغالة عليها»"); }}>
             <ClipboardCopy />
-            انسخي معلوماتها{req.wants_workout ? " (لمولّد التمارين)" : ""}
+            انسخي معلوماتها{req.wants_workout ? " (لمولد التمارين)" : ""}
           </button>
           {req.status === "in_progress" ? (
             <div className="row between wrap small">
@@ -232,7 +232,7 @@ export default function CoachRequestPage() {
       </section>
 
       <details className="card">
-        <summary style={{ cursor: "pointer", fontWeight: 700 }}>النص اللي ينسخ للمولّد</summary>
+        <summary style={{ cursor: "pointer", fontWeight: 700 }}>النص اللي ينسخ للمولد</summary>
         <pre className="copy-box" style={{ marginTop: 12 }}>{answersToGeneratorText(a, req)}</pre>
       </details>
 

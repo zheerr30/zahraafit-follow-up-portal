@@ -146,7 +146,7 @@ export default function SubscriberPage() {
       {mealRow ? (
         <Link href={`/coach/plans/${mealRow.id}`} className="tip-card">
           <span className="em" aria-hidden="true">✏️</span>
-          <span><b>عدّلي خطتها الغذائية</b> بدّلي وجبة، أو غيري الكمية، أو اكتبي لها ملاحظة، بدون ما تولّدين جدول جديد.</span>
+          <span><b>عدلي خطتها الغذائية</b> بدلي وجبة، أو غيري الكمية، أو اكتبي لها ملاحظة، بدون ما تولدين جدول جديد.</span>
         </Link>
       ) : null}
 

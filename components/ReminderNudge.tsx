@@ -19,7 +19,7 @@ export function ReminderNudge() {
     <div className="tip-card" style={{ alignItems: "center" }}>
       <span className="em" aria-hidden="true">🔔</span>
       <Link href="/app/account#reminders" style={{ flex: 1 }}>
-        <b>شغّلي التذكيرات</b> ونذكرك بوجباتك والماء والتمرين
+        <b>شغلي التذكيرات</b> ونذكرك بوجباتك والماء والتمرين
       </Link>
       <button type="button" className="icon-btn" aria-label="إخفاء" onClick={() => {
         setShow(false);

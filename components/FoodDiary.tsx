@@ -143,7 +143,7 @@ export function FoodDiary({
   }
 
   async function onBarcode(slot: Slot, code: string) {
-    toast.show("لحظة، ندوّر على المنتج...");
+    toast.show("لحظة، ندور على المنتج...");
     const pr = await lookupBarcode(code, profileId);
     if (pr) {
       const f = fromBarcode(pr);
@@ -151,7 +151,7 @@ export function FoodDiary({
       setSheet({ mode: "amount", slot, food: f });
     } else {
       setSheet({ mode: "new", slot, name: "", barcode: code });
-      toast.show("ما لقينا هالمنتج. صوّري جدول القيم الغذائية وحنا نقرأه 📸");
+      toast.show("ما لقينا هالمنتج. صوري جدول القيم الغذائية وحنا نقرأه 📸");
     }
   }
 
@@ -268,7 +268,7 @@ export function FoodDiary({
       })}
       {loaded && !entries.length && !ticked.length ? (
         <p className="note" style={{ textAlign: "center" }}>
-          {planMeal ? "علّمي على وجبات خطتك من «وجباتي» وتنحسب هنا، وأي شي ثاني أضيفيه بنفسك." : "ابدئي بإضافة أول شي أكلتيه 👆"}
+          {planMeal ? "علمي على وجبات خطتك من «وجباتي» وتنحسب هنا، وأي شي ثاني أضيفيه بنفسك." : "ابدئي بإضافة أول شي أكلتيه 👆"}
         </p>
       ) : null}
 
@@ -276,7 +276,7 @@ export function FoodDiary({
         <div className="sheet-bg" onClick={(e) => e.target === e.currentTarget && setSheet(null)}>
           <div className="sheet" role="dialog" aria-modal="true" aria-label="أضيفي أكل" style={{ maxHeight: "88vh", overflowY: "auto" }}>
             <div className="row between">
-              <h2 style={{ fontSize: 18 }}>{SLOT_EMOJI[sheet.slot]} {sheet.mode === "new" ? (sheet.barcode ? "منتج جديد" : "صنف جديد") : sheet.mode === "barcode" ? "امسحي الباركود" : sheet.mode === "photo" ? "صوّري وجبتك" : `أضيفي لـ${sheet.slot}`}</h2>
+              <h2 style={{ fontSize: 18 }}>{SLOT_EMOJI[sheet.slot]} {sheet.mode === "new" ? (sheet.barcode ? "منتج جديد" : "صنف جديد") : sheet.mode === "barcode" ? "امسحي الباركود" : sheet.mode === "photo" ? "صوري وجبتك" : `أضيفي لـ${sheet.slot}`}</h2>
               <button type="button" className="icon-btn" aria-label="إغلاق" onClick={() => setSheet(null)}>
                 <X />
               </button>
@@ -286,7 +286,7 @@ export function FoodDiary({
               <>
                 <div className="scan-btns">
                   <button type="button" onClick={() => setSheet({ mode: "barcode", slot: sheet.slot })}><span aria-hidden="true">📷</span>باركود</button>
-                  <button type="button" onClick={() => setSheet({ mode: "photo", slot: sheet.slot })}><span aria-hidden="true">🤖</span>صوّري وجبتك</button>
+                  <button type="button" onClick={() => setSheet({ mode: "photo", slot: sheet.slot })}><span aria-hidden="true">🤖</span>صوري وجبتك</button>
                   <button type="button" onClick={() => setSheet({ mode: "new", slot: sheet.slot, name: q.trim() })}><span aria-hidden="true">✍️</span>صنف جديد</button>
                 </div>
                 <div className="unit">
@@ -420,7 +420,7 @@ function NewFood({ initialName, barcode, profileId, onSaved }: { initialName: st
     const { data, error } = await aiRead<LabelRead>("label", file);
     setReading(false);
     if (error || !data) return setErr(error || "ما قدرنا نقرأ الملصق.");
-    if (!data.readable) return setErr("ما قدرنا نقرأ الأرقام. صوّري جدول القيم الغذائية قريب وواضح.");
+    if (!data.readable) return setErr("ما قدرنا نقرأ الأرقام. صوري جدول القيم الغذائية قريب وواضح.");
     // Prefer per 100 g; else work it out from the serving; else keep per serving.
     let per100 = data.per100;
     if ((!per100 || per100.cal === null) && data.perServing && data.serving_g) {
@@ -470,7 +470,7 @@ function NewFood({ initialName, barcode, profileId, onSaved }: { initialName: st
       {barcode ? <p className="small">باركود <b className="num" dir="ltr">{barcode}</b> ما كان عندنا. لما تحفظينه يلقاه الكل بعدين 🙌</p> : null}
       <label className="btn btn-s" style={{ cursor: reading ? "wait" : "pointer" }}>
         <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={reading} onChange={(e) => readLabel(e.target.files?.[0])} />
-        {reading ? "لحظة... نقرأ الملصق 🔍" : "📸 صوّري جدول القيم الغذائية ونعبيها لك"}
+        {reading ? "لحظة... نقرأ الملصق 🔍" : "📸 صوري جدول القيم الغذائية ونعبيها لك"}
       </label>
       {readMsg ? <p className="alert info">{readMsg}</p> : <p className="note">أو اكتبي الأرقام من الملصق أو موقع المطعم. يتحفظ في «أكلاتي» وتلقينه المرة الجاية.</p>}
       <div className="field">
