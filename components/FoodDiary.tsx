@@ -16,7 +16,10 @@ type Sheet =
   | { mode: "amount"; slot: Slot; food: Pickable }
   | { mode: "new"; slot: Slot; name: string; barcode?: string }
   | { mode: "barcode"; slot: Slot }
-  | { mode: "photo"; slot: Slot };
+  | { mode: "photo"; slot: Slot }
+  | { mode: "saveMeal"; slot: Slot };
+type EntryRow = Omit<FoodEntry, "id" | "client_id" | "log_date" | "slot" | "created_at">;
+type Saved = { id: string; kind: "item" | "meal"; name: string; data: { food?: Pickable; items?: EntryRow[] } };
 
 let baseCache: BaseFood[] | null = null;
 async function loadBase(): Promise<BaseFood[]> {
@@ -66,6 +69,8 @@ export function FoodDiary({
   const [target, setTarget] = useState<Target | null>(planTarget);
   const [foods, setFoods] = useState<Pickable[]>([]);
   const [recent, setRecent] = useState<FoodEntry[]>([]);
+  const [saved, setSaved] = useState<Saved[]>([]);
+  const [mealName, setMealName] = useState("");
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [q, setQ] = useState("");
   const [loaded, setLoaded] = useState(false);
@@ -82,6 +87,7 @@ export function FoodDiary({
       setFoods([...((mine as CustomFood[] | null) || []).map(fromCustom), ...((bc as BarcodeProduct[] | null) || []).map(fromBarcode), ...base.map(fromBase)]);
       const seen = new Set<string>();
       setRecent(((rec as FoodEntry[] | null) || []).filter((e) => (seen.has(e.name) ? false : (seen.add(e.name), true))).slice(0, 12));
+      supabase.from("saved_foods").select("id, kind, name, data").order("created_at", { ascending: false }).then(({ data }) => setSaved((data as Saved[] | null) || []));
       if (!planTarget && t.data) setTarget(t.data as Target);
     })();
   }, [clientId, planTarget]);
@@ -153,6 +159,44 @@ export function FoodDiary({
       setSheet({ mode: "new", slot, name: "", barcode: code });
       toast.show("ما لقينا هالمنتج. صوري جدول القيم الغذائية وحنا نقرأه 📸");
     }
+  }
+
+  const favOf = (f: Pickable) => saved.find((x) => x.kind === "item" && x.data.food?.key === f.key);
+
+  async function toggleFav(f: Pickable) {
+    const cur = favOf(f);
+    if (cur) {
+      await supabase.from("saved_foods").delete().eq("id", cur.id);
+      setSaved((l) => l.filter((x) => x.id !== cur.id));
+      return toast.show("انشال من مفضلاتك");
+    }
+    const { data, error } = await supabase.from("saved_foods").insert({ kind: "item", name: f.name, data: { food: f } }).select("id, kind, name, data").single();
+    if (error || !data) return toast.show("ما انحفظ. تأكدي من الاتصال.");
+    setSaved((l) => [data as Saved, ...l]);
+    toast.show("⭐ انضاف لمفضلاتك");
+  }
+
+  /** Everything in one meal of this day, to save as «وجبة محفوظة». */
+  const slotItems = (slot: Slot): EntryRow[] => [
+    ...ticked.filter((x) => slotOf(x.meal.slot) === slot).map((x) => ({ name: x.meal.name, amount: 1, unit: "وجبة", cal: x.meal.cal, p: x.meal.p, c: x.meal.c, f: x.meal.f })),
+    ...entries.filter((e) => e.slot === slot).map((e) => ({ name: e.name, amount: Number(e.amount), unit: e.unit, cal: Number(e.cal), p: Number(e.p), c: Number(e.c), f: Number(e.f) }))
+  ];
+
+  async function saveMeal(slot: Slot) {
+    const items = slotItems(slot);
+    const name = mealName.trim() || `${slot} ${dayLabel(date)}`;
+    if (!items.length) return;
+    const { data, error } = await supabase.from("saved_foods").insert({ kind: "meal", name: name.slice(0, 120), data: { items } }).select("id, kind, name, data").single();
+    if (error || !data) return toast.show("ما انحفظت. تأكدي من الاتصال.");
+    setSaved((l) => [data as Saved, ...l]);
+    setSheet(null);
+    setMealName("");
+    toast.show("🍱 انحفظت في وجباتك المحفوظة");
+  }
+
+  async function removeSaved(id: string) {
+    await supabase.from("saved_foods").delete().eq("id", id);
+    setSaved((l) => l.filter((x) => x.id !== id));
   }
 
   /** Copies yesterday's items of one meal to this day. */
@@ -231,7 +275,12 @@ export function FoodDiary({
           <section key={slot} className="card stack" style={{ gap: 0, padding: "12px 16px" }}>
             <div className="row between" style={{ paddingBottom: 6 }}>
               <b>{SLOT_EMOJI[slot]} {slot}</b>
-              <span className="small muted num">{Math.round(cal)} سعرة</span>
+              <span className="row" style={{ gap: 8 }}>
+                {plan.length + mine.length > 0 ? (
+                  <button type="button" className="link small" style={{ minHeight: 0 }} onClick={() => { setMealName(""); setSheet({ mode: "saveMeal", slot }); }}>⭐ احفظيها</button>
+                ) : null}
+                <span className="small muted num">{Math.round(cal)} سعرة</span>
+              </span>
             </div>
             {!mine.length && prevEntries.some((x) => x.slot === slot) ? (
               <button type="button" className="copy-prev" onClick={() => copyPrev(slot)}>
@@ -276,7 +325,7 @@ export function FoodDiary({
         <div className="sheet-bg" onClick={(e) => e.target === e.currentTarget && setSheet(null)}>
           <div className="sheet" role="dialog" aria-modal="true" aria-label="أضيفي أكل" style={{ maxHeight: "88vh", overflowY: "auto" }}>
             <div className="row between">
-              <h2 style={{ fontSize: 18 }}>{SLOT_EMOJI[sheet.slot]} {sheet.mode === "new" ? (sheet.barcode ? "منتج جديد" : "صنف جديد") : sheet.mode === "barcode" ? "امسحي الباركود" : sheet.mode === "photo" ? "صوري وجبتك" : `أضيفي لـ${sheet.slot}`}</h2>
+              <h2 style={{ fontSize: 18 }}>{SLOT_EMOJI[sheet.slot]} {sheet.mode === "new" ? (sheet.barcode ? "منتج جديد" : "صنف جديد") : sheet.mode === "barcode" ? "امسحي الباركود" : sheet.mode === "photo" ? "صوري وجبتك" : sheet.mode === "saveMeal" ? `احفظي ${sheet.slot} كوجبة` : `أضيفي لـ${sheet.slot}`}</h2>
               <button type="button" className="icon-btn" aria-label="إغلاق" onClick={() => setSheet(null)}>
                 <X />
               </button>
@@ -309,9 +358,38 @@ export function FoodDiary({
                       {results.length ? "ما لقيتيه؟ أضيفيه بنفسك" : `ما لقينا «${q.trim()}». أضيفيه بنفسك`}
                     </button>
                   </div>
-                ) : recent.length ? (
+                ) : saved.length || recent.length ? (
                   <>
-                    <span className="label">⏱️ أكلتيها قبل (اضغطي وتنضاف بنفس الكمية)</span>
+                    {saved.some((x) => x.kind === "meal") ? (
+                      <>
+                        <span className="label">🍱 وجباتي المحفوظة (اضغطي وتنضاف كلها)</span>
+                        <div className="opts">
+                          {saved.filter((x) => x.kind === "meal").map((m) => {
+                            const items = m.data.items || [];
+                            return (
+                              <div key={m.id} className="opt" style={{ padding: 0 }}>
+                                <button type="button" style={{ flex: 1, minWidth: 0, textAlign: "start", padding: "12px 14px" }} onClick={() => addMany(sheet.slot, items)}>
+                                  <span className="opt-t">{m.name}</span>
+                                  <span className="opt-s">{items.map((i) => i.name).join("، ")} · {Math.round(items.reduce((a, i) => a + Number(i.cal), 0))} سعرة</span>
+                                </button>
+                                <button type="button" className="icon-btn" aria-label={`احذفي ${m.name}`} onClick={() => removeSaved(m.id)}><X size={15} /></button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    ) : null}
+                    {saved.some((x) => x.kind === "item") ? (
+                      <>
+                        <span className="label">⭐ مفضلاتي</span>
+                        <div className="fav-chips">
+                          {saved.filter((x) => x.kind === "item" && x.data.food).map((x) => (
+                            <button key={x.id} type="button" onClick={() => setSheet({ mode: "amount", slot: sheet.slot, food: x.data.food! })}>{x.name}</button>
+                          ))}
+                        </div>
+                      </>
+                    ) : null}
+                    {recent.length ? <span className="label">⏱️ أكلتيها قبل (اضغطي وتنضاف بنفس الكمية)</span> : null}
                     <div className="opts">
                       {recent.map((e) => (
                         <button key={e.id} type="button" className="opt" onClick={() => add(sheet.slot, { name: e.name, amount: e.amount, unit: e.unit, cal: e.cal, p: e.p, c: e.c, f: e.f })}>
@@ -329,10 +407,27 @@ export function FoodDiary({
                 )}
               </>
             ) : sheet.mode === "amount" ? (
-              <AmountPicker food={sheet.food} onAdd={(amount, unit) => {
+              <AmountPicker food={sheet.food} fav={Boolean(favOf(sheet.food))} onFav={() => toggleFav(sheet.food)} onAdd={(amount, unit) => {
                 const v = scaled(sheet.food, amount, unit);
                 add(sheet.slot, { name: sheet.food.name, amount, unit: unit.label, ...v });
               }} onBack={() => setSheet({ mode: "search", slot: sheet.slot })} />
+            ) : sheet.mode === "saveMeal" ? (
+              <div className="stack">
+                <p className="small muted">تحفظينها وبعدين تضيفينها كلها بضغطة من «أضيفي أكل».</p>
+                <div className="opts">
+                  {slotItems(sheet.slot).map((i, n) => (
+                    <div key={n} className="row between small" style={{ padding: "4px 0" }}>
+                      <span>{i.name} <span className="note">{fmt(Number(i.amount))} {i.unit}</span></span>
+                      <b className="num">{Math.round(Number(i.cal))}</b>
+                    </div>
+                  ))}
+                </div>
+                <div className="field">
+                  <label htmlFor="meal-name">اسمها</label>
+                  <input id="meal-name" className="inp" value={mealName} onChange={(e) => setMealName(e.target.value)} placeholder={`مثلًا: ${({ فطور: "فطوري", غداء: "غدائي", عشاء: "عشائي", سناك: "سناكي" } as Record<Slot, string>)[sheet.slot]} المعتاد`} />
+                </div>
+                <button type="button" className="btn btn-p" onClick={() => saveMeal(sheet.slot)}>⭐ احفظيها</button>
+              </div>
             ) : sheet.mode === "barcode" ? (
               <BarcodeScanner onCode={(code) => onBarcode(sheet.slot, code)} onCancel={() => setSheet({ mode: "search", slot: sheet.slot })} />
             ) : sheet.mode === "photo" ? (
@@ -351,7 +446,7 @@ export function FoodDiary({
   );
 }
 
-function AmountPicker({ food, onAdd, onBack }: { food: Pickable; onAdd: (amount: number, unit: { label: string; g: number }) => void; onBack: () => void }) {
+function AmountPicker({ food, fav, onFav, onAdd, onBack }: { food: Pickable; fav: boolean; onFav: () => void; onAdd: (amount: number, unit: { label: string; g: number }) => void; onBack: () => void }) {
   const [unitIdx, setUnitIdx] = useState(0);
   const unit = food.units[unitIdx];
   const [amount, setAmount] = useState(food.basis === "100g" && unit.label === "جرام" ? "100" : "1");
@@ -359,9 +454,12 @@ function AmountPicker({ food, onAdd, onBack }: { food: Pickable; onAdd: (amount:
   const v = scaled(food, n, unit);
   return (
     <div className="stack">
-      <div>
-        <b style={{ fontSize: 17 }}>{food.name}</b>
-        <p className="note">{food.hint}</p>
+      <div className="row between" style={{ alignItems: "flex-start" }}>
+        <div style={{ minWidth: 0 }}>
+          <b style={{ fontSize: 17 }}>{food.name}</b>
+          <p className="note">{food.hint}</p>
+        </div>
+        <button type="button" className="fav-star" aria-pressed={fav} aria-label={fav ? "شيليه من المفضلة" : "أضيفيه للمفضلة"} onClick={onFav}>{fav ? "⭐" : "☆"}</button>
       </div>
       <div className="row" style={{ gap: 8, alignItems: "flex-end" }}>
         <div className="field" style={{ flex: 1 }}>

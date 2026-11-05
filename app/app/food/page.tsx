@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeftRight, Check, FileText, Utensils, X } from "lucide-react";
+import { ArrowLeftRight, Check, ChevronDown, FileText, Utensils, X } from "lucide-react";
 import { ClientShell, Empty, Loading, useToast } from "@/components/ui";
 import { FoodDiary } from "@/components/FoodDiary";
 import { planMealFor, resolve, type MealRef } from "@/lib/meal-resolve";
@@ -60,6 +60,7 @@ export default function FoodPage() {
   const [dayNote, setDayNote] = useState<DayNote>({});
   const [sheet, setSheet] = useState<Sheet>(null);
   const [cups, setCups] = useState(10);
+  const [openMeals, setOpenMeals] = useState<Set<string>>(new Set());
   const [ready, setReady] = useState(false);
   const today = todayKey();
 
@@ -195,22 +196,38 @@ export default function FoodPage() {
   function mealCard(key: string, meal: Meal, slot: string, opts: { swapped?: boolean; swapMeal?: boolean }) {
     const steps = prepSteps(meal.prep);
     const eaten = log.meals[key] === true;
+    const isOpen = openMeals.has(key);
+    const toggle = () => {
+      const next = new Set(openMeals);
+      if (isOpen) next.delete(key);
+      else next.add(key);
+      setOpenMeals(next);
+    };
     return (
-      <section key={key} className={`mcard ${eaten ? "eaten" : ""}`} aria-label={meal.name}>
-        <div className="mcard-h">
-          <div style={{ minWidth: 0 }}>
-            <span className="slot">
-              <span aria-hidden="true">{slotEmoji(slot)}</span>
-              {slot}
-              {opts.swapped ? " · بدلتيها" : ""}
+      <section key={key} className={`mcard ${eaten ? "eaten" : ""} ${isOpen ? "open" : ""}`} aria-label={meal.name}>
+        <div className="mc-top">
+          <button type="button" className="mc-eat" aria-pressed={eaten} aria-label={eaten ? `أكلتيها: ${meal.name}` : `علمي إنك أكلتي ${meal.name}`} onClick={() => saveLog({ ...log, meals: { ...log.meals, [key]: !eaten } })}>
+            <Check />
+          </button>
+          <button type="button" className="mc-head" aria-expanded={isOpen} onClick={toggle}>
+            <span style={{ minWidth: 0, flex: 1 }}>
+              <span className="slot">
+                <span aria-hidden="true">{slotEmoji(slot)}</span>
+                {slot}
+                {opts.swapped ? " · بدلتيها" : ""}
+              </span>
+              <b className="mc-name">{meal.name}</b>
+              <span className="mc-mac">💪 {Math.round(meal.p)} · 🌾 {Math.round(meal.c)} · 🫒 {Math.round(meal.f)}</span>
             </span>
-            <h3>{meal.name}</h3>
-          </div>
-          <span className="kcal">
-            <b>{meal.cal}</b>
-            <span>سعرة</span>
-          </span>
+            <span className="kcal">
+              <b>{meal.cal}</b>
+              <span>سعرة</span>
+            </span>
+            <ChevronDown className="mc-chev" aria-hidden="true" />
+          </button>
         </div>
+        {isOpen ? (
+        <>
         <div className="mrow">
           <div className="mtile" style={{ "--c": "var(--protein)" } as React.CSSProperties}><b>{Math.round(meal.p)}g</b><span>💪 بروتين</span></div>
           <div className="mtile" style={{ "--c": "var(--carb)" } as React.CSSProperties}><b>{Math.round(meal.c)}g</b><span>🌾 كارب</span></div>
@@ -269,6 +286,8 @@ export default function FoodPage() {
             </button>
           ) : null}
         </div>
+        </>
+        ) : null}
       </section>
     );
   }
