@@ -5,12 +5,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeftRight, Check, FileText, Utensils, X } from "lucide-react";
 import { ClientShell, Empty, Loading, useToast } from "@/components/ui";
 import { FoodDiary } from "@/components/FoodDiary";
-import { ingredientText, todayKey, type Meal, type MealPlanData } from "@/lib/plan-data";
+import { planMealFor, resolve, type MealRef } from "@/lib/meal-resolve";
+import { ingredientText, todayKey, waterCups, type Meal, type MealPlanData } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 import { useAuthGuard } from "@/lib/use-auth";
 import { useClientPlans } from "@/lib/use-client";
 
-type MealRef = { d: number; m: number } | { e: "snacks" | "salads"; i: number };
 type Choices = { meals: Record<string, MealRef>; ings: Record<string, string>; shop: Record<string, boolean>; rates: Record<string, 1 | -1> };
 /** Something she ate outside the plan (meals._off). */
 type OffItem = { t: string; cal?: number; at: string };
@@ -20,13 +20,7 @@ type Log = { meals: Record<string, boolean | DayNote | OffItem[]>; water: number
 type Sheet = { type: "meal"; key: string; slot: string } | { type: "ing"; key: string; original: string; options: string[] } | null;
 type Tab = "meals" | "extras" | "shop" | "diary";
 
-const CUPS = 10;
 
-function resolve(plan: MealPlanData, ref: MealRef | undefined, d: number, m: number): Meal {
-  if (ref && "e" in ref) return plan.extras[ref.e][ref.i] || plan.days[d].meals[m];
-  if (ref && "d" in ref) return plan.days[ref.d]?.meals[ref.m] || plan.days[d].meals[m];
-  return plan.days[d].meals[m];
-}
 
 function slotEmoji(slot: string) {
   if (/فطور/.test(slot)) return "🌅";
@@ -65,6 +59,7 @@ export default function FoodPage() {
   const [log, setLog] = useState<Log>({ meals: {}, water: 0 });
   const [dayNote, setDayNote] = useState<DayNote>({});
   const [sheet, setSheet] = useState<Sheet>(null);
+  const [cups, setCups] = useState(10);
   const [ready, setReady] = useState(false);
   const today = todayKey();
 
@@ -80,6 +75,8 @@ export default function FoodPage() {
     const since = Math.max(0, Math.floor((Date.now() - new Date(row.created_at).getTime()) / 864e5));
     setDay(since % plan.days.length);
     (async () => {
+      supabase.from("body_logs").select("weight_kg").eq("client_id", cp.client!.id).not("weight_kg", "is", null).order("log_date", { ascending: false }).limit(1).maybeSingle()
+        .then(({ data }) => setCups(waterCups(data?.weight_kg ? Number(data.weight_kg) : null)));
       const [{ data: ch }, { data: lg }] = await Promise.all([
         supabase.from("plan_choices").select("data").eq("plan_id", row.id).maybeSingle(),
         supabase.from("daily_logs").select("meals, water").eq("client_id", cp.client!.id).eq("log_date", today).maybeSingle()
@@ -144,21 +141,7 @@ export default function FoodPage() {
   }, [plan, choices.meals, choices.ings]);
 
   /** A ticked key → the meal she ate (with her swaps), for the diary. */
-  const planMeal = useCallback(
-    (key: string): Meal | null => {
-      if (!plan) return null;
-      const x = key.match(/^x-(snacks|salads)-(\d+)$/);
-      if (x) {
-        const m = plan.extras[x[1] as "snacks" | "salads"][Number(x[2])];
-        return m ? { ...m, slot: "سناك" } : null;
-      }
-      const dm = key.match(/^(\d+)-(\d+)$/);
-      if (!dm || !plan.days[Number(dm[1])]?.meals[Number(dm[2])]) return null;
-      const d = Number(dm[1]), m = Number(dm[2]);
-      return { ...resolve(plan, choices.meals[key], d, m), slot: plan.days[d].meals[m].slot };
-    },
-    [plan, choices.meals]
-  );
+  const planMeal = useCallback((key: string): Meal | null => planMealFor(plan, choices.meals, key), [plan, choices.meals]);
 
   if (auth.loading || cp.loading || !ready) return <Loading />;
   if (!auth.profile) return null;
@@ -300,6 +283,12 @@ export default function FoodPage() {
 
       {tab === "meals" ? (
         <>
+          {plan.coachNote ? (
+            <div className="reply">
+              <b>💬 من المدربة</b>
+              <p style={{ whiteSpace: "pre-line" }}>{plan.coachNote}</p>
+            </div>
+          ) : null}
           <div className="days" role="group" aria-label="أيام الجدول">
             {plan.days.map((d, i) => (
               <button key={i} type="button" className="day-pill" aria-pressed={i === day} onClick={() => setDay(i)}>
@@ -360,15 +349,15 @@ export default function FoodPage() {
           <div className="sec-title">
             <span className="em" aria-hidden="true">💧</span>
             <h2>الماء</h2>
-            <span className="aside num">{log.water} / {CUPS} أكواب</span>
+            <span className="aside num">{log.water} / {cups} أكواب</span>
           </div>
           <section className="card stack">
             <div className="cups">
-              {Array.from({ length: CUPS }, (_, i) => (
+              {Array.from({ length: Math.min(20, Math.max(cups, log.water + (log.water >= cups ? 1 : 0))) }, (_, i) => (
                 <button key={i} type="button" className={`cup ${i < log.water ? "full" : ""}`} aria-label={`كوب ${i + 1}`} onClick={() => saveLog({ ...log, water: log.water === i + 1 ? i : i + 1 })} />
               ))}
             </div>
-            <p className="note">كل كوب ٢٥٠ مل. هدفك ٢ إلى ٢.٥ لتر في اليوم.</p>
+            <p className="note">{`كل كوب ٢٥٠ مل. هدفك ${cups} أكواب (${(cups * 0.25).toLocaleString("ar-SA-u-nu-latn")} لتر) على حسب وزنك.`}</p>
           </section>
 
           <div className="sec-title">

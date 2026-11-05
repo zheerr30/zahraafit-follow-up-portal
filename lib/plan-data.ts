@@ -22,6 +22,10 @@ export type MealPlanData = {
   target: { cal: number; p: number; c: number; f: number };
   days: { n: number; meals: Meal[] }[];
   extras: { snacks: Meal[]; salads: Meal[] };
+  /** Message from the coach shown on top of «أكلي» (set in the plan editor). */
+  coachNote?: string;
+  /** When the coach last edited the plan in the platform. */
+  editedAt?: string;
 };
 
 export type Exercise = {
@@ -149,4 +153,10 @@ export function muscleImage(muscle: string) {
 
 export function todayKey() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Riyadh", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+}
+
+/** Her daily water goal in 250 ml cups: about 35 ml per kg, between 8 and 14 cups. */
+export function waterCups(weightKg: number | null | undefined) {
+  if (!weightKg) return 10;
+  return Math.max(8, Math.min(14, Math.round((weightKg * 35) / 250)));
 }

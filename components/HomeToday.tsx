@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ChevronLeft } from "lucide-react";
-import { todayKey, type MealPlanData, type WorkoutPlanData } from "@/lib/plan-data";
+import { todayKey, waterCups, type MealPlanData, type WorkoutPlanData } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 import type { Plan } from "@/lib/types";
 
@@ -43,7 +43,7 @@ export function HomeToday({ clientId, plans }: { clientId: string; plans: Plan[]
   const cards = [
     meal && { href: "/app/food", em: "🍽️", label: "أكل اليوم", value: `${eaten} من ${mealsToday}`, sub: "وجبات أكلتيها" },
     work && { href: "/app/workout", em: "💪", label: "تمرينك الجاي", value: nextDay || "—", sub: "اضغطي وابدئي" },
-    meal && { href: "/app/food", em: "💧", label: "الماء", value: `${water} أكواب`, sub: "هدفك ٨ إلى ١٠" },
+    meal && { href: "/app/food", em: "💧", label: "الماء", value: `${water} من ${waterCups(weight)}`, sub: "أكواب ماء اليوم" },
     { href: "/app/progress", em: "⚖️", label: "وزنك", value: weight ? `${weight} كجم` : "سجّليه", sub: weight ? "آخر وزن" : "من «تقدّمي»" }
   ].filter(Boolean) as { href: string; em: string; label: string; value: string; sub: string }[];
 

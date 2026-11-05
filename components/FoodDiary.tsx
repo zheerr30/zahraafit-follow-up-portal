@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, Search, X } from "lucide-react";
 import { useToast } from "@/components/ui";
-import { SLOTS, SLOT_EMOJI, defaultSlot, fromBase, fromCustom, scaled, search, type BaseFood, type CustomFood, type FoodEntry, type Pickable, type Slot } from "@/lib/foods";
+import { SLOTS, SLOT_EMOJI, defaultSlot, fromBarcode, fromBase, fromCustom, scaled, search, type BarcodeProduct, type BaseFood, type CustomFood, type FoodEntry, type Pickable, type Slot } from "@/lib/foods";
+import { aiRead, lookupBarcode } from "@/lib/food-scan";
+import { BarcodeScanner, MealPhoto } from "@/components/FoodScan";
 import { todayKey, type Meal } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 
@@ -12,7 +14,9 @@ type Target = { cal: number; p: number; c: number; f: number };
 type Sheet =
   | { mode: "search"; slot: Slot }
   | { mode: "amount"; slot: Slot; food: Pickable }
-  | { mode: "new"; slot: Slot; name: string };
+  | { mode: "new"; slot: Slot; name: string; barcode?: string }
+  | { mode: "barcode"; slot: Slot }
+  | { mode: "photo"; slot: Slot };
 
 let baseCache: BaseFood[] | null = null;
 async function loadBase(): Promise<BaseFood[]> {
@@ -57,6 +61,7 @@ export function FoodDiary({
   const toast = useToast();
   const [date, setDate] = useState(todayKey());
   const [entries, setEntries] = useState<FoodEntry[]>([]);
+  const [prevEntries, setPrevEntries] = useState<FoodEntry[]>([]);
   const [ticked, setTicked] = useState<{ key: string; meal: Meal }[]>([]);
   const [target, setTarget] = useState<Target | null>(planTarget);
   const [foods, setFoods] = useState<Pickable[]>([]);
@@ -67,13 +72,14 @@ export function FoodDiary({
 
   useEffect(() => {
     (async () => {
-      const [base, { data: mine }, { data: rec }, t] = await Promise.all([
+      const [base, { data: mine }, { data: rec }, t, { data: bc }] = await Promise.all([
         loadBase(),
         supabase.from("foods").select("*").order("name"),
         supabase.from("food_entries").select("*").eq("client_id", clientId).order("created_at", { ascending: false }).limit(80),
-        planTarget ? Promise.resolve({ data: null }) : supabase.from("food_targets").select("cal, p, c, f").eq("client_id", clientId).maybeSingle()
+        planTarget ? Promise.resolve({ data: null }) : supabase.from("food_targets").select("cal, p, c, f").eq("client_id", clientId).maybeSingle(),
+        supabase.from("barcode_products").select("*").order("created_at", { ascending: false }).limit(500)
       ]);
-      setFoods([...((mine as CustomFood[] | null) || []).map(fromCustom), ...base.map(fromBase)]);
+      setFoods([...((mine as CustomFood[] | null) || []).map(fromCustom), ...((bc as BarcodeProduct[] | null) || []).map(fromBarcode), ...base.map(fromBase)]);
       const seen = new Set<string>();
       setRecent(((rec as FoodEntry[] | null) || []).filter((e) => (seen.has(e.name) ? false : (seen.add(e.name), true))).slice(0, 12));
       if (!planTarget && t.data) setTarget(t.data as Target);
@@ -82,11 +88,13 @@ export function FoodDiary({
 
   useEffect(() => {
     (async () => {
-      const [{ data: e }, { data: d }] = await Promise.all([
+      const [{ data: e }, { data: d }, { data: pe }] = await Promise.all([
         supabase.from("food_entries").select("*").eq("client_id", clientId).eq("log_date", date).order("created_at"),
-        supabase.from("daily_logs").select("meals").eq("client_id", clientId).eq("log_date", date).maybeSingle()
+        supabase.from("daily_logs").select("meals").eq("client_id", clientId).eq("log_date", date).maybeSingle(),
+        supabase.from("food_entries").select("*").eq("client_id", clientId).eq("log_date", shiftDay(date, -1)).order("created_at")
       ]);
       setEntries((e as FoodEntry[] | null) || []);
+      setPrevEntries((pe as FoodEntry[] | null) || []);
       const m = ((d?.meals || {}) as Record<string, unknown>);
       setTicked(
         planMeal
@@ -123,6 +131,38 @@ export function FoodDiary({
     setSheet(null);
     setQ("");
     toast.show(`انضاف ${row.name} ✅`);
+  }
+
+  /** Several items at once (from a meal photo). */
+  async function addMany(slot: Slot, rows: Omit<FoodEntry, "id" | "client_id" | "log_date" | "slot" | "created_at">[]) {
+    const { data, error } = await supabase.from("food_entries").insert(rows.map((r) => ({ client_id: clientId, log_date: date, slot, ...r }))).select("*");
+    if (error || !data) return toast.show("ما انحفظ. تأكدي من الاتصال.");
+    setEntries((cur) => [...cur, ...(data as FoodEntry[])]);
+    setSheet(null);
+    toast.show(`انضافت ${data.length} أصناف ✅`);
+  }
+
+  async function onBarcode(slot: Slot, code: string) {
+    toast.show("لحظة، ندوّر على المنتج...");
+    const pr = await lookupBarcode(code, profileId);
+    if (pr) {
+      const f = fromBarcode(pr);
+      setFoods((cur) => [f, ...cur.filter((x) => x.key !== f.key)]);
+      setSheet({ mode: "amount", slot, food: f });
+    } else {
+      setSheet({ mode: "new", slot, name: "", barcode: code });
+      toast.show("ما لقينا هالمنتج. صوّري جدول القيم الغذائية وحنا نقرأه 📸");
+    }
+  }
+
+  /** Copies yesterday's items of one meal to this day. */
+  async function copyPrev(slot: Slot) {
+    const rows = prevEntries.filter((x) => x.slot === slot).map((x) => ({ client_id: clientId, log_date: date, slot, name: x.name, amount: x.amount, unit: x.unit, cal: x.cal, p: x.p, c: x.c, f: x.f }));
+    if (!rows.length) return;
+    const { data, error } = await supabase.from("food_entries").insert(rows).select("*");
+    if (error || !data) return toast.show("ما انحفظ. تأكدي من الاتصال.");
+    setEntries((cur) => [...cur, ...(data as FoodEntry[])]);
+    toast.show(`انضاف ${slot} نفس أمس ✅`);
   }
 
   async function remove(id: string) {
@@ -193,6 +233,11 @@ export function FoodDiary({
               <b>{SLOT_EMOJI[slot]} {slot}</b>
               <span className="small muted num">{Math.round(cal)} سعرة</span>
             </div>
+            {!mine.length && prevEntries.some((x) => x.slot === slot) ? (
+              <button type="button" className="copy-prev" onClick={() => copyPrev(slot)}>
+                ↺ نفس {slot} أمس ({prevEntries.filter((x) => x.slot === slot).map((x) => x.name).join("، ")})
+              </button>
+            ) : null}
             {plan.map(({ key, meal }) => (
               <div key={key} className="diary-row">
                 <span style={{ minWidth: 0 }}>
@@ -231,7 +276,7 @@ export function FoodDiary({
         <div className="sheet-bg" onClick={(e) => e.target === e.currentTarget && setSheet(null)}>
           <div className="sheet" role="dialog" aria-modal="true" aria-label="أضيفي أكل" style={{ maxHeight: "88vh", overflowY: "auto" }}>
             <div className="row between">
-              <h2 style={{ fontSize: 18 }}>{SLOT_EMOJI[sheet.slot]} {sheet.mode === "new" ? "صنف جديد" : `أضيفي لـ${sheet.slot}`}</h2>
+              <h2 style={{ fontSize: 18 }}>{SLOT_EMOJI[sheet.slot]} {sheet.mode === "new" ? (sheet.barcode ? "منتج جديد" : "صنف جديد") : sheet.mode === "barcode" ? "امسحي الباركود" : sheet.mode === "photo" ? "صوّري وجبتك" : `أضيفي لـ${sheet.slot}`}</h2>
               <button type="button" className="icon-btn" aria-label="إغلاق" onClick={() => setSheet(null)}>
                 <X />
               </button>
@@ -239,6 +284,11 @@ export function FoodDiary({
 
             {sheet.mode === "search" ? (
               <>
+                <div className="scan-btns">
+                  <button type="button" onClick={() => setSheet({ mode: "barcode", slot: sheet.slot })}><span aria-hidden="true">📷</span>باركود</button>
+                  <button type="button" onClick={() => setSheet({ mode: "photo", slot: sheet.slot })}><span aria-hidden="true">🤖</span>صوّري وجبتك</button>
+                  <button type="button" onClick={() => setSheet({ mode: "new", slot: sheet.slot, name: q.trim() })}><span aria-hidden="true">✍️</span>صنف جديد</button>
+                </div>
                 <div className="unit">
                   <label htmlFor="food-q" className="sr-only">ابحثي</label>
                   <input id="food-q" className="inp" autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحثي: دجاج، رز، تمر، شوفان..." />
@@ -283,8 +333,12 @@ export function FoodDiary({
                 const v = scaled(sheet.food, amount, unit);
                 add(sheet.slot, { name: sheet.food.name, amount, unit: unit.label, ...v });
               }} onBack={() => setSheet({ mode: "search", slot: sheet.slot })} />
+            ) : sheet.mode === "barcode" ? (
+              <BarcodeScanner onCode={(code) => onBarcode(sheet.slot, code)} onCancel={() => setSheet({ mode: "search", slot: sheet.slot })} />
+            ) : sheet.mode === "photo" ? (
+              <MealPhoto onAdd={(rows) => addMany(sheet.slot, rows)} onCancel={() => setSheet({ mode: "search", slot: sheet.slot })} />
             ) : (
-              <NewFood initialName={sheet.name} profileId={profileId} onSaved={(f) => {
+              <NewFood initialName={sheet.name} barcode={sheet.barcode} profileId={profileId} onSaved={(f) => {
                 setFoods((cur) => [f, ...cur]);
                 setSheet({ mode: "amount", slot: sheet.slot, food: f });
               }} />
@@ -341,16 +395,53 @@ function AmountPicker({ food, onAdd, onBack }: { food: Pickable; onAdd: (amount:
   );
 }
 
-function NewFood({ initialName, profileId, onSaved }: { initialName: string; profileId: string; onSaved: (f: Pickable) => void }) {
-  const [f, setF] = useState({ name: initialName, basis: "serving" as "serving" | "100g", label: "حصة", cal: "", p: "", c: "", f: "" });
+type LabelRead = { readable: boolean; name: string | null; per100: Macro | null; perServing: Macro | null; serving_g: number | null; serving_label: string | null };
+type Macro = { cal: number | null; p: number | null; c: number | null; f: number | null };
+
+function NewFood({ initialName, barcode, profileId, onSaved }: { initialName: string; barcode?: string; profileId: string; onSaved: (f: Pickable) => void }) {
+  const [f, setF] = useState({ name: initialName, basis: (barcode ? "100g" : "serving") as "serving" | "100g", label: "حصة", servingG: "", cal: "", p: "", c: "", f: "" });
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [reading, setReading] = useState(false);
+  const [readMsg, setReadMsg] = useState<string | null>(null);
   const num = (k: "cal" | "p" | "c" | "f", label: string) => (
     <div className="field">
       <label htmlFor={`nf-${k}`}>{label}</label>
       <input id={`nf-${k}`} className="inp num" inputMode="decimal" value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value.replace(/[^\d.]/g, "") })} placeholder={k === "cal" ? "250" : "0"} />
     </div>
   );
+  const str = (v: number | null | undefined) => (v === null || v === undefined || !Number.isFinite(v) ? "" : String(Math.round(v * 10) / 10));
+
+  async function readLabel(file: File | undefined) {
+    if (!file) return;
+    setReading(true);
+    setReadMsg(null);
+    setErr(null);
+    const { data, error } = await aiRead<LabelRead>("label", file);
+    setReading(false);
+    if (error || !data) return setErr(error || "ما قدرنا نقرأ الملصق.");
+    if (!data.readable) return setErr("ما قدرنا نقرأ الأرقام. صوّري جدول القيم الغذائية قريب وواضح.");
+    // Prefer per 100 g; else work it out from the serving; else keep per serving.
+    let per100 = data.per100;
+    if ((!per100 || per100.cal === null) && data.perServing && data.serving_g) {
+      const k = 100 / data.serving_g;
+      const sc = (v: number | null) => (v === null ? null : v * k);
+      per100 = { cal: sc(data.perServing.cal), p: sc(data.perServing.p), c: sc(data.perServing.c), f: sc(data.perServing.f) };
+    }
+    const use100 = Boolean(per100 && per100.cal !== null);
+    const m = use100 ? per100! : data.perServing;
+    if (!m || m.cal === null) return setErr("ما لقينا السعرات في الصورة. اكتبيها بنفسك.");
+    setF((cur) => ({
+      ...cur,
+      name: cur.name || data.name || "",
+      basis: use100 ? "100g" : "serving",
+      label: data.serving_label || cur.label,
+      servingG: data.serving_g ? str(data.serving_g) : cur.servingG,
+      cal: str(m.cal), p: str(m.p), c: str(m.c), f: str(m.f)
+    }));
+    setReadMsg("🤖 قرينا الملصق. راجعي الأرقام قبل ما تحفظين.");
+  }
+
   return (
     <form
       className="stack"
@@ -358,9 +449,17 @@ function NewFood({ initialName, profileId, onSaved }: { initialName: string; pro
         e.preventDefault();
         if (!f.name.trim() || !Number(f.cal)) return setErr("اكتبي الاسم والسعرات على الأقل.");
         setBusy(true);
+        const sg = Number(f.servingG) > 0 ? Number(f.servingG) : null;
+        if (barcode && f.basis === "100g") {
+          const row = { barcode, name: f.name.trim(), brand: null, cal: Number(f.cal), p: Number(f.p) || 0, c: Number(f.c) || 0, f: Number(f.f) || 0, serving_g: sg, serving_label: sg ? f.label.trim() || "حصة" : null, source: "label", added_by: profileId };
+          const { error } = await supabase.from("barcode_products").insert(row);
+          setBusy(false);
+          if (error) return setErr("ما انحفظ. تأكدي إن الأرقام لكل ١٠٠ جم معقولة.");
+          return onSaved(fromBarcode(row as BarcodeProduct));
+        }
         const { data, error } = await supabase
           .from("foods")
-          .insert({ owner_id: profileId, name: f.name.trim(), basis: f.basis, serving_label: f.basis === "serving" ? f.label.trim() || "حصة" : null, cal: Number(f.cal), p: Number(f.p) || 0, c: Number(f.c) || 0, f: Number(f.f) || 0 })
+          .insert({ owner_id: profileId, name: f.name.trim(), basis: f.basis, serving_label: f.basis === "serving" || sg ? f.label.trim() || "حصة" : null, serving_g: f.basis === "100g" ? sg : null, cal: Number(f.cal), p: Number(f.p) || 0, c: Number(f.c) || 0, f: Number(f.f) || 0 })
           .select("*")
           .single();
         setBusy(false);
@@ -368,7 +467,12 @@ function NewFood({ initialName, profileId, onSaved }: { initialName: string; pro
         onSaved(fromCustom(data as CustomFood));
       }}
     >
-      <p className="note">تلقين الأرقام على ملصق المنتج أو موقع المطعم. يتحفظ في «أكلاتي» وتلقينه المرة الجاية.</p>
+      {barcode ? <p className="small">باركود <b className="num" dir="ltr">{barcode}</b> ما كان عندنا. لما تحفظينه يلقاه الكل بعدين 🙌</p> : null}
+      <label className="btn btn-s" style={{ cursor: reading ? "wait" : "pointer" }}>
+        <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={reading} onChange={(e) => readLabel(e.target.files?.[0])} />
+        {reading ? "لحظة... نقرأ الملصق 🔍" : "📸 صوّري جدول القيم الغذائية ونعبيها لك"}
+      </label>
+      {readMsg ? <p className="alert info">{readMsg}</p> : <p className="note">أو اكتبي الأرقام من الملصق أو موقع المطعم. يتحفظ في «أكلاتي» وتلقينه المرة الجاية.</p>}
       <div className="field">
         <label htmlFor="nf-name">الاسم</label>
         <input id="nf-name" className="inp" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="مثلًا: ساندويتش حلومي من ..." />
@@ -377,12 +481,18 @@ function NewFood({ initialName, profileId, onSaved }: { initialName: string; pro
         <button type="button" aria-selected={f.basis === "serving"} onClick={() => setF({ ...f, basis: "serving" })}>لكل حصة / حبة</button>
         <button type="button" aria-selected={f.basis === "100g"} onClick={() => setF({ ...f, basis: "100g" })}>لكل ١٠٠ جم</button>
       </div>
-      {f.basis === "serving" ? (
+      <div className="grid2">
         <div className="field">
           <label htmlFor="nf-label">اسم الحصة</label>
-          <input id="nf-label" className="inp" value={f.label} onChange={(e) => setF({ ...f, label: e.target.value })} placeholder="حصة، حبة، علبة، ساندويتش" />
+          <input id="nf-label" className="inp" value={f.label} onChange={(e) => setF({ ...f, label: e.target.value })} placeholder="حصة، حبة، علبة" />
         </div>
-      ) : null}
+        {f.basis === "100g" ? (
+          <div className="field">
+            <label htmlFor="nf-sg">وزن الحصة (جم)</label>
+            <input id="nf-sg" className="inp num" inputMode="decimal" value={f.servingG} onChange={(e) => setF({ ...f, servingG: e.target.value.replace(/[^\d.]/g, "") })} placeholder="اختياري" />
+          </div>
+        ) : null}
+      </div>
       <div className="grid2">
         {num("cal", "🔥 السعرات")}
         {num("p", "💪 بروتين (جم)")}
@@ -390,7 +500,7 @@ function NewFood({ initialName, profileId, onSaved }: { initialName: string; pro
         {num("f", "🫒 دهون (جم)")}
       </div>
       {err ? <p className="alert err">{err}</p> : null}
-      <button className="btn btn-p" type="submit" disabled={busy}>{busy ? "لحظة..." : "احفظي وكملي"}</button>
+      <button className="btn btn-p" type="submit" disabled={busy || reading}>{busy ? "لحظة..." : "احفظي وكملي"}</button>
     </form>
   );
 }

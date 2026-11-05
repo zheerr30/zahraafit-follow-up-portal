@@ -2,7 +2,10 @@
 export type BaseFood = { n: string; cat: string; cal: number; p: number; c: number; f: number; note: string; piece?: { label: string; g: number } };
 
 /** A food added by hand (hers, or a ready dish from the coach). */
-export type CustomFood = { id: string; owner_id: string | null; name: string; basis: "100g" | "serving"; serving_label: string | null; cal: number; p: number; c: number; f: number };
+export type CustomFood = { id: string; owner_id: string | null; name: string; basis: "100g" | "serving"; serving_label: string | null; serving_g?: number | null; cal: number; p: number; c: number; f: number };
+
+/** A product found by barcode (values per 100 g). */
+export type BarcodeProduct = { barcode: string; name: string; brand: string | null; cal: number; p: number; c: number; f: number; serving_g: number | null; serving_label: string | null; source: string };
 
 export type FoodEntry = { id: string; client_id: string; log_date: string; slot: Slot; name: string; amount: number; unit: string; cal: number; p: number; c: number; f: number; created_at: string };
 
@@ -14,7 +17,7 @@ export const SLOT_EMOJI: Record<Slot, string> = { فطور: "🌅", غداء: "�
 export type Pickable = {
   key: string;
   name: string;
-  src: "base" | "mine" | "coach";
+  src: "base" | "mine" | "coach" | "barcode";
   basis: "100g" | "serving";
   cal: number;
   p: number;
@@ -43,8 +46,18 @@ export function fromCustom(x: CustomFood): Pickable {
     c: Number(x.c),
     f: Number(x.f),
     hint: x.owner_id ? "أكلاتي" : "من المدربة",
-    units: serving ? [{ label: x.serving_label || "حصة", g: 1 }] : [{ label: "جرام", g: 1 }]
+    units: serving
+      ? [{ label: x.serving_label || "حصة", g: 1 }]
+      : x.serving_g
+        ? [{ label: x.serving_label || "حصة", g: Number(x.serving_g) }, { label: "جرام", g: 1 }]
+        : [{ label: "جرام", g: 1 }]
   };
+}
+
+export function fromBarcode(x: BarcodeProduct): Pickable {
+  const units = [{ label: "جرام", g: 1 }];
+  if (x.serving_g) units.unshift({ label: x.serving_label || "حصة", g: Number(x.serving_g) });
+  return { key: `bc:${x.barcode}`, name: x.brand ? `${x.name} · ${x.brand}` : x.name, src: "barcode", basis: "100g", cal: Number(x.cal), p: Number(x.p), c: Number(x.c), f: Number(x.f), hint: "📷 من الباركود", units };
 }
 
 /** Values for an amount of a food. */

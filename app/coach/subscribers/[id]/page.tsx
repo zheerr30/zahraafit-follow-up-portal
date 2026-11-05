@@ -6,6 +6,9 @@ import { useEffect, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { CoachShell, Loading } from "@/components/ui";
 import { FollowupSettings } from "@/components/FollowupSettings";
+import { Fragment } from "react";
+import { tickedMeals, type MealRef } from "@/lib/meal-resolve";
+import type { FoodEntry } from "@/lib/foods";
 import { formatDate } from "@/lib/format";
 import { planTypeLabel } from "@/lib/intake";
 import { todayKey, type MealPlanData } from "@/lib/plan-data";
@@ -44,7 +47,10 @@ export default function SubscriberPage() {
   const [body, setBody] = useState<Body[]>([]);
   const [checks, setChecks] = useState(0);
   const [rates, setRates] = useState<Record<string, number>>({});
-  const [foodCal, setFoodCal] = useState<Map<string, number>>(new Map());
+  const [entries, setEntries] = useState<FoodEntry[]>([]);
+  const [swaps, setSwaps] = useState<Record<string, MealRef>>({});
+  const [mealRow, setMealRow] = useState<Plan | null>(null);
+  const [openDay, setOpenDay] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -70,16 +76,17 @@ export default function SubscriberPage() {
       setMealPlan((mp?.data as MealPlanData | undefined) || null);
       if (mp) {
         const { data: ch } = await supabase.from("plan_choices").select("data").eq("plan_id", mp.id).maybeSingle();
-        setRates(((ch?.data as { rates?: Record<string, number> } | null)?.rates) || {});
+        const cd = (ch?.data as { rates?: Record<string, number>; meals?: Record<string, MealRef> } | null) || {};
+        setRates(cd.rates || {});
+        setSwaps(cd.meals || {});
+        setMealRow(mp);
       }
       setDaily((d.data as Daily[] | null) || []);
       setWlogs((w.data as WLog[] | null) || []);
       setBody((b.data as Body[] | null) || []);
       setChecks(k.count || 0);
-      const { data: fe } = await supabase.from("food_entries").select("log_date, cal").eq("client_id", id).gte("log_date", since);
-      const fc = new Map<string, number>();
-      ((fe as { log_date: string; cal: number }[] | null) || []).forEach((x) => fc.set(x.log_date, (fc.get(x.log_date) || 0) + Number(x.cal)));
-      setFoodCal(fc);
+      const { data: fe } = await supabase.from("food_entries").select("*").eq("client_id", id).gte("log_date", since).order("created_at");
+      setEntries((fe as FoodEntry[] | null) || []);
       setLoading(false);
     })();
   }, [auth.profile, params?.id]);
@@ -112,16 +119,9 @@ export default function SubscriberPage() {
     .map((d) => ({ d, n: ((byDate.get(d)?.meals?._day as DayNote | undefined) || {}) as DayNote, off: offOf(byDate.get(d)) }))
     .filter((x) => x.n.notes || x.n.steps || x.n.sleep || x.off.length);
   /** Calories of ticked plan meals plus her diary entries for a day. */
-  const dayCal = (d: string, x?: Daily) => {
-    let t = foodCal.get(d) || 0;
-    if (x && mealPlan) {
-      Object.entries(x.meals || {}).forEach(([k, v]) => {
-        const m = v === true ? k.match(/^(\d+)-(\d+)$/) : null;
-        if (m) t += mealPlan.days[Number(m[1])]?.meals[Number(m[2])]?.cal || 0;
-      });
-    }
-    return Math.round(t);
-  };
+  const entriesOf = (d: string) => entries.filter((e) => e.log_date === d);
+  const dayCal = (d: string, x?: Daily) =>
+    Math.round(entriesOf(d).reduce((a, e) => a + Number(e.cal), 0) + tickedMeals(mealPlan, swaps, x?.meals).reduce((a, t) => a + t.meal.cal, 0));
   const liked = Object.keys(rates).filter((k) => rates[k] === 1);
   const disliked = Object.keys(rates).filter((k) => rates[k] === -1);
   const offWeek = week.reduce((a, d) => a + offOf(byDate.get(d)).length, 0);
@@ -143,6 +143,13 @@ export default function SubscriberPage() {
         {req ? <Link className="btn btn-g btn-sm" href={`/coach/requests/${req.id}`}>طلبها ومعلوماتها</Link> : null}
       </div>
 
+      {mealRow ? (
+        <Link href={`/coach/plans/${mealRow.id}`} className="tip-card">
+          <span className="em" aria-hidden="true">✏️</span>
+          <span><b>عدّلي خطتها الغذائية</b> بدّلي وجبة، أو غيري الكمية، أو اكتبي لها ملاحظة، بدون ما تولّدين جدول جديد.</span>
+        </Link>
+      ) : null}
+
       <FollowupSettings client={client} wantsFollowup={Boolean(req?.wants_followup)} onChange={setClient} />
 
       <div className="sec-title">
@@ -160,7 +167,7 @@ export default function SubscriberPage() {
       <div className="sec-title">
         <span className="em" aria-hidden="true">🗓️</span>
         <h2>يوم بيوم</h2>
-        <span className="aside">آخر ١٤ يوم</span>
+        <span className="aside">اضغطي على اليوم تشوفين وش أكلت</span>
       </div>
       <section className="card" style={{ padding: 0, overflowX: "auto" }}>
         <table className="gtable" style={{ minWidth: 580 }}>
@@ -174,7 +181,8 @@ export default function SubscriberPage() {
               const w = workoutDates.get(d);
               const eaten = eatenOf(x);
               return (
-                <tr key={d} style={{ opacity: x || w || foodCal.has(d) ? 1 : 0.45 }}>
+                <Fragment key={d}>
+                <tr style={{ opacity: x || w || entriesOf(d).length ? 1 : 0.45, cursor: x || entriesOf(d).length ? "pointer" : undefined }} onClick={() => setOpenDay(openDay === d ? null : d)} aria-expanded={openDay === d}>
                   <td style={{ paddingInlineStart: 16, whiteSpace: "nowrap" }}>{short(d)}</td>
                   <td>{x ? `${eaten}${perDay ? ` / ${perDay}` : ""}${offOf(x).length ? " 🍔" : ""}` : "—"}</td>
                   <td>{dayCal(d, x) || "—"}</td>
@@ -183,6 +191,21 @@ export default function SubscriberPage() {
                   <td>{n.sleep || "—"}</td>
                   <td title={w?.day_title || undefined}>{w ? "✅" : "—"}</td>
                 </tr>
+                {openDay === d ? (
+                  <tr>
+                    <td colSpan={7} style={{ background: "var(--sunken)", padding: "8px 16px" }}>
+                      {[...tickedMeals(mealPlan, swaps, x?.meals).map((t) => ({ k: t.key, name: t.meal.name, sub: `✅ من خطتها · ${t.meal.slot}`, cal: t.meal.cal })),
+                        ...entriesOf(d).map((e) => ({ k: e.id, name: e.name, sub: `📒 ${e.slot} · ${Number(e.amount)} ${e.unit} · 💪 ${Number(e.p)} 🌾 ${Number(e.c)} 🫒 ${Number(e.f)}`, cal: Math.round(Number(e.cal)) }))].map((it) => (
+                        <div key={it.k} className="small" style={{ padding: "4px 0", position: "sticky", right: 16, maxWidth: "calc(100vw - 64px)" }}>
+                          {it.name} · <b className="num">{it.cal} سعرة</b>
+                          <span className="note" style={{ display: "block" }}>{it.sub}</span>
+                        </div>
+                      ))}
+                      {!tickedMeals(mealPlan, swaps, x?.meals).length && !entriesOf(d).length ? <span className="note">ما سجلت أكل هاليوم.</span> : null}
+                    </td>
+                  </tr>
+                ) : null}
+                </Fragment>
               );
             })}
           </tbody>
