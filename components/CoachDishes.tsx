@@ -57,7 +57,7 @@ export function CoachDishes() {
           أكلة جديدة
         </button>
       </div>
-      <p className="small muted">أكلات تلقاها كل المشتركات في «يومياتي» لما يبحثون، مثل الكبسة والشاورما وأكلات المطاعم. أصناف مولدك موجودة تلقائي.</p>
+      <p className="small muted">أكلات تلقاها كل المشتركات في «سعراتي» لما يبحثون، مثل الكبسة والشاورما وأكلات المطاعم. أصناف مولدك موجودة تلقائي.</p>
 
       {draft ? (
         <form className="card stack" onSubmit={save}>

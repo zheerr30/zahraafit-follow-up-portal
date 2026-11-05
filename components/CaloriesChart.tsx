@@ -93,7 +93,7 @@ export function CaloriesChart({ clientId, mealRow }: { clientId: string; mealRow
           </>
         ) : null}
       </svg>
-      <p className="note">آخر {DAYS} يوم: وجبات خطتك اللي علمتيها + اللي سجلتيه في يومياتي. الغامق = زدتي عن هدفك بأكثر من ١٠٪.</p>
+      <p className="note">آخر {DAYS} يوم: وجبات خطتك اللي علمتيها + اللي سجلتيه في «سعراتي». الغامق = زدتي عن هدفك بأكثر من ١٠٪.</p>
     </section>
     </>
   );

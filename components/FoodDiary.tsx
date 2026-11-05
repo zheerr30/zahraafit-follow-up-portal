@@ -221,50 +221,53 @@ export function FoodDiary({
 
   return (
     <>
-      <div className="row between" style={{ alignItems: "center" }}>
-        <button type="button" className="icon-btn" aria-label="اليوم اللي قبل" onClick={() => setDate(shiftDay(date, -1))}>
-          <ChevronRight />
-        </button>
-        <b style={{ color: "var(--navy)" }}>{dayLabel(date)}</b>
-        <button type="button" className="icon-btn" aria-label="اليوم اللي بعد" disabled={date >= today} style={{ opacity: date >= today ? 0.3 : 1 }} onClick={() => setDate(shiftDay(date, 1))}>
-          <ChevronLeft />
-        </button>
-      </div>
-
-      <section className="card stack" style={{ gap: 12 }}>
-        <div className="row between" style={{ alignItems: "flex-end" }}>
-          <div>
-            <span className="label">🔥 أكلتي</span>
-            <b className="num" style={{ fontSize: 32, lineHeight: 1.1, color: "var(--navy)", display: "block" }}>{Math.round(totals.cal)}</b>
+      <section className="cal-hero">
+        <div className="row between" style={{ alignItems: "center" }}>
+          <div style={{ minWidth: 0 }}>
+            <h2>🔥 حاسبة السعرات</h2>
+            <p>سجلي اللي تاكلينه ونحسب لك السعرات والبروتين والكارب والدهون تلقائي.</p>
           </div>
-          {target ? (
-            <div style={{ textAlign: "end" }}>
-              <span className="label">{left! >= 0 ? "باقي لك" : "زدتي"}</span>
-              <b className="num" style={{ fontSize: 24, color: left! >= 0 ? "var(--green)" : "var(--clay-ink)", display: "block" }}>{Math.abs(left!)}</b>
-              <span className="note">من {target.cal} سعرة</span>
-            </div>
-          ) : null}
         </div>
-        {target ? (
-          <span aria-hidden="true" style={{ display: "block", height: 8, borderRadius: 99, background: "var(--line)", overflow: "hidden" }}>
-            <i style={{ display: "block", height: "100%", width: `${Math.min(100, (totals.cal / target.cal) * 100)}%`, background: left! >= 0 ? "var(--clay)" : "var(--clay-ink)" }} />
-          </span>
-        ) : null}
-        <div className="grid3">
-          {([["💪 بروتين", totals.p, target?.p, "var(--protein)"], ["🌾 كارب", totals.c, target?.c, "var(--carb)"], ["🫒 دهون", totals.f, target?.f, "var(--fat)"]] as [string, number, number | undefined, string][]).map(([l, v, t, c]) => (
-            <div key={l} className="mtile" style={{ "--c": c, textAlign: "start" } as React.CSSProperties}>
-              <span>{l}</span>
-              <b>{Math.round(v)}g</b>
-              {t ? <span>من {t}g</span> : null}
-            </div>
-          ))}
+        <div className="cal-day" role="group" aria-label="اليوم">
+          <button type="button" aria-label="اليوم اللي قبل" onClick={() => setDate(shiftDay(date, -1))}><ChevronRight size={18} /></button>
+          <b>{dayLabel(date)}</b>
+          <button type="button" aria-label="اليوم اللي بعد" disabled={date >= today} onClick={() => setDate(shiftDay(date, 1))}><ChevronLeft size={18} /></button>
         </div>
-        {!target ? (
-          <Link href="/app/guide?tab=calc" className="tip-card">
-            <span className="em" aria-hidden="true">🧮</span>
-            <span>حطي هدفك اليومي من <b>الحاسبة</b> عشان نقولك كم باقي لك.</span>
-          </Link>
-        ) : null}
+        <div className="cal-main">
+          <svg viewBox="0 0 120 120" className="cal-ring" role="img" aria-label={target ? `أكلتي ${Math.round(totals.cal)} من ${target.cal} سعرة` : `أكلتي ${Math.round(totals.cal)} سعرة`}>
+            <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,.14)" strokeWidth="10" />
+            {target ? (
+              <circle cx="60" cy="60" r="52" fill="none" stroke={left! >= 0 ? "var(--clay)" : "#FF8A65"} strokeWidth="10" strokeLinecap="round"
+                strokeDasharray={`${2 * Math.PI * 52 * (target ? Math.min(1, totals.cal / target.cal) : 0)} ${2 * Math.PI * 52}`} transform="rotate(-90 60 60)" />
+            ) : null}
+            <text x="60" y="58" textAnchor="middle" fontSize="26" fontWeight="700" fill="#fff">{Math.round(totals.cal)}</text>
+            <text x="60" y="78" textAnchor="middle" fontSize="11" fill="rgba(255,255,255,.75)">{target ? `من ${target.cal}` : "سعرة"}</text>
+          </svg>
+          <div className="cal-side">
+            {target ? (
+              <>
+                <span>{left! >= 0 ? "باقي لك" : "زدتي"}</span>
+                <b style={{ color: left! >= 0 ? "#7EE2A8" : "#FFB59C" }}>{Math.abs(left!)} <small>سعرة</small></b>
+              </>
+            ) : (
+              <Link href="/app/guide?tab=calc" className="cal-goal">🎯 حطي هدفك اليومي من الحاسبة</Link>
+            )}
+            <div className="cal-macros">
+              {([["💪 بروتين", totals.p, target?.p], ["🌾 كارب", totals.c, target?.c], ["🫒 دهون", totals.f, target?.f]] as [string, number, number | undefined][]).map(([l, v, t]) => (
+                <div key={l}>
+                  <span>{l}</span>
+                  <b>{Math.round(v)}{t ? <small> / {t}g</small> : <small>g</small>}</b>
+                  {t ? <i aria-hidden="true"><i style={{ width: `${Math.min(100, (v / t) * 100)}%` }} /></i> : null}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="cal-quick">
+          <button type="button" onClick={() => { setQ(""); setSheet({ mode: "search", slot: defaultSlot() }); }}>🔍 ابحثي عن أكل</button>
+          <button type="button" onClick={() => setSheet({ mode: "barcode", slot: defaultSlot() })}>📷 باركود</button>
+          <button type="button" onClick={() => setSheet({ mode: "photo", slot: defaultSlot() })}>🤖 صوري صحنك</button>
+        </div>
       </section>
 
       {SLOTS.map((slot) => {

@@ -95,7 +95,7 @@ export function Calculator({ profileId }: { profileId: string }) {
             const { data: c } = await supabase.from("clients").select("id").eq("profile_id", profileId).maybeSingle();
             if (!c) return toast.show("ما قدرنا نحفظ. جربي مرة ثانية.");
             const { error } = await supabase.from("food_targets").upsert({ client_id: c.id, cal: res.cal, p: res.p, c: res.c, f: res.f }, { onConflict: "client_id" });
-            toast.show(error ? "ما انحفظ. تأكدي من الاتصال." : "🎯 صار هدفك في «يومياتي»");
+            toast.show(error ? "ما انحفظ. تأكدي من الاتصال." : "🎯 صار هدفك في «سعراتي»");
           }}>🎯 احفظيها هدفي اليومي</button>
         </section>
       ) : (

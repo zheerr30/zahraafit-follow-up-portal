@@ -295,7 +295,7 @@ export default function FoodPage() {
   return (
     <ClientShell title="أكلي" action={pdf ? <a className="btn btn-g btn-sm" href={pdf.href} target={pdf.external ? "_blank" : undefined} rel="noreferrer"><FileText />PDF</a> : undefined}>
       <div className="seg-tabs" role="tablist" aria-label="أقسام أكلي">
-        {([["meals", "🍽️ وجباتي"], ["extras", "🍎 إضافي"], ["shop", "🛒 تسوق"], ["diary", "📒 يومياتي"]] as [Tab, string][]).map(([k, l]) => (
+        {([["meals", "🍽️ وجباتي"], ["extras", "🍎 إضافي"], ["shop", "🛒 تسوق"], ["diary", "🔥 سعراتي"]] as [Tab, string][]).map(([k, l]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
@@ -362,7 +362,7 @@ export default function FoodPage() {
 
           <button type="button" className="tip-card" style={{ width: "100%", textAlign: "start" }} onClick={() => { setTab("diary"); window.scrollTo(0, 0); }}>
             <span className="em" aria-hidden="true">🍔</span>
-            <span><b>أكلتي شي برا الخطة؟</b> عادي يصير! سجليه في <b>📒 يومياتي</b> ونحسب لك سعراته.</span>
+            <span><b>أكلتي شي برا الخطة؟</b> عادي يصير! سجليه في <b>🔥 سعراتي</b> ونحسب لك سعراته.</span>
           </button>
 
           <div className="sec-title">
