@@ -133,7 +133,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
     replyAlert = true;
     alert = (
       <div className="alert-card coach-note">
-        <span className="coach-av" aria-hidden="true"><img src="/brand/logo-white.png" alt="" /></span>
+        <span className="coach-av" aria-hidden="true"><img src="/brand/logo-mark.png" alt="" /></span>
         <span className="coach-note-t">
           <b>رسالة جديدة من زهراء</b>
           <span className="one-line">{reply.coach_notes}</span>

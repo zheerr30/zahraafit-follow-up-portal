@@ -408,9 +408,10 @@ pre.copy-box { white-space: pre-wrap; margin: 0; padding: 14px; border-radius: v
 .diary-row > b { color: var(--navy); font-size: 15px; }
 
 /* Account button in the subscriber app bar */
-.acc-btn { display: flex; flex-direction: column; align-items: center; gap: 1px; color: #fff; font-size: 11px; font-weight: 600; min-width: 44px; min-height: 44px; justify-content: center; border-radius: 12px; padding: 2px 6px; }
+.acc-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; color: #fff; font-size: 11px; font-weight: 700; min-width: 50px; min-height: 46px; justify-content: center; border-radius: 14px; padding: 4px 8px; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .28); box-shadow: 0 4px 14px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .12); }
 .acc-btn svg { width: 21px; height: 21px; }
-.acc-btn[aria-current="page"] { background: rgba(255, 255, 255, .12); }
+.acc-btn[aria-current="page"] { background: var(--clay); border-color: var(--clay); }
+.acc-btn:active { transform: scale(.96); }
 
 /* Weekly check-in */
 .scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
@@ -621,3 +622,9 @@ details.msg-old[open] .sub { display: none; }
 .coach-note-t { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
 .coach-note-t .one-line { white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
 .coach-note-t .link { font-size: 13.5px; font-weight: 700; color: var(--clay-ink); min-height: 0; padding: 0; }
+.period-card { position: relative; }
+.period-next { align-self: flex-start; font-size: 12.5px; font-weight: 600; color: var(--ink-2); background: var(--sunken); border-radius: 999px; padding: 4px 10px; }
+.period-day { font-size: 22px; color: var(--navy); }
+.period-bar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; direction: rtl; }
+.period-bar i { height: 10px; border-radius: 6px; background: var(--sunken); }
+.period-log summary { cursor: pointer; font-size: 13.5px; font-weight: 600; color: var(--ink-2); padding: 6px 0; }
