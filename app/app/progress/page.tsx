@@ -11,6 +11,7 @@ import { useClientPlans } from "@/lib/use-client";
 import { CaloriesChart } from "@/components/CaloriesChart";
 import { Achievements } from "@/components/Achievements";
 import { PeriodTracker } from "@/components/PeriodTracker";
+import { CoachMessages } from "@/components/CoachMessages";
 import { inPeriod } from "@/lib/period";
 import { STORE_URL, accountOf } from "@/lib/account";
 
@@ -171,6 +172,7 @@ export default function ProgressPage() {
 
       {accountOf(auth.profile).sub ? (
       <>
+      {cp.client ? <CoachMessages clientId={cp.client.id} /> : null}
       <div className="sec-h">
         <h2>القياسات</h2>
         {m1 ? <span className="small muted">آخر قياس {formatDate(m1.log_date)}</span> : null}

@@ -9,7 +9,8 @@ export type ShareCard =
   | { kind: "day"; eaten: number; target: number | null; p: number; c: number; f: number; done: number; total: number }
   | { kind: "meal"; photo: Blob | null; name: string; cal: number; p: number; c: number; f: number }
   | { kind: "streak"; days: number }
-  | { kind: "weight"; lost: number; show: boolean };
+  | { kind: "weight"; lost: number; show: boolean }
+  | { kind: "week"; days: number; avgCal: number | null; avgP: number | null; weight: number | null; show: boolean };
 
 const W = 1080;
 const H = 1920;
@@ -153,6 +154,21 @@ export async function drawShareCard(card: ShareCard): Promise<Blob> {
     text(ctx, String(card.days), W / 2, 1060, 300);
     text(ctx, "أيام ورا بعض", W / 2, 1200, 80);
     text(ctx, "التزمت بخطتي 💪", W / 2, 1320, 80, 700, "#FFB088");
+  } else if (card.kind === "week") {
+    text(ctx, "📊 ملخص أسبوعي", W / 2, 480, 80);
+    const rows: [string, string][] = [["📅 أيام التزمت فيها", `${card.days} من 7`]];
+    if (card.avgCal) rows.push(["🔥 متوسط سعراتي", `${card.avgCal}`]);
+    if (card.avgP) rows.push(["💪 متوسط البروتين", `${card.avgP}g`]);
+    if (card.weight !== null && card.show) rows.push(["⚖️ تغير وزني", `${card.weight > 0 ? "+" : ""}${card.weight} كجم`]);
+    rows.forEach(([l, v], i) => {
+      const y0 = 640 + i * 230;
+      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      roundRect(ctx, 120, y0, W - 240, 190, 36);
+      ctx.fill();
+      text(ctx, l, W - 170, y0 + 82, 44, 500, "rgba(255,255,255,0.8)", "right");
+      ctx.direction = "ltr";
+      text(ctx, v, W - 170, y0 + 152, 64, 700, "#fff", "right");
+    });
   } else {
     text(ctx, "🏆", W / 2, 700, 200);
     if (card.show) {

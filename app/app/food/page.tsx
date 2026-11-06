@@ -9,6 +9,8 @@ import { CalorieCard } from "@/components/CalorieCard";
 import { PlanOffer } from "@/components/PlanOffer";
 import { accountOf } from "@/lib/account";
 import { ramadanMealSlot } from "@/lib/ramadan";
+import { smartSwaps, type SwapOption } from "@/lib/smart-swap";
+import { loadBase } from "@/lib/base-foods";
 import { ShareSheet } from "@/components/ShareSheet";
 import type { ShareCard } from "@/lib/share-card";
 import { planMealFor, resolve, tickedMeals, type MealRef } from "@/lib/meal-resolve";
@@ -23,7 +25,7 @@ type OffItem = { t: string; cal?: number; at: string };
 /** Day check-in kept inside the day's log (meals._day). */
 type DayNote = { steps?: string; sleep?: string; notes?: string };
 type Log = { meals: Record<string, boolean | DayNote | OffItem[]>; water: number };
-type Sheet = { type: "meal"; key: string; slot: string } | { type: "ing"; key: string; original: string; options: string[] } | null;
+type Sheet = { type: "meal"; key: string; slot: string } | { type: "ing"; key: string; original: string; options: string[] } | { type: "smart"; key: string; original: string; options: SwapOption[] | null } | null;
 type Tab = "meals" | "shop" | "diary";
 
 
@@ -318,6 +320,15 @@ export default function FoodPage() {
                     بدلي
                   </button>
                 ) : null}
+                {!toTaste(ing.a, ing.u) ? (
+                  <button type="button" className="swap ghost" aria-label={`ما عندي ${ing.n}`} onClick={async () => {
+                    setSheet({ type: "smart", key: ik, original: ingredientText(ing), options: null });
+                    const base = await loadBase();
+                    setSheet({ type: "smart", key: ik, original: ingredientText(ing), options: smartSwaps(ing, base) });
+                  }}>
+                    ما عندي؟
+                  </button>
+                ) : null}
               </div>
             );
           })}
@@ -498,12 +509,38 @@ export default function FoodPage() {
         <div className="sheet-bg" onClick={(e) => e.target === e.currentTarget && setSheet(null)}>
           <div className="sheet" role="dialog" aria-modal="true" aria-label="بدلي">
             <div className="row between">
-              <h2 style={{ fontSize: 18 }}>{sheet.type === "meal" ? `بدلي ${sheet.slot || "الوجبة"}` : "بدلي الصنف"}</h2>
+              <h2 style={{ fontSize: 18 }}>{sheet.type === "meal" ? `بدلي ${sheet.slot || "الوجبة"}` : sheet.type === "smart" ? `ما عندي ${sheet.original}` : "بدلي الصنف"}</h2>
               <button type="button" className="icon-btn" aria-label="إغلاق" onClick={() => setSheet(null)}>
                 <X />
               </button>
             </div>
-            {sheet.type === "ing" ? (
+            {sheet.type === "smart" ? (
+              <div className="opts">
+                {sheet.options === null ? <p className="note">لحظة، ندور بدائل...</p> : sheet.options.length ? (
+                  <>
+                    <p className="small muted">بدائل من نفس النوع وبنفس السعرات والماكروز تقريبًا، والكمية محسوبة لك:</p>
+                    {sheet.options.map((o) => (
+                      <button key={o.label} type="button" className="opt" onClick={() => {
+                        saveChoices({ ...choices, ings: { ...choices.ings, [sheet.key]: o.label } });
+                        setSheet(null);
+                        toast.show(`تم: ${o.label}`);
+                      }}>
+                        <span className="radio" />
+                        <span>
+                          <span className="opt-t">{o.name} <b className="num">{o.grams}</b> جم</span>
+                          <span className="opt-s">{o.cal} سعرة · 💪 {o.p} · 🌾 {o.c} · 🫒 {o.f}</span>
+                        </span>
+                      </button>
+                    ))}
+                    {choices.ings[sheet.key] ? (
+                      <button type="button" className="btn btn-g" onClick={() => { const ings = { ...choices.ings }; delete ings[sheet.key]; saveChoices({ ...choices, ings }); setSheet(null); }}>رجعي للصنف الأصلي</button>
+                    ) : null}
+                  </>
+                ) : (
+                  <p className="alert info">ما لقينا بديل محسوب لهالصنف. جربي زر «بدلي» لو موجود، أو اسألي المدربة.</p>
+                )}
+              </div>
+            ) : sheet.type === "ing" ? (
               <div className="opts">
                 {[sheet.original, ...sheet.options].map((o, i) => {
                   const on = i === 0 ? !choices.ings[sheet.key] : choices.ings[sheet.key] === o;

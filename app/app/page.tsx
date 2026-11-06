@@ -10,6 +10,7 @@ import { CheckinCard } from "@/components/CheckinCard";
 import { ReminderNudge } from "@/components/ReminderNudge";
 import { FreeHome, RenewBanner } from "@/components/FreeHome";
 import { PeriodNote } from "@/components/PeriodTracker";
+import { HomeBoosts } from "@/components/HomeBoosts";
 import { RamadanSuggest } from "@/components/RamadanToggle";
 import { accountOf } from "@/lib/account";
 import { useRouter } from "next/navigation";
@@ -85,6 +86,7 @@ export default function ClientHome() {
       <>
         <RenewBanner daysLeft={null} expired={acc.expired} />
         <FreeHome clientId={client.id} />
+        <WeekSummary clientId={client.id} plans={[]} />
       </>
     );
   } else if (!request && !plan) {
@@ -202,6 +204,7 @@ export default function ClientHome() {
       {client && auth.profile.gender !== "male" ? <PeriodNote clientId={client.id} /> : null}
       <RamadanSuggest profileId={auth.profile.id} />
       {main}
+      {client && (!acc.sub || plans.some((x) => x.kind === "nutrition" && x.data)) ? <HomeBoosts clientId={client.id} plans={plans} /> : null}
       {client ? <HomeExtras clientId={client.id} /> : null}
       {request || plan || !acc.sub ? null : (
         <div className="card row" style={{ alignItems: "flex-start" }}>

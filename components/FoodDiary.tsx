@@ -10,6 +10,7 @@ import { BarcodeScanner, MealPhoto } from "@/components/FoodScan";
 import { Restaurants } from "@/components/Restaurants";
 import { CalorieCard } from "@/components/CalorieCard";
 import { RAMADAN_EMOJI, RAMADAN_SLOT } from "@/lib/ramadan";
+import { loadBase } from "@/lib/base-foods";
 import { STORE_URL } from "@/lib/account";
 import { SuggestedSnacks } from "@/components/SuggestedSnacks";
 import { generalSnacks, type Snack } from "@/lib/snacks";
@@ -27,16 +28,6 @@ type Sheet =
   | { mode: "rest"; slot: Slot };
 type EntryRow = Omit<FoodEntry, "id" | "client_id" | "log_date" | "slot" | "created_at">;
 type Saved = { id: string; kind: "item" | "meal"; name: string; data: { food?: Pickable; items?: EntryRow[] } };
-
-let baseCache: BaseFood[] | null = null;
-async function loadBase(): Promise<BaseFood[]> {
-  if (baseCache) return baseCache;
-  const { data: s } = await supabase.auth.getSession();
-  const res = await fetch("/api/foods", { headers: { Authorization: `Bearer ${s.session?.access_token || ""}` } });
-  if (!res.ok) return [];
-  baseCache = (await res.json()) as BaseFood[];
-  return baseCache;
-}
 
 const shiftDay = (d: string, n: number) => {
   const x = new Date(d + "T12:00:00");

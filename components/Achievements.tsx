@@ -7,7 +7,7 @@ import { todayKey } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 
 /** Days in a row (up to today, or yesterday if today isn't logged yet) with meals ticked or food logged. */
-async function streakDays(clientId: string) {
+export async function streakDays(clientId: string) {
   const since = new Date(todayKey() + "T12:00:00");
   since.setDate(since.getDate() - 90);
   const from = since.toISOString().slice(0, 10);

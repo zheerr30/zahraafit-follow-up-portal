@@ -13,7 +13,7 @@ export function ShareSheet({ card, onClose, numberToggle }: { card: ShareCard; o
 
   useEffect(() => {
     let alive = true;
-    const c: ShareCard = card.kind === "weight" ? { ...card, show } : card;
+    const c: ShareCard = card.kind === "weight" || card.kind === "week" ? { ...card, show } : card;
     drawShareCard(c).then((b) => {
       if (!alive) return;
       setBlob(b);
