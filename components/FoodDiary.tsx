@@ -201,6 +201,17 @@ export function FoodDiary({
 
   const favOf = (f: Pickable) => saved.find((x) => x.kind === "item" && x.data.food?.key === f.key);
 
+  /** A logged item as a food she can add again (one serving = what she logged). */
+  const entryFood = (e: FoodEntry): Pickable => ({
+    key: `e:${e.name}|${Number(e.amount)}|${e.unit}`,
+    name: e.name,
+    src: "mine",
+    basis: "serving",
+    cal: Number(e.cal), p: Number(e.p), c: Number(e.c), f: Number(e.f),
+    hint: `${fmt(Number(e.amount))} ${e.unit}`,
+    units: [{ label: `حصة (${fmt(Number(e.amount))} ${e.unit})`, g: 1 }]
+  });
+
   async function toggleFav(f: Pickable) {
     const cur = favOf(f);
     if (cur) {
@@ -257,7 +268,11 @@ export function FoodDiary({
   const snackList: Snack[] = coachSnacks && coachSnacks.length
     ? coachSnacks.map((m) => ({ name: m.name, detail: m.ingredients.slice(0, 3).map((i) => i.n).join("، "), cal: m.cal, p: m.p, c: m.c, f: m.f }))
     : generalSnacks(foods);
-  const results = sheet?.mode === "search" ? search(foods, q) : [];
+  // Favorites first, including foods starred from what she logged.
+  const favFoods = saved.filter((x) => x.kind === "item" && x.data.food).map((x) => x.data.food!);
+  const results = sheet?.mode === "search"
+    ? search([...favFoods.filter((f) => !foods.some((x) => x.key === f.key)), ...foods], q).sort((a, b) => Number(Boolean(favOf(b))) - Number(Boolean(favOf(a))))
+    : [];
   const today = todayKey();
 
   return (
@@ -335,6 +350,9 @@ export function FoodDiary({
                   <span className="note" style={{ display: "block" }}>{fmt(Number(e.amount))} {e.unit} · 💪 {fmt(Number(e.p))} · 🌾 {fmt(Number(e.c))} · 🫒 {fmt(Number(e.f))}</span>
                 </span>
                 <b className="num">{Math.round(Number(e.cal))}</b>
+                <button type="button" className="icon-btn fav-mini" aria-pressed={Boolean(favOf(entryFood(e)))} aria-label={favOf(entryFood(e)) ? `شيلي ${e.name} من المفضلة` : `أضيفي ${e.name} للمفضلة`} onClick={() => toggleFav(entryFood(e))}>
+                  {favOf(entryFood(e)) ? "⭐" : "☆"}
+                </button>
                 <button type="button" className="icon-btn" aria-label={`احذفي ${e.name}`} onClick={() => remove(e.id)}>
                   <X size={15} />
                 </button>
@@ -381,7 +399,7 @@ export function FoodDiary({
                     {results.map((f) => (
                       <button key={f.key} type="button" className="opt" onClick={() => setSheet({ mode: "amount", slot: sheet.slot, food: f })}>
                         <span style={{ minWidth: 0 }}>
-                          <span className="opt-t">{f.name}</span>
+                          <span className="opt-t">{favOf(f) ? "⭐ " : ""}{f.name}</span>
                           <span className="opt-s">{f.cal} سعرة {f.basis === "100g" ? "لكل ١٠٠ جم" : `لكل ${f.units[0].label}`}{f.hint ? ` · ${f.hint}` : ""}</span>
                         </span>
                       </button>

@@ -9,6 +9,7 @@ import { GOALS, normalizeAnswers, planTypeLabel } from "@/lib/intake";
 import { supabase } from "@/lib/supabase";
 import { signOut, useAuthGuard } from "@/lib/use-auth";
 import { setGender } from "@/lib/gender";
+import { accountOf } from "@/lib/account";
 import { useClientPlans } from "@/lib/use-client";
 import type { PlanRequest } from "@/lib/types";
 
@@ -143,7 +144,7 @@ export default function AccountPage() {
         <span className="em" aria-hidden="true">🔔</span>
         <h2>التذكيرات</h2>
       </div>
-      <Reminders profileId={p.id} mealsPerDay={cp.meal?.days[0]?.meals.length || 3} />
+      <Reminders profileId={p.id} mealsPerDay={cp.meal?.days[0]?.meals.length || 3} subscriber={accountOf(p).sub} />
 
       <div className="sec-title">
         <span className="em" aria-hidden="true">🔒</span>

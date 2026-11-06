@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui";
 import { pushState, turnOffPush, turnOnPush, type PushState } from "@/lib/push";
 import { supabase } from "@/lib/supabase";
 
-type Prefs = { meal_times: string[]; water: boolean; workout_time: string | null };
+type Prefs = { meal_times: string[]; water: boolean; workout_time: string | null; saturday?: boolean };
 
 const DEFAULT_TIMES: Record<number, string[]> = {
   1: ["14:00"],
@@ -17,7 +17,7 @@ const DEFAULT_TIMES: Record<number, string[]> = {
 };
 
 /** Phone reminders: turn on for this phone, pick meal times, water, workout. */
-export function Reminders({ profileId, mealsPerDay }: { profileId: string; mealsPerDay: number }) {
+export function Reminders({ profileId, mealsPerDay, subscriber = true }: { profileId: string; mealsPerDay: number; subscriber?: boolean }) {
   const toast = useToast();
   const [state, setState] = useState<PushState | null>(null);
   const [prefs, setPrefs] = useState<Prefs | null>(null);
@@ -26,14 +26,16 @@ export function Reminders({ profileId, mealsPerDay }: { profileId: string; meals
 
   useEffect(() => {
     pushState().then(setState);
-    supabase.from("reminder_prefs").select("meal_times, water, workout_time").eq("profile_id", profileId).maybeSingle().then(({ data }) => {
-      setPrefs((data as Prefs | null) || { meal_times: DEFAULT_TIMES[Math.min(5, Math.max(1, mealsPerDay || 3))], water: true, workout_time: null });
+    supabase.from("reminder_prefs").select("*").eq("profile_id", profileId).maybeSingle().then(({ data }) => {
+      // Few by default: the main meals only, no water reminders.
+      setPrefs((data as Prefs | null) || { meal_times: DEFAULT_TIMES[Math.min(3, Math.max(1, mealsPerDay || 3))], water: false, workout_time: null, saturday: true });
     });
   }, [profileId, mealsPerDay]);
 
   async function save(next: Prefs, msg = "انحفظت أوقاتك") {
     setPrefs(next);
-    const clean = { ...next, meal_times: Array.from(new Set(next.meal_times.filter(Boolean))).sort() };
+    const clean: Prefs = { ...next, meal_times: Array.from(new Set(next.meal_times.filter(Boolean))).sort() };
+    if (clean.saturday === undefined) delete clean.saturday;
     const { error } = await supabase.from("reminder_prefs").upsert({ profile_id: profileId, ...clean }, { onConflict: "profile_id" });
     toast.show(error ? "ما انحفظ. تأكدي من الاتصال." : msg);
   }
@@ -104,6 +106,12 @@ export function Reminders({ profileId, mealsPerDay }: { profileId: string; meals
             <span>💧 ذكريني بالماء كل ساعتين <span className="note">(١٠ الصبح لـ ١٠ الليل)</span></span>
             <input type="checkbox" checked={prefs.water} onChange={() => save({ ...prefs, water: !prefs.water })} style={{ width: 22, height: 22, accentColor: "var(--clay)" }} />
           </label>
+          {subscriber ? (
+            <label className="row between" style={{ cursor: "pointer" }}>
+              <span>📅 ذكريني بتسجيل السبت <span className="note">(١٠ الصبح)</span></span>
+              <input type="checkbox" checked={prefs.saturday !== false} onChange={() => save({ ...prefs, saturday: prefs.saturday === false })} style={{ width: 22, height: 22, accentColor: "var(--clay)" }} />
+            </label>
+          ) : null}
           <div className="row between">
             <span>💪 وقت التمرين</span>
             <span className="row" style={{ gap: 6 }}>
