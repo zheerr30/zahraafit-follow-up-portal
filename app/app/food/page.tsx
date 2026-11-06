@@ -3,7 +3,7 @@
 import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeftRight, Check, ChevronDown, FileText, Utensils, X } from "lucide-react";
+import { ArrowLeftRight, Check, ChevronDown, FileText, Plus, Utensils, X } from "lucide-react";
 import { ClientShell, Empty, Loading, useToast } from "@/components/ui";
 import { FoodDiary } from "@/components/FoodDiary";
 import { CalorieCard } from "@/components/CalorieCard";
@@ -21,7 +21,8 @@ import { supabase } from "@/lib/supabase";
 import { useAuthGuard } from "@/lib/use-auth";
 import { useClientPlans } from "@/lib/use-client";
 
-type Choices = { meals: Record<string, MealRef>; ings: Record<string, string>; shop: Record<string, boolean>; rates: Record<string, 1 | -1> };
+type ShopExtra = { id: string; name: string; amount: string };
+type Choices = { meals: Record<string, MealRef>; ings: Record<string, string>; shop: Record<string, boolean>; rates: Record<string, 1 | -1>; extra?: ShopExtra[] };
 /** Something she ate outside the plan (meals._off). */
 type OffItem = { t: string; cal?: number; at: string };
 /** Day check-in kept inside the day's log (meals._day). */
@@ -68,6 +69,7 @@ export default function FoodPage() {
   const [tab, setTab] = useState<Tab>("meals");
   const [day, setDay] = useState<number | null>(null);
   const [choices, setChoices] = useState<Choices>({ meals: {}, ings: {}, shop: {}, rates: {} });
+  const [newItem, setNewItem] = useState({ name: "", amount: "" });
   const [log, setLog] = useState<Log>({ meals: {}, water: 0 });
   const [dayNote, setDayNote] = useState<DayNote>({});
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -101,7 +103,7 @@ export default function FoodPage() {
         supabase.from("daily_logs").select("meals, water").eq("client_id", cp.client!.id).eq("log_date", today).maybeSingle()
       ]);
       const c = (ch?.data || {}) as Partial<Choices>;
-      setChoices({ meals: c.meals || {}, ings: c.ings || {}, shop: c.shop || {}, rates: c.rates || {} });
+      setChoices({ meals: c.meals || {}, ings: c.ings || {}, shop: c.shop || {}, rates: c.rates || {}, extra: Array.isArray(c.extra) ? c.extra : [] });
       if (lg) {
         const meals = (lg.meals as Log["meals"]) || {};
         setLog({ meals, water: lg.water || 0 });
@@ -478,7 +480,36 @@ export default function FoodPage() {
             <span className="em" aria-hidden="true">🛒</span>
             <span>كل اللي تحتاجينه لأيام جدولك ({plan.days.length} أيام)، بعد تبديلاتك. علمي على اللي اشتريتيه. الكميات بالوزن النيء.</span>
           </div>
+          <form className="card row shop-add" onSubmit={(e) => {
+            e.preventDefault();
+            const name = newItem.name.trim().slice(0, 80);
+            if (!name) return;
+            saveChoices({ ...choices, extra: [...(choices.extra || []), { id: crypto.randomUUID().slice(0, 8), name, amount: newItem.amount.trim().slice(0, 30) }] });
+            setNewItem({ name: "", amount: "" });
+          }}>
+            <input className="inp" style={{ flex: 2, minWidth: 0 }} placeholder="أضيفي شي من عندك (مثلا: مناديل)" aria-label="اسم الغرض" value={newItem.name} onChange={(e) => setNewItem({ ...newItem, name: e.target.value })} />
+            <input className="inp" style={{ flex: 1, minWidth: 0 }} placeholder="الكمية" aria-label="الكمية (اختياري)" value={newItem.amount} onChange={(e) => setNewItem({ ...newItem, amount: e.target.value })} />
+            <button type="submit" className="btn btn-p" aria-label="أضيفي للقائمة" disabled={!newItem.name.trim()}><Plus /></button>
+          </form>
           <section className="card" style={{ padding: "6px 16px" }}>
+            {(choices.extra || []).map((it) => {
+              const k = `x:${it.id}`;
+              const on = Boolean(choices.shop[k]);
+              return (
+                <div key={k} className="row" style={{ padding: "11px 0", borderTop: "1px solid var(--line)", opacity: on ? 0.55 : 1 }}>
+                  <label className="row" style={{ flex: 1, minWidth: 0, cursor: "pointer" }}>
+                    <input type="checkbox" checked={on} onChange={() => saveChoices({ ...choices, shop: { ...choices.shop, [k]: !on } })} style={{ width: 20, height: 20, accentColor: "var(--clay)", flexShrink: 0 }} />
+                    <span style={{ flex: 1, minWidth: 0, textDecoration: on ? "line-through" : "none" }}>{it.name} <span className="chip" style={{ fontSize: 10.5, padding: "1px 7px" }}>من عندك</span></span>
+                    {it.amount ? <span className="amt" style={{ fontWeight: 700, color: "var(--clay-ink)" }}>{it.amount}</span> : null}
+                  </label>
+                  <button type="button" className="icon-btn" aria-label={`احذفي ${it.name}`} onClick={() => {
+                    const { [k]: _gone, ...shop } = choices.shop;
+                    void _gone;
+                    saveChoices({ ...choices, shop, extra: (choices.extra || []).filter((x) => x.id !== it.id) });
+                  }}><X size={16} /></button>
+                </div>
+              );
+            })}
             {shopping.items.map((it) => {
               const on = Boolean(choices.shop[it.key]);
               return (

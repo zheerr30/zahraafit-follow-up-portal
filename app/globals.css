@@ -729,3 +729,4 @@ details.msg-old[open] .sub { display: none; }
 /* «خطتك جاهزة»: plain navy, same as the calorie card after it */
 .photo-hero.plain { background: linear-gradient(160deg, #0B1430 0%, #16244F 100%); min-height: 0; }
 .photo-hero.plain::before { display: none; }
+.shop-add { gap: 8px; padding: 10px; }
