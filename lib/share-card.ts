@@ -98,7 +98,7 @@ export async function drawShareCard(card: ShareCard): Promise<Blob> {
   ctx.fillRect(0, 0, W, H);
 
   try {
-    const logo = await loadImage("/brand/logo-white.png");
+    const logo = await loadImage("/brand/logo-mark.png");
     const lw = 340;
     ctx.drawImage(logo, (W - lw) / 2, 120, lw, (logo.naturalHeight / logo.naturalWidth) * lw);
   } catch {}

@@ -11,7 +11,7 @@ import { getGender, useGenderText } from "@/lib/gender";
 /** Her logo, dark, for light pages. */
 export function Brand({ height = 44 }: { height?: number }) {
   // eslint-disable-next-line @next/next/no-img-element
-  return <img className="logo-d" src="/brand/logo-white.png" alt="ZahraaFit" style={{ height }} />;
+  return <img className="logo-d" src="/brand/logo-mark.png" alt="ZahraaFit" style={{ height }} />;
 }
 
 /** White logo for navy bars. */
