@@ -1,5 +1,6 @@
 "use client";
 
+import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import { useEffect, useRef, useState } from "react";
 import { Camera } from "lucide-react";
 import { aiRead } from "@/lib/food-scan";
@@ -117,7 +118,7 @@ export function MealPhoto({ onAdd, onCancel }: { onAdd: (items: { name: string; 
               <input type="checkbox" checked={r.on} aria-label={`احسبي ${r.name}`} onChange={() => setRows(rows.map((x, j) => (j === i ? { ...x, on: !x.on } : x)))} style={{ width: 20, height: 20, accentColor: "var(--clay)", flex: "none" }} />
               <span style={{ minWidth: 0 }}>
                 {r.name}
-                <span className="note" style={{ display: "block" }}>💪 {scaled(r).p} · 🌾 {scaled(r).c} · 🫒 {scaled(r).f}</span>
+                <span className="note" style={{ display: "block" }}><MacLine p={scaled(r).p} c={scaled(r).c} f={scaled(r).f} /></span>
               </span>
               <input className="inp num" inputMode="numeric" aria-label={`جرامات ${r.name}`} value={r.g} onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, g: e.target.value.replace(/\D/g, "") } : x)))} style={{ width: 66, minHeight: 38, padding: "0 8px", flex: "none" }} />
               <span className="note" style={{ flex: "none" }}>جم</span>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import { useEffect, useState } from "react";
 import { ACTIVITY, CALC_GOALS, calcMacros, type CalcGoal } from "@/lib/macros";
 import { supabase } from "@/lib/supabase";
@@ -82,9 +83,9 @@ export function Calculator({ profileId }: { profileId: string }) {
             </div>
           </div>
           <div className="grid3">
-            {([["💪 بروتين", res.p, "var(--protein)"], ["🌾 كارب", res.c, "var(--carb)"], ["🫒 دهون", res.f, "var(--fat)"]] as [string, number, string][]).map(([l, v, c]) => (
+            {([["p", res.p, "var(--protein)"], ["c", res.c, "var(--carb)"], ["f", res.f, "var(--fat)"]] as ["p" | "c" | "f", number, string][]).map(([l, v, c]) => (
               <div key={l} className="mtile" style={{ "--c": c, textAlign: "start" } as React.CSSProperties}>
-                <span>{l}</span>
+                <span><MacLabel k={l} /></span>
                 <b>{v}g</b>
               </div>
             ))}

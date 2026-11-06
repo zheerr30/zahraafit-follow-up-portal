@@ -1,5 +1,6 @@
 "use client";
 
+import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { Brand, Loading } from "@/components/ui";
@@ -65,8 +66,8 @@ export default function StartPage() {
               <div style={{ color: "rgba(255,255,255,.8)" }}>سعرة في اليوم</div>
             </div>
             <div className="cal-macros">
-              {([["💪 بروتين", done.p], ["🌾 كارب", done.c], ["🫒 دهون", done.f]] as [string, number][]).map(([l, v]) => (
-                <div key={l}><span>{l}</span><b>{v}g</b></div>
+              {([["p", done.p], ["c", done.c], ["f", done.f]] as ["p" | "c" | "f", number][]).map(([l, v]) => (
+                <div key={l}><span><MacLabel k={l} /></span><b>{v}g</b></div>
               ))}
             </div>
             <p style={{ marginTop: 6 }}>🎯 {done.note}</p>

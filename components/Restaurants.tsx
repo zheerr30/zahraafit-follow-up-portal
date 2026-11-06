@@ -1,5 +1,6 @@
 "use client";
 
+import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Camera, ChevronRight, Plus, Search } from "lucide-react";
 import { aiRead } from "@/lib/food-scan";
@@ -91,7 +92,7 @@ export function Restaurants({ profileId, onAdd, onBack }: { profileId: string; o
               <button key={it.id} type="button" className="opt" onClick={() => pick(r, it)} style={{ borderColor: "var(--clay)" }}>
                 <span style={{ minWidth: 0 }}>
                   <span className="opt-t">{it.name}</span>
-                  <span className="opt-s">{Number(it.cal)} سعرة{it.p ? ` · 💪 ${Number(it.p)}` : ""}{it.tip ? ` · 💡 ${it.tip}` : ""}</span>
+                  <span className="opt-s">{Number(it.cal)} سعرة{it.p ? <> · <Dot k="p" />{Number(it.p)}</> : ""}{it.tip ? ` · 💡 ${it.tip}` : ""}</span>
                 </span>
                 <Plus size={18} color="var(--clay)" style={{ flexShrink: 0, marginInlineStart: "auto" }} />
               </button>
@@ -107,7 +108,7 @@ export function Restaurants({ profileId, onAdd, onBack }: { profileId: string; o
               <button key={it.id} type="button" className="opt" onClick={() => pick(r, it)}>
                 <span style={{ minWidth: 0 }}>
                   <span className="opt-t">{it.name}</span>
-                  <span className="opt-s">{Number(it.cal)} سعرة{it.p ? ` · 💪 ${Number(it.p)} · 🌾 ${Number(it.c) || 0} · 🫒 ${Number(it.f) || 0}` : ""}</span>
+                  <span className="opt-s">{Number(it.cal)} سعرة{it.p ? <> · <MacLine p={Number(it.p)} c={Number(it.c) || 0} f={Number(it.f) || 0} /></> : ""}</span>
                 </span>
                 <Plus size={18} color="var(--clay)" style={{ flexShrink: 0, marginInlineStart: "auto" }} />
               </button>
@@ -152,7 +153,7 @@ function NewRestaurant({ initial, profileId, onDone, onBack }: { initial: string
 function NewItem({ r, profileId, onDone, onBack }: { r: Restaurant; profileId: string; onDone: (it: RestItem) => void; onBack: () => void }) {
   const [f, setF] = useState({ name: "", cal: "", p: "", c: "", fat: "" });
   const [err, setErr] = useState<string | null>(null);
-  const n = (k: "cal" | "p" | "c" | "fat", l: string) => (
+  const n = (k: "cal" | "p" | "c" | "fat", l: React.ReactNode) => (
     <div className="field">
       <label htmlFor={`ri-${k}`}>{l}</label>
       <input id={`ri-${k}`} className="inp num" inputMode="decimal" value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value.replace(/[^\d.]/g, "") })} />
@@ -180,9 +181,9 @@ function NewItem({ r, profileId, onDone, onBack }: { r: Restaurant; profileId: s
       </div>
       <div className="grid2" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
         {n("cal", "🔥 سعرات")}
-        {n("p", "💪 بروتين")}
-        {n("c", "🌾 كارب")}
-        {n("fat", "🫒 دهون")}
+        {n("p", <MacLabel k="p" />)}
+        {n("c", <MacLabel k="c" />)}
+        {n("fat", <MacLabel k="f" />)}
       </div>
       {err ? <p className="alert err">{err}</p> : null}
       <div className="row" style={{ gap: 8 }}>

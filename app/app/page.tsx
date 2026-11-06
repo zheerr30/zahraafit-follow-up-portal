@@ -135,7 +135,7 @@ export default function ClientHome() {
     const fresh = !plan || Date.now() - new Date(plan.created_at).getTime() < 3 * 864e5;
     main = fresh ? (
       <>
-        <section className="photo-hero">
+        <section className="photo-hero plain">
 
           <span className="kicker">{plan ? `🎉 وصلتك ${formatDate(plan.created_at)}` : "🎉 خطتك"}</span>
           <h2>خطتك جاهزة</h2>

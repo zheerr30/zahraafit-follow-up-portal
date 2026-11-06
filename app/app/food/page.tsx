@@ -1,5 +1,6 @@
 "use client";
 
+import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeftRight, Check, ChevronDown, FileText, Utensils, X } from "lucide-react";
@@ -290,7 +291,7 @@ export default function FoodPage() {
                 {opts.swapped ? " · بدلتيها" : ""}
               </span>
               <b className="mc-name">{meal.name}</b>
-              <span className="mc-mac">💪 {Math.round(meal.p)} · 🌾 {Math.round(meal.c)} · 🫒 {Math.round(meal.f)}</span>
+              <span className="mc-mac"><MacLine p={Math.round(meal.p)} c={Math.round(meal.c)} f={Math.round(meal.f)} /></span>
             </span>
             <span className="kcal">
               <b>{meal.cal}</b>
@@ -302,9 +303,9 @@ export default function FoodPage() {
         {isOpen ? (
         <>
         <div className="mrow">
-          <div className="mtile" style={{ "--c": "var(--protein)" } as React.CSSProperties}><b>{Math.round(meal.p)}g</b><span>💪 بروتين</span></div>
-          <div className="mtile" style={{ "--c": "var(--carb)" } as React.CSSProperties}><b>{Math.round(meal.c)}g</b><span>🌾 كارب</span></div>
-          <div className="mtile" style={{ "--c": "var(--fat)" } as React.CSSProperties}><b>{Math.round(meal.f)}g</b><span>🫒 دهون</span></div>
+          <div className="mtile" style={{ "--c": "var(--protein)" } as React.CSSProperties}><b>{Math.round(meal.p)}g</b><span><MacLabel k="p" /></span></div>
+          <div className="mtile" style={{ "--c": "var(--carb)" } as React.CSSProperties}><b>{Math.round(meal.c)}g</b><span><MacLabel k="c" /></span></div>
+          <div className="mtile" style={{ "--c": "var(--fat)" } as React.CSSProperties}><b>{Math.round(meal.f)}g</b><span><MacLabel k="f" /></span></div>
         </div>
         <div className="ings">
           {meal.ingredients.map((ing) => {
@@ -529,7 +530,7 @@ export default function FoodPage() {
                         <span className="radio" />
                         <span>
                           <span className="opt-t">{o.name} <b className="num">{o.grams}</b> جم</span>
-                          <span className="opt-s">{o.cal} سعرة · 💪 {o.p} · 🌾 {o.c} · 🫒 {o.f}</span>
+                          <span className="opt-s">{o.cal} سعرة · <MacLine p={o.p} c={o.c} f={o.f} /></span>
                         </span>
                       </button>
                     ))}
@@ -612,7 +613,7 @@ function MealOptions({ plan, slot, current, onPick }: { plan: MealPlanData; slot
           <span className="radio" />
           <span style={{ minWidth: 0 }}>
             <span className="opt-t">{o.meal.name}</span>
-            <span className="opt-s">{o.where} · {o.meal.cal} سعرة · 💪 {Math.round(o.meal.p)} · 🌾 {Math.round(o.meal.c)} · 🫒 {Math.round(o.meal.f)} جم</span>
+            <span className="opt-s">{o.where} · {o.meal.cal} سعرة · <MacLine p={Math.round(o.meal.p)} c={Math.round(o.meal.c)} f={Math.round(o.meal.f)} /> جم</span>
           </span>
         </button>
       ))}

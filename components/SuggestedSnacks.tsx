@@ -1,5 +1,6 @@
 "use client";
 
+import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import { useState } from "react";
 import { Check, Plus } from "lucide-react";
 import type { Snack } from "@/lib/snacks";
@@ -31,7 +32,7 @@ export function SuggestedSnacks({ snacks, fromCoach, left, onAdd }: { snacks: Sn
             <div key={s.name} className="snack" style={{ opacity: tooMuch && !on ? 0.6 : 1 }}>
               <b>{s.name}</b>
               <span className="note">{s.detail}</span>
-              <span className="snack-mac">💪 {Math.round(s.p)} · 🌾 {Math.round(s.c)} · 🫒 {Math.round(s.f)}</span>
+              <span className="snack-mac"><MacLine p={Math.round(s.p)} c={Math.round(s.c)} f={Math.round(s.f)} /></span>
               <button type="button" aria-pressed={on} aria-label={on ? `انضاف ${s.name}` : `أضيفي ${s.name}`} disabled={on} onClick={async () => {
                 if (await onAdd(s)) setAdded((cur) => new Set(cur).add(s.name));
               }}>

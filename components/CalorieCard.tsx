@@ -1,5 +1,6 @@
 "use client";
 
+import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -40,13 +41,13 @@ export function CalorieCard({ totals, target, header, footer, line }: { totals: 
               <Link href="/app/guide?tab=calc" className="cal-goal">🎯 حطي هدفك اليومي من الحاسبة</Link>
             )}
             <div className="cal-macros">
-              {([["💪 بروتين", totals.p, target?.p], ["🌾 كارب", totals.c, target?.c], ["🫒 دهون", totals.f, target?.f]] as [string, number, number | undefined][]).map(([l, v, t]) => {
+              {([["p", totals.p, target?.p], ["c", totals.c, target?.c], ["f", totals.f, target?.f]] as ["p" | "c" | "f", number, number | undefined][]).map(([l, v, t]) => {
                 const rest = t ? Math.round(t - v) : 0;
                 return (
                   <div key={l}>
-                    <span>{l}</span>
-                    <b>{t ? (rest >= 0 ? <>باقي {rest}g</> : <>زيادة {-rest}g</>) : <>{Math.round(v)}g</>}</b>
-                    {t ? <i aria-hidden="true"><i style={{ width: `${Math.min(100, (v / t) * 100)}%` }} /></i> : null}
+                    <span><MacLabel k={l} /></span>
+                    <b style={{ color: `var(--${l === "p" ? "protein" : l === "c" ? "carb" : "fat"})` }}>{t ? (rest >= 0 ? <>باقي {rest}g</> : <>زيادة {-rest}g</>) : <>{Math.round(v)}g</>}</b>
+                    {t ? <i aria-hidden="true"><i style={{ width: `${Math.min(100, (v / t) * 100)}%`, background: `var(--${l === "p" ? "protein" : l === "c" ? "carb" : "fat"})` }} /></i> : null}
                   </div>
                 );
               })}

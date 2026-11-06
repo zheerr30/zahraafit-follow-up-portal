@@ -1,5 +1,6 @@
 "use client";
 
+import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import { track } from "@/components/AppStatus";
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -346,7 +347,7 @@ export function FoodDiary({
               <div key={key} className="diary-row">
                 <span style={{ minWidth: 0 }}>
                   {meal.name}
-                  <span className="note" style={{ display: "block" }}>✅ من خطتك · 💪 {Math.round(meal.p)} · 🌾 {Math.round(meal.c)} · 🫒 {Math.round(meal.f)}</span>
+                  <span className="note" style={{ display: "block" }}>✅ من خطتك · <MacLine p={Math.round(meal.p)} c={Math.round(meal.c)} f={Math.round(meal.f)} /></span>
                 </span>
                 <b className="num">{meal.cal}</b>
               </div>
@@ -355,7 +356,7 @@ export function FoodDiary({
               <div key={e.id} className="diary-row">
                 <span style={{ minWidth: 0 }}>
                   {e.name}
-                  <span className="note" style={{ display: "block" }}>{fmt(Number(e.amount))} {e.unit} · 💪 {fmt(Number(e.p))} · 🌾 {fmt(Number(e.c))} · 🫒 {fmt(Number(e.f))}</span>
+                  <span className="note" style={{ display: "block" }}>{fmt(Number(e.amount))} {e.unit} · <MacLine p={fmt(Number(e.p))} c={fmt(Number(e.c))} f={fmt(Number(e.f))} /></span>
                 </span>
                 <b className="num">{Math.round(Number(e.cal))}</b>
                 <button type="button" className="icon-btn fav-mini" aria-pressed={Boolean(favOf(entryFood(e)))} aria-label={favOf(entryFood(e)) ? `شيلي ${e.name} من المفضلة` : `أضيفي ${e.name} للمفضلة`} onClick={() => toggleFav(entryFood(e))}>
@@ -547,10 +548,10 @@ function AmountPicker({ food, fav, onFav, onAdd, onBack }: { food: Pickable; fav
       </div>
       {unit.label !== "جرام" && food.basis === "100g" ? <p className="note">{unit.label} ≈ {unit.g} جم</p> : null}
       <div className="grid2" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
-        {([["🔥", v.cal, "سعرة"], ["💪", v.p, "بروتين"], ["🌾", v.c, "كارب"], ["🫒", v.f, "دهون"]] as [string, number, string][]).map(([em, val, l]) => (
+        {([["🔥", v.cal, "سعرة"], ["p", v.p, "بروتين"], ["c", v.c, "كارب"], ["f", v.f, "دهون"]] as [string, number, string][]).map(([em, val, l]) => (
           <div key={l} className="stat" style={{ padding: 10 }}>
-            <span>{em} {l}</span>
-            <b style={{ fontSize: 18 }}>{fmt(val)}</b>
+            <span>{em === "🔥" ? <>🔥 {l}</> : <MacLabel k={em as "p" | "c" | "f"} />}</span>
+            <b style={{ fontSize: 18, color: em === "🔥" ? undefined : `var(--${em === "p" ? "protein" : em === "c" ? "carb" : "fat"})` }}>{fmt(val)}</b>
           </div>
         ))}
       </div>
@@ -571,7 +572,7 @@ function NewFood({ initialName, barcode, profileId, onSaved }: { initialName: st
   const [busy, setBusy] = useState(false);
   const [reading, setReading] = useState(false);
   const [readMsg, setReadMsg] = useState<string | null>(null);
-  const num = (k: "cal" | "p" | "c" | "f", label: string) => (
+  const num = (k: "cal" | "p" | "c" | "f", label: React.ReactNode) => (
     <div className="field">
       <label htmlFor={`nf-${k}`}>{label}</label>
       <input id={`nf-${k}`} className="inp num" inputMode="decimal" value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value.replace(/[^\d.]/g, "") })} placeholder={k === "cal" ? "250" : "0"} />
@@ -662,9 +663,9 @@ function NewFood({ initialName, barcode, profileId, onSaved }: { initialName: st
       </div>
       <div className="grid2">
         {num("cal", "🔥 السعرات")}
-        {num("p", "💪 بروتين (جم)")}
-        {num("c", "🌾 كارب (جم)")}
-        {num("f", "🫒 دهون (جم)")}
+        {num("p", <MacLabel k="p" suffix="(جم)" />)}
+        {num("c", <MacLabel k="c" suffix="(جم)" />)}
+        {num("f", <MacLabel k="f" suffix="(جم)" />)}
       </div>
       {err ? <p className="alert err">{err}</p> : null}
       <button className="btn btn-p" type="submit" disabled={busy || reading}>{busy ? "لحظة..." : "احفظي وكملي"}</button>

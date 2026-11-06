@@ -1,5 +1,6 @@
 "use client";
 
+import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -88,7 +89,7 @@ export function CoachRestaurants() {
                     <button type="button" className="icon-btn" aria-label={`احذفي ${it.name}`} onClick={() => removeItem(it.id)}><Trash2 size={15} /></button>
                   </div>
                   <div className="grid2" style={{ gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
-                    {([["cal", "🔥"], ["p", "💪"], ["c", "🌾"], ["f", "🫒"]] as const).map(([k, l]) => (
+                    {([["cal", "سعرات"], ["p", "بروتين"], ["c", "كارب"], ["f", "دهون"]] as const).map(([k, l]) => (
                       <input key={k} className="inp num" inputMode="decimal" aria-label={`${l} ${it.name}`} placeholder={l} defaultValue={it[k] === null ? "" : String(Number(it[k]))} style={{ minHeight: 38 }}
                         onBlur={(e) => { const v = num(e.target.value.replace(/[^\d.]/g, "")); if (k === "cal" && !v) return; if (v !== (it[k] === null ? null : Number(it[k]))) patch(it, { [k]: v } as Partial<RestItem>); }} />
                     ))}

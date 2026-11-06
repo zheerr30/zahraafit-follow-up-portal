@@ -1,5 +1,6 @@
 "use client";
 
+import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -121,7 +122,7 @@ export default function PlanEditor() {
 
       <section className="card row between wrap">
         <span><b className="num" style={{ fontSize: 22, color: "var(--navy)" }}>{Math.round(total.cal)}</b> <span className="small muted">من {plan.target.cal} سعرة</span></span>
-        <span className="small">💪 {Math.round(total.p)} / {plan.target.p} · 🌾 {Math.round(total.c)} / {plan.target.c} · 🫒 {Math.round(total.f)} / {plan.target.f}</span>
+        <span className="small"><MacLine p={`${Math.round(total.p)} / ${plan.target.p}`} c={`${Math.round(total.c)} / ${plan.target.c}`} f={`${Math.round(total.f)} / ${plan.target.f}`} /></span>
       </section>
 
       {meals.map((meal, m) => (
@@ -133,7 +134,7 @@ export default function PlanEditor() {
             </div>
             <span className="chip">{meal.cal} سعرة</span>
           </div>
-          <p className="small muted">💪 {Math.round(meal.p)} · 🌾 {Math.round(meal.c)} · 🫒 {Math.round(meal.f)} — {meal.ingredients.map((i) => `${i.n} ${typeof i.a === "number" && i.a ? `${i.a}${i.u}` : ""}`).join("، ")}</p>
+          <p className="small muted"><MacLine p={Math.round(meal.p)} c={Math.round(meal.c)} f={Math.round(meal.f)} /> — {meal.ingredients.map((i) => `${i.n} ${typeof i.a === "number" && i.a ? `${i.a}${i.u}` : ""}`).join("، ")}</p>
           {meal.note ? <p className="note">📝 {meal.note}</p> : null}
           <div className="row wrap" style={{ gap: 6 }}>
             <button type="button" className="btn btn-g btn-sm" onClick={() => setSheet({ type: "swap", d: day, m })}>🔁 بدليها</button>
@@ -160,7 +161,7 @@ export default function PlanEditor() {
                   <button key={o.meal.name} type="button" className="opt" onClick={() => setMeal(sheet.d, sheet.m, { ...JSON.parse(JSON.stringify(o.meal)), slot: cur.slot })}>
                     <span style={{ minWidth: 0 }}>
                       <span className="opt-t">{o.meal.name}</span>
-                      <span className="opt-s">{o.where} · {o.meal.cal} سعرة · 💪 {Math.round(o.meal.p)} · 🌾 {Math.round(o.meal.c)} · 🫒 {Math.round(o.meal.f)}</span>
+                      <span className="opt-s">{o.where} · {o.meal.cal} سعرة · <MacLine p={Math.round(o.meal.p)} c={Math.round(o.meal.c)} f={Math.round(o.meal.f)} /></span>
                     </span>
                   </button>
                 ))}

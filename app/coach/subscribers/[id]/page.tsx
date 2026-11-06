@@ -1,5 +1,6 @@
 "use client";
 
+import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -195,7 +196,7 @@ export default function SubscriberPage() {
                   <tr>
                     <td colSpan={7} style={{ background: "var(--sunken)", padding: "8px 16px" }}>
                       {[...tickedMeals(mealPlan, swaps, x?.meals).map((t) => ({ k: t.key, name: t.meal.name, sub: `✅ من خطتها · ${t.meal.slot}`, cal: t.meal.cal })),
-                        ...entriesOf(d).map((e) => ({ k: e.id, name: e.name, sub: `📒 ${e.slot} · ${Number(e.amount)} ${e.unit} · 💪 ${Number(e.p)} 🌾 ${Number(e.c)} 🫒 ${Number(e.f)}`, cal: Math.round(Number(e.cal)) }))].map((it) => (
+                        ...entriesOf(d).map((e) => ({ k: e.id, name: e.name, sub: <>📒 {e.slot} · {Number(e.amount)} {e.unit} · <MacLine p={Number(e.p)} c={Number(e.c)} f={Number(e.f)} /></>, cal: Math.round(Number(e.cal)) }))].map((it) => (
                         <div key={it.k} className="small" style={{ padding: "4px 0", position: "sticky", right: 16, maxWidth: "calc(100vw - 64px)" }}>
                           {it.name} · <b className="num">{it.cal} سعرة</b>
                           <span className="note" style={{ display: "block" }}>{it.sub}</span>

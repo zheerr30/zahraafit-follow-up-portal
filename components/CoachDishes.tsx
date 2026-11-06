@@ -1,5 +1,6 @@
 "use client";
 
+import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import { FormEvent, useEffect, useState } from "react";
 import { Plus, Trash2, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -40,7 +41,7 @@ export function CoachDishes() {
     if (!error) setList((cur) => (cur || []).filter((x) => x.id !== id));
   }
 
-  const num = (k: "cal" | "p" | "c" | "f", label: string) => (
+  const num = (k: "cal" | "p" | "c" | "f", label: React.ReactNode) => (
     <div className="field">
       <label htmlFor={`d-${k}`}>{label}</label>
       <input id={`d-${k}`} className="inp num" inputMode="decimal" value={draft![k]} onChange={(e) => setDraft({ ...draft!, [k]: e.target.value.replace(/[^\d.]/g, "") })} />
@@ -77,9 +78,9 @@ export function CoachDishes() {
           </div>
           <div className="grid2" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
             {num("cal", "🔥 سعرات")}
-            {num("p", "💪 بروتين")}
-            {num("c", "🌾 كارب")}
-            {num("f", "🫒 دهون")}
+            {num("p", <MacLabel k="p" />)}
+            {num("c", <MacLabel k="c" />)}
+            {num("f", <MacLabel k="f" />)}
           </div>
           {err ? <p className="alert err">{err}</p> : null}
           <button className="btn btn-p" type="submit" disabled={busy}>{busy ? "لحظة..." : "احفظي"}</button>
@@ -92,7 +93,7 @@ export function CoachDishes() {
             <div key={x.id} className="diary-row">
               <span style={{ minWidth: 0 }}>
                 {x.name}
-                <span className="note" style={{ display: "block" }}>لكل {x.serving_label || "حصة"} · 💪 {Number(x.p)} · 🌾 {Number(x.c)} · 🫒 {Number(x.f)}</span>
+                <span className="note" style={{ display: "block" }}>لكل {x.serving_label || "حصة"} · <MacLine p={Number(x.p)} c={Number(x.c)} f={Number(x.f)} /></span>
               </span>
               <b className="num">{Number(x.cal)}</b>
               <button type="button" className="icon-btn" aria-label={`احذفي ${x.name}`} onClick={() => remove(x.id)}><Trash2 size={16} /></button>
