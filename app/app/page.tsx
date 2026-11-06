@@ -4,14 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CheckCircle2, ClipboardEdit, Clock3, Dumbbell, FileText, PenLine, Utensils } from "lucide-react";
 import { HomeExtras } from "@/components/HomeExtras";
-import { HomeToday } from "@/components/HomeToday";
-import { WeekSummary } from "@/components/WeekSummary";
-import { CheckinCard } from "@/components/CheckinCard";
 import { ReminderNudge } from "@/components/ReminderNudge";
-import { FreeHome, RenewBanner } from "@/components/FreeHome";
-import { PeriodNote } from "@/components/PeriodTracker";
-import { HomeBoosts } from "@/components/HomeBoosts";
-import { RamadanSuggest } from "@/components/RamadanToggle";
+import { HomeDashboard } from "@/components/HomeDashboard";
 import { accountOf } from "@/lib/account";
 import { useRouter } from "next/navigation";
 import { ClientShell, Loading } from "@/components/ui";
@@ -25,7 +19,8 @@ import type { Client, Plan, PlanRequest } from "@/lib/types";
 const STAGES = ["وصلتنا معلوماتك", "المدربة تجهز خطتك", "خطتك جاهزة"];
 
 function greeting() {
-  return new Date().getHours() < 12 ? "صباح الخير" : "مساء الخير";
+  const h = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hourCycle: "h23", timeZone: "Asia/Riyadh" }).format(new Date()));
+  return h >= 4 && h < 12 ? "صباح الخير" : "مساء الخير";
 }
 
 export default function ClientHome() {
@@ -82,13 +77,7 @@ export default function ClientHome() {
   if (!client) {
     main = <p className="alert err">حسابك ما انربط بملف مشتركة. تواصلي مع المدربة.</p>;
   } else if (!acc.sub) {
-    main = (
-      <>
-        <RenewBanner daysLeft={null} expired={acc.expired} />
-        <FreeHome clientId={client.id} />
-        <WeekSummary clientId={client.id} plans={[]} />
-      </>
-    );
+    main = null;
   } else if (!request && !plan) {
     main = (
       <section className="photo-hero">
@@ -143,7 +132,8 @@ export default function ClientHome() {
       </>
     );
   } else {
-    main = (
+    const fresh = !plan || Date.now() - new Date(plan.created_at).getTime() < 3 * 864e5;
+    main = fresh ? (
       <>
         <section className="photo-hero">
 
@@ -181,39 +171,27 @@ export default function ClientHome() {
             );
           })}
         </section>
-        {client ? <CheckinCard client={client} saturday={acc.sub} /> : null}
-        {client && plans.some((x) => x.kind !== "other" && x.data) ? <HomeToday clientId={client.id} plans={plans.filter((x) => !x.variant)} /> : null}
-        {client && plans.length ? <ReminderNudge /> : null}
-        {client ? <WeekSummary clientId={client.id} plans={plans} /> : null}
-        <section className="card row between wrap">
-          <span className="row small">
-            <CheckCircle2 size={20} color="var(--green)" />
-            اشتريتي خطة جديدة من المتجر؟
-          </span>
-          <Link className="btn btn-g btn-sm" href="/app/intake">
-            عبي معلوماتها
-          </Link>
-        </section>
       </>
-    );
+    ) : null;
   }
 
   return (
     <ClientShell title={`${greeting()}، ${firstName}`}>
-      {acc.sub ? <RenewBanner daysLeft={acc.daysLeft} expired={false} /> : null}
-      {client && auth.profile.gender !== "male" ? <PeriodNote clientId={client.id} /> : null}
-      <RamadanSuggest profileId={auth.profile.id} />
-      {main}
-      {client && (!acc.sub || plans.some((x) => x.kind === "nutrition" && x.data)) ? <HomeBoosts clientId={client.id} plans={plans} /> : null}
+      {client && auth.profile ? (
+        <HomeDashboard profile={auth.profile} client={client} plans={plans} acc={acc} readyHero={main || undefined} />
+      ) : (
+        main
+      )}
+      {client && plans.length && acc.sub ? <ReminderNudge /> : null}
       {client ? <HomeExtras clientId={client.id} /> : null}
-      {request || plan || !acc.sub ? null : (
+      {acc.sub && !request && !plan ? (
         <div className="card row" style={{ alignItems: "flex-start" }}>
           <Clock3 size={20} color="var(--clay)" style={{ flexShrink: 0, marginTop: 2 }} />
           <p className="small muted">
             جهزي رقم طلبك من سلة. تلقينه في رسالة تأكيد الطلب أو في <b>طلباتي</b> داخل المتجر.
           </p>
         </div>
-      )}
+      ) : null}
     </ClientShell>
   );
 }
