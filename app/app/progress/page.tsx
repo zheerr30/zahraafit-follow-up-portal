@@ -10,6 +10,8 @@ import { useAuthGuard } from "@/lib/use-auth";
 import { useClientPlans } from "@/lib/use-client";
 import { CaloriesChart } from "@/components/CaloriesChart";
 import { Achievements } from "@/components/Achievements";
+import { PeriodTracker } from "@/components/PeriodTracker";
+import { inPeriod } from "@/lib/period";
 import { STORE_URL, accountOf } from "@/lib/account";
 
 type Body = { log_date: string; weight_kg: number | null; waist_cm: number | null; hips_cm: number | null };
@@ -20,7 +22,7 @@ const toNum = (s: string) => {
   return Number.isFinite(n) ? n : null;
 };
 
-function Chart({ pts }: { pts: { d: string; w: number }[] }) {
+function Chart({ pts, marked }: { pts: { d: string; w: number }[]; marked?: (d: string) => boolean }) {
   if (pts.length < 2) return <p className="note">الرسم يطلع بعد ما تسجلين وزنك مرتين.</p>;
   const W = 340, H = 150, L = 34, R = 10, T = 12, B = 24;
   const ts = pts.map((p) => new Date(p.d + "T12:00").getTime());
@@ -46,7 +48,8 @@ function Chart({ pts }: { pts: { d: string; w: number }[] }) {
       ))}
       <path d={`${line}L${x(ts[last]).toFixed(1)},${H - B}L${x(ts[0]).toFixed(1)},${H - B}Z`} fill="var(--clay)" opacity={0.1} />
       <path d={line} fill="none" stroke="var(--clay)" strokeWidth={2.2} strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx={x(ts[last])} cy={y(ws[last])} r={4.5} fill="var(--clay)" stroke="var(--surface)" strokeWidth={2} />
+      {marked ? pts.map((p, i) => (marked(p.d) ? <circle key={p.d} cx={x(ts[i])} cy={y(p.w)} r={5} fill="#E85D9A" stroke="var(--surface)" strokeWidth={2}><title>{`${short(p.d)}: أيام الدورة`}</title></circle> : null)) : null}
+      <circle cx={x(ts[last])} cy={y(ws[last])} r={4.5} fill={marked?.(pts[last].d) ? "#E85D9A" : "var(--clay)"} stroke="var(--surface)" strokeWidth={2} />
       <text x={L} y={H - 6} textAnchor="start">{short(pts[0].d)}</text>
       <text x={W - R} y={H - 6} textAnchor="end">{short(pts[last].d)}</text>
     </svg>
@@ -120,7 +123,11 @@ export default function ProgressPage() {
 
   const weights = body.filter((b) => b.weight_kg).map((b) => ({ d: b.log_date, w: Number(b.weight_kg) }));
   const pts = weights;
-  const cur = weights.length ? weights[weights.length - 1].w : startWeight;
+  const isPeriodDay = (d: string) => inPeriod(cp.periods, d);
+  // Weights on period days are marked and left out of the change (water retention).
+  const steady = weights.filter((x) => !isPeriodDay(x.d));
+  const cur = steady.length ? steady[steady.length - 1].w : weights.length ? weights[weights.length - 1].w : startWeight;
+  const shown = weights.length ? weights[weights.length - 1].w : startWeight;
   const base = startWeight ?? (weights[0]?.w || null);
   const diff = cur !== null && base !== null ? Math.round((cur - base) * 10) / 10 : null;
   const meas = body.filter((b) => b.waist_cm && b.hips_cm);
@@ -135,13 +142,14 @@ export default function ProgressPage() {
           <div>
             <span className="label">وزنك الحالي</span>
             <div className="row" style={{ alignItems: "baseline", gap: 6 }}>
-              <b className="num" style={{ fontSize: 36, lineHeight: 1.1 }}>{cur ?? "—"}</b>
+              <b className="num" style={{ fontSize: 36, lineHeight: 1.1 }}>{shown ?? "—"}</b>
               <span className="muted">كجم</span>
             </div>
           </div>
           {diff !== null && diff !== 0 ? <span className="chip" dir="ltr">{sign(diff)} كجم من البداية</span> : null}
         </div>
-        <Chart pts={pts} />
+        <Chart pts={pts} marked={cp.periods.length ? isPeriodDay : undefined} />
+        {weights.length && isPeriodDay(weights[weights.length - 1].d) ? <p className="note">🌸 آخر وزن في أيام الدورة، ما حسبناه في التغير.</p> : weights.some((x) => isPeriodDay(x.d)) ? <p className="note">🌸 النقاط الوردية أوزان أيام الدورة، ما تدخل في حساب التغير.</p> : null}
         <form className="row" onSubmit={saveWeight} style={{ gap: 8 }}>
           <div className="unit" style={{ flex: 1 }}>
             <label htmlFor="w" className="sr-only">وزن اليوم</label>
@@ -155,6 +163,7 @@ export default function ProgressPage() {
 
       {cp.client ? (
         <>
+          {auth.profile.gender !== "male" ? <PeriodTracker clientId={cp.client.id} periods={cp.periods} onChange={cp.reload} /> : null}
           <Achievements clientId={cp.client.id} lost={base !== null && cur !== null ? Math.round((base - cur) * 10) / 10 : null} />
           <CaloriesChart clientId={cp.client.id} mealRow={cp.mealRow || null} />
         </>

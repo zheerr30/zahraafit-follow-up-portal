@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { todayKey, type MealPlanData } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 import type { Plan } from "@/lib/types";
+import { inPeriod, type PeriodLog } from "@/lib/period";
 
 type Stats = { mealPct: number | null; days: number; water: number; workouts: number; steps: number | null; weight: number | null; off: number };
 
@@ -32,16 +33,19 @@ export function WeekSummary({ clientId, plans }: { clientId: string; plans: Plan
   useEffect(() => {
     const days = dayKeys(7);
     (async () => {
-      const [{ data: d }, { data: w }, { data: b }] = await Promise.all([
+      const [{ data: d }, { data: w }, { data: b }, { data: pl }] = await Promise.all([
         supabase.from("daily_logs").select("log_date, meals, water").eq("client_id", clientId).gte("log_date", days[6]),
         supabase.from("workout_logs").select("performed_on").eq("client_id", clientId).gte("performed_on", days[6]),
-        supabase.from("body_logs").select("log_date, weight_kg").eq("client_id", clientId).not("weight_kg", "is", null).gte("log_date", dayKeys(14)[13]).order("log_date", { ascending: true })
+        supabase.from("body_logs").select("log_date, weight_kg").eq("client_id", clientId).not("weight_kg", "is", null).gte("log_date", dayKeys(14)[13]).order("log_date", { ascending: true }),
+        supabase.from("period_logs").select("*").eq("client_id", clientId).order("start_date", { ascending: false }).limit(3)
       ]);
+      const periods = (pl as PeriodLog[] | null) || [];
       const logs = (d as { log_date: string; meals: Record<string, unknown>; water: number }[] | null) || [];
       const eaten = logs.reduce((a, x) => a + Object.entries(x.meals || {}).filter(([k, v]) => /^\d+-\d+$/.test(k) && v === true).length, 0);
       const steps = logs.map((x) => Number((x.meals?._day as { steps?: string } | undefined)?.steps?.replace(/\D/g, "")) || 0).filter(Boolean);
       const off = logs.reduce((a, x) => a + (Array.isArray(x.meals?._off) ? (x.meals._off as unknown[]).length : 0), 0);
-      const ws = ((b as { log_date: string; weight_kg: number }[] | null) || []).map((x) => Number(x.weight_kg));
+      // Period-day weights don't count toward the change.
+      const ws = ((b as { log_date: string; weight_kg: number }[] | null) || []).filter((x) => !inPeriod(periods, x.log_date)).map((x) => Number(x.weight_kg));
       setS({
         mealPct: perDay ? Math.min(100, Math.round((eaten / (perDay * 7)) * 100)) : null,
         days: logs.length,

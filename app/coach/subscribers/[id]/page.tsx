@@ -72,7 +72,7 @@ export default function SubscriberPage() {
       ]);
       setProfile((p.data as Profile | null) || null);
       setReq((r.data as PlanRequest | null) || null);
-      const mp = ((pl.data as Plan[] | null) || []).find((x) => x.data);
+      const mp = ((pl.data as Plan[] | null) || []).find((x) => x.data && !x.variant) || ((pl.data as Plan[] | null) || []).find((x) => x.data);
       setMealPlan((mp?.data as MealPlanData | undefined) || null);
       if (mp) {
         const { data: ch } = await supabase.from("plan_choices").select("data").eq("plan_id", mp.id).maybeSingle();

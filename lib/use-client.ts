@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { MealPlanData, WorkoutPlanData } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 import type { Client, Plan, Profile } from "@/lib/types";
+import { currentPeriod, type PeriodLog } from "@/lib/period";
 
 export type PlanRow = Plan & { url?: string };
 
@@ -13,6 +14,7 @@ const isDoc = (d: unknown) => Boolean(d && typeof d === "object" && (d as { form
 export function useClientPlans(profile: Profile | null) {
   const [client, setClient] = useState<Client | null>(null);
   const [plans, setPlans] = useState<PlanRow[]>([]);
+  const [periods, setPeriods] = useState<PeriodLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -20,7 +22,11 @@ export function useClientPlans(profile: Profile | null) {
     const { data: c } = await supabase.from("clients").select("*").eq("profile_id", profile.id).maybeSingle();
     setClient((c as Client | null) || null);
     if (c) {
-      const { data: p } = await supabase.from("plans").select("*").eq("client_id", c.id).eq("is_current", true).order("created_at", { ascending: true });
+      const [{ data: p }, { data: pl }] = await Promise.all([
+        supabase.from("plans").select("*").eq("client_id", c.id).eq("is_current", true).order("created_at", { ascending: true }),
+        profile.gender === "male" ? Promise.resolve({ data: [] }) : supabase.from("period_logs").select("*").eq("client_id", c.id).order("start_date", { ascending: false }).limit(12)
+      ]);
+      setPeriods((pl as PeriodLog[] | null) || []);
       const rows = (p as Plan[] | null) || [];
       setPlans(
         await Promise.all(
@@ -39,8 +45,15 @@ export function useClientPlans(profile: Profile | null) {
     load();
   }, [load]);
 
-  const mealRow = plans.find((p) => p.kind === "nutrition" && p.data) || null;
-  const workoutRow = plans.find((p) => p.kind === "workout" && p.data) || null;
+  // Special plans (period days, Ramadan) replace the regular one while they apply.
+  const period = profile?.gender === "male" ? null : currentPeriod(periods);
+  const pick = (kind: string) => {
+    const rows = plans.filter((p) => p.kind === kind && p.data);
+    const special = period ? rows.find((p) => p.variant === "period") : undefined;
+    return special || rows.find((p) => !p.variant) || null;
+  };
+  const mealRow = pick("nutrition");
+  const workoutRow = pick("workout");
   return {
     client,
     plans,
@@ -53,6 +66,9 @@ export function useClientPlans(profile: Profile | null) {
     meal: (mealRow?.data as MealPlanData | undefined) || null,
     workoutRow,
     workout: (workoutRow?.data as WorkoutPlanData | undefined) || null,
+    periods,
+    /** She is on her period today. */
+    period,
     loading,
     reload: load
   };

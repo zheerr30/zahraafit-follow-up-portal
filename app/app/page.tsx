@@ -9,6 +9,7 @@ import { WeekSummary } from "@/components/WeekSummary";
 import { CheckinCard } from "@/components/CheckinCard";
 import { ReminderNudge } from "@/components/ReminderNudge";
 import { FreeHome, RenewBanner } from "@/components/FreeHome";
+import { PeriodNote } from "@/components/PeriodTracker";
 import { accountOf } from "@/lib/account";
 import { useRouter } from "next/navigation";
 import { ClientShell, Loading } from "@/components/ui";
@@ -178,7 +179,7 @@ export default function ClientHome() {
           })}
         </section>
         {client ? <CheckinCard client={client} saturday={acc.sub} /> : null}
-        {client && plans.some((x) => x.kind !== "other" && x.data) ? <HomeToday clientId={client.id} plans={plans} /> : null}
+        {client && plans.some((x) => x.kind !== "other" && x.data) ? <HomeToday clientId={client.id} plans={plans.filter((x) => !x.variant)} /> : null}
         {client && plans.length ? <ReminderNudge /> : null}
         {client ? <WeekSummary clientId={client.id} plans={plans} /> : null}
         <section className="card row between wrap">
@@ -197,6 +198,7 @@ export default function ClientHome() {
   return (
     <ClientShell title={`${greeting()}، ${firstName}`}>
       {acc.sub ? <RenewBanner daysLeft={acc.daysLeft} expired={false} /> : null}
+      {client && auth.profile.gender !== "male" ? <PeriodNote clientId={client.id} /> : null}
       {main}
       {client ? <HomeExtras clientId={client.id} /> : null}
       {request || plan || !acc.sub ? null : (

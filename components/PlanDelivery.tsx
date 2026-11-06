@@ -20,6 +20,7 @@ type Pending = { name: string; title: string; file?: File; parsed?: ParsedPlan }
 export function PlanDelivery({ req, onDelivered, toast, incoming }: { req: PlanRequest; onDelivered: (r: PlanRequest) => void; toast: (m: string) => void; incoming?: ParsedPlan | null }) {
   const [pending, setPending] = useState<Pending[]>([]);
   const [message, setMessage] = useState("");
+  const [variant, setVariant] = useState<"" | "period" | "ramadan">("");
   const [sent, setSent] = useState<(Plan & { url?: string })[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +90,7 @@ export function PlanDelivery({ req, onDelivered, toast, incoming }: { req: PlanR
     const rows: Record<string, unknown>[] = [];
     for (const p of pending) {
       if (p.parsed) {
-        rows.push({ client_id: req.client_id, title: p.parsed.title, kind: p.parsed.kind, data: p.parsed.data, content: message.trim() || null, is_current: true });
+        rows.push({ client_id: req.client_id, title: variant ? `${p.parsed.title} (${variant === "period" ? "أيام الدورة" : "رمضان"})` : p.parsed.title, kind: p.parsed.kind, data: p.parsed.data, content: message.trim() || null, is_current: true, ...(variant ? { variant } : {}) });
         if (p.parsed.doc) {
           rows.push({ client_id: req.client_id, title: `${p.parsed.title} (PDF)`, kind: "other", data: p.parsed.doc, content: message.trim() || null, is_current: true });
         }
@@ -104,8 +105,18 @@ export function PlanDelivery({ req, onDelivered, toast, incoming }: { req: PlanR
       rows.push({ client_id: req.client_id, title: p.title, kind: KIND_OF[p.title] || "other", content: message.trim() || null, file_path: path, is_current: true });
     }
 
-    // Older plans stay in her history but stop being "current".
-    await supabase.from("plans").update({ is_current: false }).eq("client_id", req.client_id).eq("is_current", true);
+    // Older plans stay in her history but stop being "current". A special plan (period days,
+    // Ramadan) only replaces the previous special plan of the same type, and a regular one
+    // leaves the special plans in place.
+    const reset = supabase.from("plans").update({ is_current: false }).eq("client_id", req.client_id).eq("is_current", true);
+    const { error: resetErr } = variant ? await reset.eq("variant", variant) : await reset.is("variant", null);
+    if (resetErr) {
+      if (variant) {
+        setBusy(false);
+        return setError("الخطط الخاصة تحتاج تحديث قاعدة البيانات: شغلي ملف phase15-period.sql في Supabase.");
+      }
+      await supabase.from("plans").update({ is_current: false }).eq("client_id", req.client_id).eq("is_current", true);
+    }
     const { error: insErr } = await supabase.from("plans").insert(rows);
     if (insErr) {
       setBusy(false);
@@ -207,6 +218,15 @@ export function PlanDelivery({ req, onDelivered, toast, incoming }: { req: PlanR
       <div className="stack" style={{ gap: 4, marginTop: 6 }}>
         <span className="label">الخطوة ٣</span>
         <h2 style={{ fontSize: 17 }}>أرسليها لها</h2>
+      </div>
+      <div className="field">
+        <span className="label">نوع الخطة</span>
+        <div className="seg-tabs" role="radiogroup" aria-label="نوع الخطة">
+          {([["", "عادية"], ["period", "🌸 أيام الدورة"], ["ramadan", "🌙 رمضان"]] as ["" | "period" | "ramadan", string][]).map(([v, l]) => (
+            <button key={v || "n"} type="button" role="radio" aria-checked={variant === v} aria-selected={variant === v} onClick={() => setVariant(v)}>{l}</button>
+          ))}
+        </div>
+        <span className="note">{variant === "period" ? "تطلع لها بدل خطتها العادية في أيام دورتها بس، وخطتها العادية تبقى." : variant === "ramadan" ? "تطلع لها بدل خطتها العادية لما تشغل وضع رمضان، وخطتها العادية تبقى." : "تحل محل خطتها الحالية."}</span>
       </div>
       <div className="field">
         <label htmlFor="plan-msg">رسالة تطلع لها مع الخطة (اختياري)</label>

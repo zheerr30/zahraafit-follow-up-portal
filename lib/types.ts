@@ -41,6 +41,7 @@ export type Plan = {
   file_url: string | null;
   is_current: boolean;
   kind?: "nutrition" | "workout" | "other" | null;
+  variant?: "period" | "ramadan" | null;
   data?: unknown;
   created_by: string | null;
   created_at: string;
