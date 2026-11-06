@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { LogOut } from "lucide-react";
 import { ClientShell, Loading, useToast } from "@/components/ui";
 import { Reminders } from "@/components/Reminders";
+import { RamadanToggle } from "@/components/RamadanToggle";
 import { formatDate } from "@/lib/format";
 import { GOALS, normalizeAnswers, planTypeLabel } from "@/lib/intake";
 import { supabase } from "@/lib/supabase";
@@ -145,6 +146,8 @@ export default function AccountPage() {
         <h2>التذكيرات</h2>
       </div>
       <Reminders profileId={p.id} mealsPerDay={cp.meal?.days[0]?.meals.length || 3} subscriber={accountOf(p).sub} />
+
+      <RamadanToggle profileId={p.id} />
 
       <div className="sec-title">
         <span className="em" aria-hidden="true">🔒</span>

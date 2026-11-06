@@ -10,6 +10,7 @@ import { CheckinCard } from "@/components/CheckinCard";
 import { ReminderNudge } from "@/components/ReminderNudge";
 import { FreeHome, RenewBanner } from "@/components/FreeHome";
 import { PeriodNote } from "@/components/PeriodTracker";
+import { RamadanSuggest } from "@/components/RamadanToggle";
 import { accountOf } from "@/lib/account";
 import { useRouter } from "next/navigation";
 import { ClientShell, Loading } from "@/components/ui";
@@ -199,6 +200,7 @@ export default function ClientHome() {
     <ClientShell title={`${greeting()}، ${firstName}`}>
       {acc.sub ? <RenewBanner daysLeft={acc.daysLeft} expired={false} /> : null}
       {client && auth.profile.gender !== "male" ? <PeriodNote clientId={client.id} /> : null}
+      <RamadanSuggest profileId={auth.profile.id} />
       {main}
       {client ? <HomeExtras clientId={client.id} /> : null}
       {request || plan || !acc.sub ? null : (

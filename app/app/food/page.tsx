@@ -8,6 +8,7 @@ import { FoodDiary } from "@/components/FoodDiary";
 import { CalorieCard } from "@/components/CalorieCard";
 import { PlanOffer } from "@/components/PlanOffer";
 import { accountOf } from "@/lib/account";
+import { ramadanMealSlot } from "@/lib/ramadan";
 import { ShareSheet } from "@/components/ShareSheet";
 import type { ShareCard } from "@/lib/share-card";
 import { planMealFor, resolve, tickedMeals, type MealRef } from "@/lib/meal-resolve";
@@ -28,6 +29,8 @@ type Tab = "meals" | "shop" | "diary";
 
 
 function slotEmoji(slot: string) {
+  if (/سحور/.test(slot)) return "🌌";
+  if (/بينية/.test(slot)) return "🥣";
   if (/فطور/.test(slot)) return "🌅";
   if (/غداء/.test(slot)) return "☀️";
   if (/عشاء/.test(slot)) return "🌙";
@@ -129,13 +132,16 @@ export default function FoodPage() {
     else if (msg) toast.show(msg);
   }
 
+  // Ramadan with her regular plan: the same meals over فطور / وجبة بينية / سحور.
+  const relabel = cp.ramadan && cp.mealRow?.variant !== "ramadan";
+  const slotFor = useCallback((d: number, m: number) => (relabel && plan ? ramadanMealSlot(m, plan.days[d].meals.length) : plan?.days[d].meals[m].slot || ""), [relabel, plan]);
   const meals = useMemo(() => {
     if (!plan || day === null) return [];
     return plan.days[day].meals.map((_, m) => {
       const key = `${day}-${m}`;
-      return { key, meal: resolve(plan, choices.meals[key], day, m), swapped: Boolean(choices.meals[key]), slot: plan.days[day].meals[m].slot };
+      return { key, meal: resolve(plan, choices.meals[key], day, m), swapped: Boolean(choices.meals[key]), slot: slotFor(day, m) };
     });
-  }, [plan, day, choices.meals]);
+  }, [plan, day, choices.meals, slotFor]);
 
   /** The whole plan's shopping, with her meal and ingredient swaps applied. */
   const shopping = useMemo(() => {
@@ -165,7 +171,11 @@ export default function FoodPage() {
   }, [plan, choices.meals, choices.ings]);
 
   /** A ticked key → the meal she ate (with her swaps), for the diary. */
-  const planMeal = useCallback((key: string): Meal | null => planMealFor(plan, choices.meals, key), [plan, choices.meals]);
+  const planMeal = useCallback((key: string): Meal | null => {
+    const m = planMealFor(plan, choices.meals, key);
+    const dm = key.match(/^(\d+)-(\d+)$/);
+    return m && dm ? { ...m, slot: slotFor(Number(dm[1]), Number(dm[2])) } : m;
+  }, [plan, choices.meals, slotFor]);
 
   if (auth.loading || cp.loading || !ready) return <Loading />;
   if (!auth.profile) return null;
@@ -179,7 +189,7 @@ export default function FoodPage() {
             <button key={k} type="button" role="tab" aria-selected={freeTab === k} onClick={() => setFreeTab(k)}>{l}</button>
           ))}
         </div>
-        {freeTab === "diary" ? <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={null} planMeal={null} /> : <PlanOffer clientId={cp.client.id} sub={acc.sub} locked={Boolean(plan) && !acc.sub} />}
+        {freeTab === "diary" ? <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={null} planMeal={null} ramadan={cp.ramadan} /> : <PlanOffer clientId={cp.client.id} sub={acc.sub} locked={Boolean(plan) && !acc.sub} />}
         {cp.files.length ? (
           <p className="note" style={{ textAlign: "center" }}>
             خطتك من المدربة وصلت كملف. <Link className="link" href="/app">افتحيها من الرئيسية</Link>
@@ -211,7 +221,7 @@ export default function FoodPage() {
   const target = plan.target.cal ? plan.target : null;
   const todayMeals = plan.days[todayDay]?.meals.map((_, m) => {
     const key = `${todayDay}-${m}`;
-    return { key, meal: resolve(plan, choices.meals[key], todayDay, m), slot: plan.days[todayDay].meals[m].slot };
+    return { key, meal: resolve(plan, choices.meals[key], todayDay, m), slot: slotFor(todayDay, m) };
   }) || [];
   const eatenCount = todayMeals.filter((x) => log.meals[x.key] === true).length;
 
@@ -446,7 +456,7 @@ export default function FoodPage() {
       ) : null}
 
       {tab === "diary" && cp.client ? (
-        <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={plan.target.cal ? plan.target : null} planMeal={planMeal} smartLine={smartLine} coachSnacks={[...plan.extras.snacks, ...plan.extras.salads]} focusSnacks={focusSnacks} />
+        <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={plan.target.cal ? plan.target : null} planMeal={planMeal} smartLine={smartLine} ramadan={cp.ramadan} coachSnacks={[...plan.extras.snacks, ...plan.extras.salads]} focusSnacks={focusSnacks} />
       ) : null}
 
       {tab === "shop" ? (

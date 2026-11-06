@@ -9,6 +9,7 @@ import { aiRead, lookupBarcode } from "@/lib/food-scan";
 import { BarcodeScanner, MealPhoto } from "@/components/FoodScan";
 import { Restaurants } from "@/components/Restaurants";
 import { CalorieCard } from "@/components/CalorieCard";
+import { RAMADAN_EMOJI, RAMADAN_SLOT } from "@/lib/ramadan";
 import { STORE_URL } from "@/lib/account";
 import { SuggestedSnacks } from "@/components/SuggestedSnacks";
 import { generalSnacks, type Snack } from "@/lib/snacks";
@@ -48,7 +49,17 @@ const dayLabel = (d: string) => {
   if (d === shiftDay(t, -1)) return "أمس";
   return new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { weekday: "long", day: "numeric", month: "long" }).format(new Date(d + "T12:00:00"));
 };
-const slotOf = (label: string): Slot => (/فطور/.test(label) ? "فطور" : /غداء/.test(label) ? "غداء" : /عشاء/.test(label) ? "عشاء" : "سناك");
+const slotOf = (label: string): Slot => (/فطور/.test(label) ? "فطور" : /غداء|بينية/.test(label) ? "غداء" : /عشاء|سحور/.test(label) ? "عشاء" : "سناك");
+
+/** Meal to add to by the time of day; in Ramadan: فطور from Maghrib, then وجبة بينية, then سحور. */
+function slotNow(ramadan: boolean): Slot {
+  if (!ramadan) return defaultSlot();
+  const h = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hourCycle: "h23", timeZone: "Asia/Riyadh" }).format(new Date()));
+  if (h >= 17 && h < 21) return "فطور";
+  if (h >= 21 || h < 1) return "غداء";
+  if (h < 5) return "عشاء";
+  return "فطور";
+}
 /** Line under the card when there is no plan to follow (or for another day). */
 function genericLine(eaten: number, target: Target | null, isToday: boolean): ReactNode {
   const e = Math.round(eaten);
@@ -73,7 +84,8 @@ export function FoodDiary({
   planMeal,
   smartLine,
   coachSnacks,
-  focusSnacks
+  focusSnacks,
+  ramadan = false
 }: {
   clientId: string;
   profileId: string;
@@ -86,7 +98,11 @@ export function FoodDiary({
   coachSnacks?: Meal[];
   /** Scroll to «سناكات مقترحة» when opened from the line under the card. */
   focusSnacks?: boolean;
+  /** Ramadan mode: meals are فطور / وجبة بينية / سحور. */
+  ramadan?: boolean;
 }) {
+  const lbl = (sl: Slot) => (ramadan ? RAMADAN_SLOT[sl] : sl);
+  const emo = (sl: Slot) => (ramadan ? RAMADAN_EMOJI[sl] : SLOT_EMOJI[sl]);
   const toast = useToast();
   const [date, setDate] = useState(todayKey());
   const [entries, setEntries] = useState<FoodEntry[]>([]);
@@ -233,7 +249,7 @@ export function FoodDiary({
 
   async function saveMeal(slot: Slot) {
     const items = slotItems(slot);
-    const name = mealName.trim() || `${slot} ${dayLabel(date)}`;
+    const name = mealName.trim() || `${lbl(slot)} ${dayLabel(date)}`;
     if (!items.length) return;
     const { data, error } = await supabase.from("saved_foods").insert({ kind: "meal", name: name.slice(0, 120), data: { items } }).select("id, kind, name, data").single();
     if (error || !data) return toast.show("ما انحفظت. تأكدي من الاتصال.");
@@ -255,7 +271,7 @@ export function FoodDiary({
     const { data, error } = await supabase.from("food_entries").insert(rows).select("*");
     if (error || !data) return toast.show("ما انحفظ. تأكدي من الاتصال.");
     setEntries((cur) => [...cur, ...(data as FoodEntry[])]);
-    toast.show(`انضاف ${slot} نفس أمس ✅`);
+    toast.show(`انضاف ${lbl(slot)} نفس أمس ✅`);
   }
 
   async function remove(id: string) {
@@ -308,10 +324,10 @@ export function FoodDiary({
       />
 
       <div className="quick-row">
-        <button type="button" onClick={() => { setQ(""); setSheet({ mode: "search", slot: defaultSlot() }); }}><span aria-hidden="true">🔍</span>ابحثي</button>
-        <button type="button" onClick={() => setSheet({ mode: "barcode", slot: defaultSlot() })}><span aria-hidden="true">📷</span>باركود</button>
-        <button type="button" onClick={() => setSheet({ mode: "photo", slot: defaultSlot() })}><span aria-hidden="true">🤖</span>صوري صحنك{photosLeft !== null && photosLeft >= 0 ? <span className="cal-badge">{photosLeft > 0 ? `باقي ${photosLeft} صور` : "للمشتركين"}</span> : null}</button>
-        <button type="button" onClick={() => setSheet({ mode: "rest", slot: defaultSlot() })}><span aria-hidden="true">🍔</span>مطاعم</button>
+        <button type="button" onClick={() => { setQ(""); setSheet({ mode: "search", slot: slotNow(ramadan) }); }}><span aria-hidden="true">🔍</span>ابحثي</button>
+        <button type="button" onClick={() => setSheet({ mode: "barcode", slot: slotNow(ramadan) })}><span aria-hidden="true">📷</span>باركود</button>
+        <button type="button" onClick={() => setSheet({ mode: "photo", slot: slotNow(ramadan) })}><span aria-hidden="true">🤖</span>صوري صحنك{photosLeft !== null && photosLeft >= 0 ? <span className="cal-badge">{photosLeft > 0 ? `باقي ${photosLeft} صور` : "للمشتركين"}</span> : null}</button>
+        <button type="button" onClick={() => setSheet({ mode: "rest", slot: slotNow(ramadan) })}><span aria-hidden="true">🍔</span>مطاعم</button>
       </div>
 
       {SLOTS.map((slot) => {
@@ -321,7 +337,7 @@ export function FoodDiary({
         return (
           <section key={slot} className="card stack" style={{ gap: 0, padding: "12px 16px" }}>
             <div className="row between" style={{ paddingBottom: 6 }}>
-              <b>{SLOT_EMOJI[slot]} {slot}</b>
+              <b>{emo(slot)} {lbl(slot)}</b>
               <span className="row" style={{ gap: 8 }}>
                 {plan.length + mine.length > 0 ? (
                   <button type="button" className="link small" style={{ minHeight: 0 }} onClick={() => { setMealName(""); setSheet({ mode: "saveMeal", slot }); }}>⭐ احفظيها</button>
@@ -331,7 +347,7 @@ export function FoodDiary({
             </div>
             {!mine.length && prevEntries.some((x) => x.slot === slot) ? (
               <button type="button" className="copy-prev" onClick={() => copyPrev(slot)}>
-                ↺ نفس {slot} أمس ({prevEntries.filter((x) => x.slot === slot).map((x) => x.name).join("، ")})
+                ↺ نفس {lbl(slot)} أمس ({prevEntries.filter((x) => x.slot === slot).map((x) => x.name).join("، ")})
               </button>
             ) : null}
             {plan.map(({ key, meal }) => (
@@ -375,7 +391,7 @@ export function FoodDiary({
         <div className="sheet-bg" onClick={(e) => e.target === e.currentTarget && setSheet(null)}>
           <div className="sheet" role="dialog" aria-modal="true" aria-label="أضيفي أكل" style={{ maxHeight: "88vh", overflowY: "auto" }}>
             <div className="row between">
-              <h2 style={{ fontSize: 18 }}>{SLOT_EMOJI[sheet.slot]} {sheet.mode === "new" ? (sheet.barcode ? "منتج جديد" : "صنف جديد") : sheet.mode === "barcode" ? "امسحي الباركود" : sheet.mode === "photo" ? "صوري وجبتك" : sheet.mode === "saveMeal" ? `احفظي ${sheet.slot} كوجبة` : sheet.mode === "rest" ? `مطاعم · ${sheet.slot}` : `أضيفي لـ${sheet.slot}`}</h2>
+              <h2 style={{ fontSize: 18 }}>{emo(sheet.slot)} {sheet.mode === "new" ? (sheet.barcode ? "منتج جديد" : "صنف جديد") : sheet.mode === "barcode" ? "امسحي الباركود" : sheet.mode === "photo" ? "صوري وجبتك" : sheet.mode === "saveMeal" ? `احفظي ${lbl(sheet.slot)} كوجبة` : sheet.mode === "rest" ? `مطاعم · ${lbl(sheet.slot)}` : `أضيفي لـ${lbl(sheet.slot)}`}</h2>
               <button type="button" className="icon-btn" aria-label="إغلاق" onClick={() => setSheet(null)}>
                 <X />
               </button>
