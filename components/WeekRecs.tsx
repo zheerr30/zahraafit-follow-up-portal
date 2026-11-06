@@ -6,12 +6,13 @@ import { supabase } from "@/lib/supabase";
 export type RecRow = { id: string; week_end: string; recs: string[]; status: string };
 
 /** Friday: this week's tips from the AI (asked once, then saved). */
-export function WeekRecs({ week }: { week: Record<string, number | null> }) {
+export function useWeekRecs(week: Record<string, number | null> | null) {
   const [recs, setRecs] = useState<string[] | null>(null);
   const [state, setState] = useState<"loading" | "ok" | "pending" | "none">("loading");
-  const key = JSON.stringify(week);
+  const key = week ? JSON.stringify(week) : "";
 
   useEffect(() => {
+    if (!key) return;
     let off = false;
     (async () => {
       const { data: s } = await supabase.auth.getSession();
@@ -24,9 +25,8 @@ export function WeekRecs({ week }: { week: Record<string, number | null> }) {
         });
         const j = (await res.json()) as { recs?: string[]; status?: string };
         if (off) return;
-        if (!res.ok || !j.recs) return setState("none");
+        if (!res.ok || !j.recs || j.status === "rejected") return setState("none");
         if (j.status === "pending") return setState("pending");
-        if (j.status === "rejected") return setState("none");
         setRecs(j.recs);
         setState("ok");
       } catch {
@@ -38,19 +38,7 @@ export function WeekRecs({ week }: { week: Record<string, number | null> }) {
     };
   }, [key]);
 
-  if (state === "none") return null;
-  return (
-    <section className="card stack recs">
-      <b className="recs-h">💡 توصيات أسبوعك</b>
-      {state === "loading" ? <p className="small muted">نجهز توصياتك من أرقام أسبوعك…</p> : null}
-      {state === "pending" ? <p className="small muted">توصيات أسبوعك عند المدربة تراجعها، وبتطلع لك هنا وفي «تقدمي».</p> : null}
-      {recs ? (
-        <ol className="recs-list">
-          {recs.map((r) => <li key={r}>{r}</li>)}
-        </ol>
-      ) : null}
-    </section>
-  );
+  return { recs, state };
 }
 
 /** «تقدمي»: past weeks' tips. */

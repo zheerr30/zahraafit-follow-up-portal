@@ -10,6 +10,7 @@ export type ShareCard =
   | { kind: "meal"; photo: Blob | null; name: string; cal: number; p: number; c: number; f: number }
   | { kind: "streak"; days: number }
   | { kind: "weight"; lost: number; show: boolean }
+  | { kind: "rings"; meals: { done: number; total: number } | null; cal: { eaten: number; target: number | null }; water: { n: number; goal: number }; workout: boolean | null; show: boolean }
   | { kind: "week"; days: number; avgCal: number | null; avgP: number | null; weight: number | null; show: boolean };
 
 const W = 1080;
@@ -154,6 +155,39 @@ export async function drawShareCard(card: ShareCard): Promise<Blob> {
     text(ctx, String(card.days), W / 2, 1060, 300);
     text(ctx, "أيام ورا بعض", W / 2, 1200, 80);
     text(ctx, "التزمت بخطتي 💪", W / 2, 1320, 80, 700, "#FFB088");
+  } else if (card.kind === "rings") {
+    text(ctx, "ملخص يومي", W / 2, 470, 76);
+    const rings: { pct: number; color: string; label: string; em: string }[] = [];
+    const foodPct = card.meals?.total ? card.meals.done / card.meals.total : card.cal.target ? card.cal.eaten / card.cal.target : card.cal.eaten ? 1 : 0;
+    rings.push({ pct: foodPct, color: CLAY, em: "🍽️", label: card.meals?.total ? `${card.meals.done} من ${card.meals.total} وجبات` : card.show ? `${Math.round(card.cal.eaten)} سعرة` : foodPct >= 0.9 ? "ضبطت أكلي" : "سجلت أكلي" });
+    rings.push({ pct: card.water.goal ? card.water.n / card.water.goal : 0, color: "#3B8BEB", em: "💧", label: `${card.water.n} من ${card.water.goal} أكواب` });
+    if (card.workout !== null) rings.push({ pct: card.workout ? 1 : 0, color: "#2FBF71", em: "💪", label: card.workout ? "التمرين خلص" : "التمرين باقي" });
+    const cx = W / 2, cy = 860, lw = 62, gap = 18;
+    rings.forEach((r, i) => {
+      const rad = 290 - i * (lw + gap);
+      ctx.lineWidth = lw;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = "rgba(255,255,255,0.10)";
+      ctx.beginPath();
+      ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+      ctx.stroke();
+      const f = Math.max(0, Math.min(1, r.pct));
+      if (f > 0) {
+        ctx.strokeStyle = r.color;
+        ctx.beginPath();
+        ctx.arc(cx, cy, rad, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(f, 0.02));
+        ctx.stroke();
+      }
+    });
+    rings.forEach((r, i) => {
+      const y0 = 1290 + i * 150;
+      ctx.fillStyle = r.color;
+      ctx.beginPath();
+      ctx.arc(W - 190, y0 - 18, 22, 0, Math.PI * 2);
+      ctx.fill();
+      text(ctx, r.label, W - 240, y0, 58, 700, "#fff", "right");
+    });
+    if (card.show && card.meals?.total) text(ctx, `🔥 ${Math.round(card.cal.eaten)} سعرة`, W / 2, 1290 + rings.length * 150 + 20, 50, 600, "#FFB088");
   } else if (card.kind === "week") {
     text(ctx, "📊 ملخص أسبوعي", W / 2, 480, 80);
     const rows: [string, string][] = [["📅 أيام التزمت فيها", `${card.days} من 7`]];

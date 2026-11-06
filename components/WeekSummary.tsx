@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import { todayKey, waterCups, type MealPlanData } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 import type { Plan } from "@/lib/types";
-import { WeekRecs } from "@/components/WeekRecs";
+import { useWeekRecs } from "@/components/WeekRecs";
+import { loggedDaysText } from "@/components/CaloriesChart";
 import { inPeriod, type PeriodLog } from "@/lib/period";
 import { tickedMeals } from "@/lib/meal-resolve";
 import { ShareSheet } from "@/components/ShareSheet";
 
-type Stats = { avgC: number | null; avgF: number | null; tC: number | null; tF: number | null; periodDays: number; eaten: number; planned: number; dayOn: boolean[]; dayKeys: string[]; target: { cal: number; p: number } | null; cups: number; mealPct: number | null; days: number; committed: number; avgCal: number | null; avgP: number | null; water: number; workouts: number; steps: number | null; weight: number | null; off: number };
+type Stats = { wChange: number | null; wAllPeriod: boolean; avgC: number | null; avgF: number | null; tC: number | null; tF: number | null; periodDays: number; eaten: number; planned: number; dayOn: boolean[]; dayKeys: string[]; target: { cal: number; p: number } | null; cups: number; mealPct: number | null; days: number; committed: number; avgCal: number | null; avgP: number | null; water: number; workouts: number; steps: number | null; weight: number | null; off: number };
 
 function dayKeys(n: number) {
   const t = new Date(todayKey() + "T12:00:00");
@@ -63,7 +64,15 @@ export function WeekSummary({ clientId, plans }: { clientId: string; plans: Plan
       const allW = ((b as { log_date: string; weight_kg: number }[] | null) || []).map((x) => Number(x.weight_kg));
       const tg2 = meal?.target.cal ? meal.target : ((tg as { cal: number; p: number; c: number; f: number } | null) || null);
       const avg = (k: "c" | "f") => (counted.length ? Math.round(counted.reduce((a, t) => a + t[k], 0) / counted.length) : null);
+      const allB = ((b as { log_date: string; weight_kg: number }[] | null) || []);
+      const wkSet = new Set(days), prevSet = new Set(dayKeys(14).slice(7));
+      const mean = (xs: number[]) => (xs.length ? xs.reduce((a, v) => a + v, 0) / xs.length : null);
+      const thisAll = allB.filter((x) => wkSet.has(x.log_date));
+      const thisW = mean(thisAll.filter((x) => !inPeriod(periods, x.log_date)).map((x) => Number(x.weight_kg)));
+      const prevW = mean(allB.filter((x) => prevSet.has(x.log_date) && !inPeriod(periods, x.log_date)).map((x) => Number(x.weight_kg)));
       setS({
+        wChange: thisW !== null && prevW !== null ? Math.round((thisW - prevW) * 10) / 10 : null,
+        wAllPeriod: thisAll.length > 0 && thisW === null,
         avgC: avg("c"),
         avgF: avg("f"),
         tC: tg2?.c || null,
@@ -89,62 +98,55 @@ export function WeekSummary({ clientId, plans }: { clientId: string; plans: Plan
     })();
   }, [clientId, perDay]);
 
-  if (!s || s.days + s.workouts + s.committed < 2) return null;
-  const friday = new Date(todayKey() + "T12:00:00").getDay() === 5;
-  const today = todayKey();
-  const bar = (v: number, goal: number) => <i className="wk-bar" aria-hidden="true"><i style={{ width: `${Math.min(100, (v / goal) * 100)}%` }} /></i>;
-  const metrics: { em: string; tone: string; label: string; value: string; extra?: React.ReactNode }[] = [];
-  if (s.avgCal) metrics.push({ em: "🔥", tone: "cal", label: "متوسط سعراتك", value: `${s.avgCal}`, extra: s.target ? <>{bar(s.avgCal, s.target.cal)}<small>هدفك {s.target.cal}</small></> : null });
-  if (s.avgP) metrics.push({ em: "🥩", tone: "pro", label: "متوسط البروتين", value: `${s.avgP}g`, extra: s.target?.p ? <>{bar(s.avgP, s.target.p)}<small>هدفك {s.target.p}g</small></> : null });
-  metrics.push({ em: "💧", tone: "wat", label: "الماء في اليوم", value: `${s.water} أكواب`, extra: <>{bar(s.water, s.cups)}<small>هدفك {s.cups}</small></> });
-  metrics.push({ em: "💪", tone: "wo", label: "تمارين", value: `${s.workouts}`, extra: <span className="wk-dots" aria-hidden="true">{Array.from({ length: Math.max(3, s.workouts) }, (_, i) => <i key={i} className={i < s.workouts ? "on" : ""} />)}</span> });
-  if (s.steps) metrics.push({ em: "👟", tone: "st", label: "خطوات في اليوم", value: s.steps.toLocaleString("en-US") });
-  if (s.weight !== null) metrics.push({ em: "⚖️", tone: s.weight <= 0 ? "down" : "up", label: "تغير الوزن (أسبوعين)", value: `${s.weight > 0 ? "+" : ""}${s.weight} كجم` });
+  const week = s
+    ? {
+        daysLogged: Math.max(s.days, s.committed), committed: s.committed, avgCal: s.avgCal, avgP: s.avgP, avgC: s.avgC, avgF: s.avgF,
+        targetCal: s.target?.cal || null, targetP: s.target?.p || null, targetC: s.tC, targetF: s.tF,
+        water: s.water, waterGoal: s.cups, mealsPlanned: s.planned || null, mealsEaten: s.planned ? s.eaten : null, outside: s.off,
+        workouts: s.workouts, workoutDays, weightChange: s.wChange, periodDays: s.periodDays
+      }
+    : null;
+  const { recs, state } = useWeekRecs(week);
+  if (!s) return null;
+  const few = Math.max(s.days, s.committed) < 3;
+  const first = few
+    ? (state === "ok" && recs?.[0]) || "سجلي أكلك كل يوم هالأسبوع، وبعد 3 أيام تسجيل يطلع لك ملخص وتوصيات على أسبوعك."
+    : state === "ok" && recs?.length ? recs[0] : state === "loading" ? "نجهز ملخص أسبوعك…" : headline(s).replace(/\p{Extended_Pictographic}/gu, "").trim();
+  const nextRecs = !few && state === "ok" && recs ? recs.slice(1) : [];
 
   return (
     <>
       <div className="sec-title">
-        <span className="em" aria-hidden="true">📈</span>
-        <h2>{friday ? "📊 ملخص أسبوعك" : "أسبوعك"}</h2>
-        <span className="aside">آخر ٧ أيام</span>
+        <span className="em" aria-hidden="true">📊</span>
+        <h2>ملخص أسبوعك</h2>
+        <span className="aside">آخر 7 أيام</span>
       </div>
-      <section className={`wk ${friday ? "fri" : ""}`}>
-        <b className="wk-head">{headline(s)}</b>
-        <div className="wk-strip" role="list" aria-label={`التزمتي ${s.committed} من 7 أيام`}>
-          {s.dayKeys.map((k, i) => (
-            <span key={k} role="listitem" className={`${s.dayOn[i] ? "on" : ""} ${k === today ? "now" : ""}`}>
-              <small>{["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"][new Date(k + "T12:00:00").getDay()]}</small>
-              <i aria-label={s.dayOn[i] ? "التزمتي" : "ما سجلتي"}>{s.dayOn[i] ? "✓" : new Date(k + "T12:00:00").getDate()}</i>
-            </span>
-          ))}
-        </div>
-        <p className="wk-count"><b className="num">{s.committed}</b> من ٧ أيام التزمتي فيها</p>
-        <div className="wk-grid">
-          {metrics.map((m) => (
-            <div key={m.label} className={`wk-m ${m.tone}`}>
-              <span className="wk-em" aria-hidden="true">{m.em}</span>
-              <small>{m.label}</small>
-              <b className="num" dir="ltr">{m.value}</b>
-              {m.extra || null}
-            </div>
-          ))}
-        </div>
-        <div className="row between wrap" style={{ gap: 8 }}>
-          {s.off ? <span className="note">🍔 سجلتي {s.off} مرات أكل برا الخطة.</span> : <span />}
-          <button type="button" className="share-btn" style={{ margin: 0 }} onClick={() => setShare(true)}>📤 شاركي أسبوعك</button>
-        </div>
+      <section className="card stack wk2">
+        <p className="wk2-first">{first}</p>
+        {s.avgCal || s.avgP ? (
+          <div className="wk2-pair">
+            {s.avgCal ? <div><small>متوسط السعرات</small><b className="num">{s.avgCal}</b><small>من {loggedDaysText(s.committed)}</small></div> : null}
+            {s.avgP ? <div><small>متوسط البروتين</small><b className="num">{s.avgP}g</b><small>من {loggedDaysText(s.committed)}</small></div> : null}
+          </div>
+        ) : null}
+        {s.wAllPeriod ? (
+          <div className="wk2-row"><span>⚖️ الوزن</span><span className="note">الوزن هالأسبوع ما ينحسب، أيام الدورة</span></div>
+        ) : s.wChange !== null ? (
+          <div className="wk2-row"><span>⚖️ الوزن عن الأسبوع اللي قبل</span><b className="num" dir="ltr">{s.wChange > 0 ? "+" : ""}{s.wChange} كجم</b></div>
+        ) : null}
+        {workoutDays ? (
+          <div className="wk2-row"><span>💪 التمارين</span><b className="num">{s.workouts} من {workoutDays}</b></div>
+        ) : null}
+        {state === "pending" && !few ? <p className="note">توصيات أسبوعك عند المدربة تراجعها، وبتطلع لك في «تقدمي».</p> : null}
+        {nextRecs.length ? (
+          <div className="wk2-next">
+            <b>لأسبوعك الجاي</b>
+            <ol className="recs-list">{nextRecs.map((r) => <li key={r}>{r}</li>)}</ol>
+          </div>
+        ) : null}
+        <button type="button" className="btn btn-s btn-block" onClick={() => setShare(true)}>📤 شاركي أسبوعك</button>
       </section>
-      {friday ? (
-        <WeekRecs
-          week={{
-            daysLogged: Math.max(s.days, s.committed), committed: s.committed, avgCal: s.avgCal, avgP: s.avgP, avgC: s.avgC, avgF: s.avgF,
-            targetCal: s.target?.cal || null, targetP: s.target?.p || null, targetC: s.tC, targetF: s.tF,
-            water: s.water, waterGoal: s.cups, mealsPlanned: s.planned || null, mealsEaten: s.planned ? s.eaten : null, outside: s.off,
-            workouts: s.workouts, workoutDays, weightChange: s.weight, periodDays: s.periodDays
-          }}
-        />
-      ) : null}
-      {share ? <ShareSheet card={{ kind: "week", days: s.committed, avgCal: s.avgCal, avgP: s.avgP, weight: s.weight, show: false }} numberToggle={s.weight !== null} onClose={() => setShare(false)} /> : null}
+      {share ? <ShareSheet card={{ kind: "week", days: s.committed, avgCal: s.avgCal, avgP: s.avgP, weight: s.wChange, show: false }} numberToggle={s.wChange !== null} onClose={() => setShare(false)} /> : null}
     </>
   );
 }

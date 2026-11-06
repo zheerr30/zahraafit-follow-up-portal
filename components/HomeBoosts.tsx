@@ -42,16 +42,16 @@ export function HomeRestaurants({ clientId, left, onAdded }: { clientId: string;
       </div>
       <section className="card" style={{ padding: "4px 16px" }}>
         {fit.map((it) => (
-          <div key={it.id} className="diary-row">
+          <button type="button" key={it.id} className="diary-row rest-pick" disabled={added.has(it.id)} onClick={() => add(it)} aria-label={`أضيفي ${it.name} لأكل اليوم`}>
             <span aria-hidden="true" style={{ fontSize: 22, flex: "none" }}>{it.restaurants?.emoji || "🍽️"}</span>
             <span style={{ minWidth: 0 }}>
               {it.coach_pick ? "⭐ " : ""}{it.name}
               <span className="note" style={{ display: "block" }}>{it.restaurants?.name}{it.tip ? ` · 💡 ${it.tip}` : ""}</span>
             </span>
-            <button type="button" className="share-btn" style={{ margin: 0, flex: "none" }} disabled={added.has(it.id)} onClick={() => add(it)} aria-label={`أضيفي ${it.name}`}>
+            <span className="share-btn" style={{ margin: 0, flex: "none", marginInlineStart: "auto" }} aria-hidden="true">
               {added.has(it.id) ? <><Check size={14} />انضاف</> : <><Plus size={14} />{Math.round(Number(it.cal))}</>}
-            </button>
-          </div>
+            </span>
+          </button>
         ))}
       </section>
     </>

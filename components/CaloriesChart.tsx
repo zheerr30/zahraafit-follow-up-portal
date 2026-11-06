@@ -17,6 +17,11 @@ export function daysText(n: number) {
   return `${n} ${n <= 10 ? "أيام" : "يوم"}`;
 }
 
+/** "from N days she logged": من يوم واحد سجلتيه / من يومين سجلتيهم / من 5 أيام سجلتيها. */
+export function loggedDaysText(n: number) {
+  return n === 1 ? "يوم واحد سجلتيه" : n === 2 ? "يومين سجلتيهم" : `${daysText(n)} سجلتيها`;
+}
+
 /** Calories and protein per day for the last `n` days: ticked plan meals + food logged in «سعراتي». */
 export function useCalorieDays(clientId: string | null | undefined, mealRow: Plan | null, n = 7) {
   const [rows, setRows] = useState<CalDay[] | null>(null);
@@ -77,7 +82,7 @@ export function CaloriesChart({ rows, target }: { rows: CalDay[] | null; target:
       <section className="card stack" aria-label="سعراتك آخر 7 أيام">
         <div className="row between" style={{ alignItems: "flex-end" }}>
           <div>
-            <span className="label" style={{ display: "block" }}>متوسط {daysText(logged.length)} سجلتيها</span>
+            <span className="label" style={{ display: "block" }}>متوسط {loggedDaysText(logged.length)}</span>
             <b className="num" style={{ fontSize: 26, color: "var(--navy)" }}>{avg}</b>
             {target ? <span className="small muted"> من هدف {target}</span> : null}
           </div>

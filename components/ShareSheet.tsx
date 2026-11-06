@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { drawShareCard, shareImage, type ShareCard } from "@/lib/share-card";
 
 /** Preview of a share image and the button that opens the phone's share sheet. */
-export function ShareSheet({ card, onClose, numberToggle }: { card: ShareCard; onClose: () => void; numberToggle?: boolean }) {
+export function ShareSheet({ card, onClose, numberToggle, toggleLabel }: { card: ShareCard; onClose: () => void; numberToggle?: boolean; toggleLabel?: string }) {
   const [show, setShow] = useState(false);
   const [blob, setBlob] = useState<Blob | null>(null);
   const [url, setUrl] = useState<string | null>(null);
@@ -13,7 +13,7 @@ export function ShareSheet({ card, onClose, numberToggle }: { card: ShareCard; o
 
   useEffect(() => {
     let alive = true;
-    const c: ShareCard = card.kind === "weight" || card.kind === "week" ? { ...card, show } : card;
+    const c: ShareCard = card.kind === "weight" || card.kind === "week" || card.kind === "rings" ? { ...card, show } : card;
     drawShareCard(c).then((b) => {
       if (!alive) return;
       setBlob(b);
@@ -37,7 +37,7 @@ export function ShareSheet({ card, onClose, numberToggle }: { card: ShareCard; o
         <div className="share-preview">{url ? <img src={url} alt="الصورة اللي بتنشارك" /> : <span className="note">لحظة...</span>}</div>
         {numberToggle ? (
           <label className="row between" style={{ cursor: "pointer" }}>
-            <span className="small">أظهري الرقم في الصورة</span>
+            <span className="small">{toggleLabel || "أظهري الرقم في الصورة"}</span>
             <input type="checkbox" checked={show} onChange={() => setShow(!show)} style={{ width: 22, height: 22, accentColor: "var(--clay)" }} />
           </label>
         ) : null}

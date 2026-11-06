@@ -84,7 +84,7 @@ export default function ClientHome() {
 
         <span className="kicker">✨ أول خطوة</span>
         <h2>عبي معلومات خطتك عشان تبدأ المدربة زهراء تجهزها</h2>
-        <p>تاخذ ٥ دقايق تقريبًا. وتوصلك خطتك خلال ٢-٣ أيام عمل.</p>
+        <p>تاخذ 5 دقايق تقريبا. وتوصلك خطتك خلال 2-3 أيام عمل.</p>
         <Link className="btn btn-p btn-block" href="/app/intake">
           <ClipboardEdit />
           عبي معلوماتي
@@ -104,7 +104,7 @@ export default function ClientHome() {
             <p>تأخرت شوي عن موعدها. المدربة عليها وبتوصلك بأقرب وقت.</p>
           ) : (
             <p>
-              توصلك خلال ٢-٣ أيام عمل، بين <b>{formatDay(win.from)}</b> و<b>{formatDay(win.to)}</b>. بنعلمك أول ما تجهز.
+              توصلك خلال 2-3 أيام عمل، بين <b>{formatDay(win.from)}</b> و<b>{formatDay(win.to)}</b>. بنعلمك أول ما تجهز.
             </p>
           )}
         </section>

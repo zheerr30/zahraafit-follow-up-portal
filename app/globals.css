@@ -628,3 +628,41 @@ details.msg-old[open] .sub { display: none; }
 .period-bar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; direction: rtl; }
 .period-bar i { height: 10px; border-radius: 6px; background: var(--sunken); }
 .period-log summary { cursor: pointer; font-size: 13.5px; font-weight: 600; color: var(--ink-2); padding: 6px 0; }
+
+/* Home «يومك» rows */
+.day-rows { padding: 2px 14px; }
+.d-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; color: var(--ink); text-decoration: none; min-height: 64px; }
+.d-row + .d-row { border-top: 1px solid var(--line); }
+.d-link { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; color: inherit; text-decoration: none; }
+.d-ic { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; flex: none; font-size: 18px; }
+.d-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.d-mid small { font-size: 12px; color: var(--ink-3); font-weight: 600; }
+.d-mid b { font-size: 16px; color: var(--navy); }
+.d-mid .note { font-size: 12px; }
+.d-end { flex: none; font-size: 13px; font-weight: 700; color: var(--clay-ink); display: flex; align-items: center; }
+.d-plus { width: 40px; height: 40px; border-radius: 50%; background: #2F7DE1; color: #fff; display: grid; place-items: center; flex: none; box-shadow: 0 3px 10px rgba(47, 125, 225, .3); }
+.d-plus:active { transform: scale(.92); }
+.seg-bar { display: flex; gap: 4px; margin-top: 2px; }
+.seg-bar i { flex: 1; height: 6px; border-radius: 4px; background: var(--sunken); }
+.seg-bar i.on { background: var(--clay); }
+.dots { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
+.dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--sunken); }
+.dots i.on { background: #2F7DE1; }
+.wk-circles { display: flex; gap: 5px; margin-top: 3px; }
+.wk-circles i { width: 24px; height: 24px; border-radius: 50%; background: var(--sunken); color: var(--ink-3); font-size: 11px; font-style: normal; font-weight: 700; display: grid; place-items: center; }
+.wk-circles i.on { background: var(--clay); color: #fff; }
+.wk-circles i.now { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--navy); }
+
+/* Alerts: white cards with a thin side line, no heavy frames */
+.alert-card, .alert-card.warn, .alert-card.ok, .alert-card.pink, .alert-card.coach-note { background: var(--surface); border: 0; border-inline-start: 3px solid var(--clay); box-shadow: var(--shadow); }
+.alert-card.pink { border-inline-start-color: #D4537E; }
+.wk2-first { margin: 0; font-size: 15.5px; font-weight: 600; line-height: 1.75; color: var(--navy); }
+.wk2-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.wk2-pair > div { background: var(--sunken); border-radius: 14px; padding: 10px 12px; display: grid; gap: 2px; }
+.wk2-pair b { font-size: 22px; color: var(--clay-ink); }
+.wk2-pair small { font-size: 12px; color: var(--ink-3); }
+.wk2-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.wk2-row b { color: var(--navy); }
+.wk2-next { display: grid; gap: 8px; background: var(--sunken); border-radius: 14px; padding: 12px 14px; }
+.rest-pick { width: 100%; text-align: start; font: inherit; color: inherit; background: none; }
+.rest-pick + .rest-pick { border-top: 1px solid var(--line); }
