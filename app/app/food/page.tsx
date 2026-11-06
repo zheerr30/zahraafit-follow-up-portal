@@ -1,5 +1,7 @@
 "use client";
 
+import { PrepBoxes } from "@/components/PrepBoxes";
+import { ShoppingExtras } from "@/components/ShoppingExtras";
 import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -69,7 +71,6 @@ export default function FoodPage() {
   const [tab, setTab] = useState<Tab>("meals");
   const [day, setDay] = useState<number | null>(null);
   const [choices, setChoices] = useState<Choices>({ meals: {}, ings: {}, shop: {}, rates: {} });
-  const [newItem, setNewItem] = useState({ name: "", amount: "" });
   const [log, setLog] = useState<Log>({ meals: {}, water: 0 });
   const [dayNote, setDayNote] = useState<DayNote>({});
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -78,7 +79,14 @@ export default function FoodPage() {
   const [todayDay, setTodayDay] = useState(0);
   const [focusSnacks, setFocusSnacks] = useState(false);
   const [share, setShare] = useState<ShareCard | null>(null);
-  const [freeTab, setFreeTab] = useState<"diary" | "meals">("diary");
+  const [freeTab, setFreeTab] = useState<"diary" | "meals" | "shop">("diary");
+  useEffect(() => {
+    // «علب جاهزة» opens on the diary tab
+    if (new URLSearchParams(window.location.search).get("boxes") === "1") {
+      setTab("diary");
+      setFreeTab("diary");
+    }
+  }, []);
   const [todayFood, setTodayFood] = useState({ cal: 0, p: 0, c: 0, f: 0 });
   const [ready, setReady] = useState(false);
   const today = todayKey();
@@ -191,11 +199,21 @@ export default function FoodPage() {
     return (
       <ClientShell title="أكلي" sub="سجلي أكلك واحسبي سعراتك">
         <div className="seg-tabs" role="tablist" aria-label="أقسام أكلي">
-          {([["diary", "🔥 سعراتي"], ["meals", "🍽️ وجباتي"]] as ["diary" | "meals", string][]).map(([k, l]) => (
+          {([["diary", "🔥 سعراتي"], ["meals", "🍽️ وجباتي"], ["shop", "🛒 تسوق"]] as ["diary" | "meals" | "shop", string][]).map(([k, l]) => (
             <button key={k} type="button" role="tab" aria-selected={freeTab === k} onClick={() => setFreeTab(k)}>{l}</button>
           ))}
         </div>
-        {freeTab === "diary" ? <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={null} planMeal={null} ramadan={cp.ramadan} /> : <PlanOffer clientId={cp.client.id} sub={acc.sub} locked={Boolean(plan) && !acc.sub} />}
+        {freeTab === "diary" ? (
+          <>
+            <PrepBoxes clientId={cp.client.id} onLogged={() => window.location.reload()} />
+            <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={null} planMeal={null} ramadan={cp.ramadan} />
+          </>
+        ) : freeTab === "shop" ? (
+          <>
+            <div className="tip-card"><span className="em" aria-hidden="true">🛒</span><span>قائمة تسوقك: أضيفي اللي تحتاجينه، أو من «حضري وجباتك» تنضاف المكونات الناقصة لحالها.</span></div>
+            <ShoppingExtras clientId={cp.client.id} />
+          </>
+        ) : <PlanOffer clientId={cp.client.id} sub={acc.sub} locked={Boolean(plan) && !acc.sub} />}
         {cp.files.length ? (
           <p className="note" style={{ textAlign: "center" }}>
             خطتك من المدربة وصلت كملف. <Link className="link" href="/app">افتحيها من الرئيسية</Link>
@@ -344,6 +362,9 @@ export default function FoodPage() {
             <ol>{steps.map((st, n) => <li key={n}>{st}</li>)}</ol>
           </details>
         ) : null}
+        {/^\d+-\d+$/.test(key) ? (
+          <Link className="prep-link" href={`/app/prep?d=${key.split("-")[0]}&m=${key.split("-")[1]}`}>🍱 حضري منها كمية</Link>
+        ) : null}
         <div className="rate-row">
           <span>عجبتك؟</span>
           {([[1, "👍", "عجبتني"], [-1, "👎", "ما عجبتني"]] as [1 | -1, string, string][]).map(([v, em, l]) => {
@@ -387,6 +408,7 @@ export default function FoodPage() {
 
       {tab === "meals" ? (
         <>
+          <Link href="/app/prep" className="card prep-cta"><span><b>🍱 حضري وجباتك</b><span className="note" style={{ display: "block" }}>اطبخي كمية مرة وحدة وقسميها علب للأيام الجاية</span></span><span aria-hidden="true">‹</span></Link>
           {plan.coachNote ? (
             <div className="reply">
               <b>💬 من المدربة</b>
@@ -470,6 +492,7 @@ export default function FoodPage() {
         </>
       ) : null}
 
+      {tab === "diary" && cp.client ? <PrepBoxes clientId={cp.client.id} onLogged={() => window.location.reload()} /> : null}
       {tab === "diary" && cp.client ? (
         <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={plan.target.cal ? plan.target : null} planMeal={planMeal} smartLine={smartLine} ramadan={cp.ramadan} coachSnacks={[...plan.extras.snacks, ...plan.extras.salads]} focusSnacks={focusSnacks} />
       ) : null}
@@ -480,36 +503,8 @@ export default function FoodPage() {
             <span className="em" aria-hidden="true">🛒</span>
             <span>كل اللي تحتاجينه لأيام جدولك ({plan.days.length} أيام)، بعد تبديلاتك. علمي على اللي اشتريتيه. الكميات بالوزن النيء.</span>
           </div>
-          <form className="card row shop-add" onSubmit={(e) => {
-            e.preventDefault();
-            const name = newItem.name.trim().slice(0, 80);
-            if (!name) return;
-            saveChoices({ ...choices, extra: [...(choices.extra || []), { id: crypto.randomUUID().slice(0, 8), name, amount: newItem.amount.trim().slice(0, 30) }] });
-            setNewItem({ name: "", amount: "" });
-          }}>
-            <input className="inp" style={{ flex: 2, minWidth: 0 }} placeholder="أضيفي شي من عندك (مثلا: مناديل)" aria-label="اسم الغرض" value={newItem.name} onChange={(e) => setNewItem({ ...newItem, name: e.target.value })} />
-            <input className="inp" style={{ flex: 1, minWidth: 0 }} placeholder="الكمية" aria-label="الكمية (اختياري)" value={newItem.amount} onChange={(e) => setNewItem({ ...newItem, amount: e.target.value })} />
-            <button type="submit" className="btn btn-p" aria-label="أضيفي للقائمة" disabled={!newItem.name.trim()}><Plus /></button>
-          </form>
+          {cp.client ? <ShoppingExtras clientId={cp.client.id} legacy={choices.extra?.length ? choices.extra.map((x) => ({ name: x.name, amount: x.amount })) : undefined} onLegacyMoved={() => saveChoices({ ...choices, extra: [] })} /> : null}
           <section className="card" style={{ padding: "6px 16px" }}>
-            {(choices.extra || []).map((it) => {
-              const k = `x:${it.id}`;
-              const on = Boolean(choices.shop[k]);
-              return (
-                <div key={k} className="row" style={{ padding: "11px 0", borderTop: "1px solid var(--line)", opacity: on ? 0.55 : 1 }}>
-                  <label className="row" style={{ flex: 1, minWidth: 0, cursor: "pointer" }}>
-                    <input type="checkbox" checked={on} onChange={() => saveChoices({ ...choices, shop: { ...choices.shop, [k]: !on } })} style={{ width: 20, height: 20, accentColor: "var(--clay)", flexShrink: 0 }} />
-                    <span style={{ flex: 1, minWidth: 0, textDecoration: on ? "line-through" : "none" }}>{it.name} <span className="chip" style={{ fontSize: 10.5, padding: "1px 7px" }}>من عندك</span></span>
-                    {it.amount ? <span className="amt" style={{ fontWeight: 700, color: "var(--clay-ink)" }}>{it.amount}</span> : null}
-                  </label>
-                  <button type="button" className="icon-btn" aria-label={`احذفي ${it.name}`} onClick={() => {
-                    const { [k]: _gone, ...shop } = choices.shop;
-                    void _gone;
-                    saveChoices({ ...choices, shop, extra: (choices.extra || []).filter((x) => x.id !== it.id) });
-                  }}><X size={16} /></button>
-                </div>
-              );
-            })}
             {shopping.items.map((it) => {
               const on = Boolean(choices.shop[it.key]);
               return (

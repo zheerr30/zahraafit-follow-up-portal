@@ -9,7 +9,7 @@ const nextConfig = {
   // Shown in problem reports so we know which version she was on.
   env: { NEXT_PUBLIC_APP_VERSION: (process.env.VERCEL_GIT_COMMIT_SHA || "dev").slice(0, 7) },
   // Ship the generator files with the route that serves them.
-  outputFileTracingIncludes: { "/api/generators/[name]": ["./generators/**"], "/api/generators/asset/[hash]": ["./generators/**"], "/api/foods": ["./generators/**"] },
+  outputFileTracingIncludes: { "/api/generators/[name]": ["./generators/**"], "/api/generators/asset/[hash]": ["./generators/**"], "/api/foods": ["./generators/**"], "/api/recipes": ["./generators/**"] },
   async redirects() {
     // Old portal addresses go to the new screens.
     return [

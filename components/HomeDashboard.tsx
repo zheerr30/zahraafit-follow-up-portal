@@ -1,5 +1,6 @@
 "use client";
 
+import { boxDaysLeft, loadBoxes, type Box } from "@/components/PrepBoxes";
 import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { CheckCircle2, ChevronLeft, Dumbbell, Flame, Plus, Share2, Utensils, X } from "lucide-react";
@@ -34,6 +35,7 @@ type Data = {
   periods: PeriodLog[];
   ramadanUntil: string | null;
   newPurchase: boolean;
+  boxes: Box[];
 };
 
 const SEEN_KEY = "zf-seen-reply";
@@ -62,7 +64,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
 
   const load = useCallback(async () => {
     const weekAgo = addDays(today, -7);
-    const [dl, fe, tg, ch, wl, bl, fu, pl, rp, np, streak, wk, wf] = await Promise.all([
+    const [dl, fe, tg, ch, wl, bl, fu, pl, rp, np, streak, wk, wf, bx] = await Promise.all([
       supabase.from("daily_logs").select("meals, water").eq("client_id", client.id).eq("log_date", today).maybeSingle(),
       supabase.from("food_entries").select("cal, p, c, f").eq("client_id", client.id).eq("log_date", today),
       plan?.target.cal ? Promise.resolve({ data: null }) : supabase.from("food_targets").select("cal, p, c, f").eq("client_id", client.id).maybeSingle(),
@@ -75,7 +77,8 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
       supabase.rpc("my_new_purchase"),
       streakDays(client.id),
       supabase.from("daily_logs").select("log_date, meals").eq("client_id", client.id).gte("log_date", addDays(today, -6)),
-      supabase.from("food_entries").select("log_date").eq("client_id", client.id).gte("log_date", addDays(today, -6))
+      supabase.from("food_entries").select("log_date").eq("client_id", client.id).gte("log_date", addDays(today, -6)),
+      loadBoxes(client.id)
     ]);
     const weekOn = new Set<string>(((wf.data as { log_date: string }[] | null) || []).map((x) => x.log_date));
     ((wk.data as { log_date: string; meals: Record<string, unknown> }[] | null) || []).forEach((x) => {
@@ -100,7 +103,8 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
       followup: (fu.data as Data["followup"]) || null,
       periods: (pl.data as PeriodLog[] | null) || [],
       ramadanUntil: ((rp.data as { ramadan_until?: string | null } | null)?.ramadan_until) || null,
-      newPurchase: np.data === true
+      newPurchase: np.data === true,
+      boxes: bx || []
     });
   }, [client.id, profile.id, profile.gender, today, plan, mealRow]);
 
@@ -140,6 +144,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
   const checkinDue = fu.openDate && d.followup?.week_date !== fu.openDate;
   const period = profile.gender !== "male" && currentPeriod(d.periods, today);
   const ramadanSuggest = isRamadanMonth(today) && hijri(today).d <= 2 && !ramadan;
+  const soonBox = d.boxes.find((b) => b.place === "fridge" && boxDaysLeft(b, today) <= 1);
   let alert: ReactNode = null;
   if (acc.sub && acc.daysLeft !== null && acc.daysLeft <= 5) {
     alert = <div className="alert-card warn"><b>⏳ {acc.daysLeft <= 0 ? "اشتراكك ينتهي اليوم" : `باقي ${acc.daysLeft} أيام على نهاية اشتراكك`}</b><span>جددي عشان ما توقف خطتك ومتابعتك.</span><a className="btn btn-p btn-sm" href={STORE_URL} target="_blank" rel="noreferrer">جددي اشتراكك</a></div>;
@@ -161,6 +166,9 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
     alert = <Link href="/app/checkin" className="alert-card"><b>📅 {fu.saturday ? "اليوم السبت! وقت تسجيلك الأسبوعي" : "وقت متابعتك الأسبوعية"}</b><span>سجلي وزنك وقياساتك وكيف كان أسبوعك.</span></Link>;
   } else if (!acc.sub && new Date(today + "T12:00:00").getDay() === 6 && !(d.weight && d.weight.date >= addDays(today, -6))) {
     alert = <Link href="/app/progress" className="alert-card"><b>📅 اليوم السبت! وقت وزنك الأسبوعي</b><span>سجلي وزنك وتابعي تغيره أسبوع بأسبوع.</span></Link>;
+  } else if (soonBox) {
+    const dl = boxDaysLeft(soonBox, today);
+    alert = <Link href="/app/food?boxes=1" className="alert-card"><b>🍱 {dl < 0 ? `علبة ${soonBox.name} انتهت مدتها` : `علبة ${soonBox.name} ${dl === 0 ? "كليها اليوم" : "كليها بكرة بالكثير"}`}</b><span>{dl < 0 ? "شيليها من الثلاجة، وسجلي الباقي أول بأول." : "اضغطي «أكلت علبة» وتنسجل بسعراتها."}</span></Link>;
   } else if (ramadanSuggest) {
     alert = (
       <div className="alert-card">
