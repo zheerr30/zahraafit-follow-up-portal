@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Camera } from "lucide-react";
 import { aiRead } from "@/lib/food-scan";
+import { ShareSheet } from "@/components/ShareSheet";
+import type { ShareCard } from "@/lib/share-card";
 
 /** Live camera barcode reader, with typing the number as a fallback. */
 export function BarcodeScanner({ onCode, onCancel }: { onCode: (code: string) => void; onCancel: () => void }) {
@@ -71,12 +73,15 @@ export function MealPhoto({ onAdd, onCancel }: { onAdd: (items: { name: string; 
   const [rows, setRows] = useState<Row[] | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [share, setShare] = useState<ShareCard | null>(null);
 
   async function pick(file: File | undefined) {
     if (!file) return;
     setBusy(true);
     setErr(null);
     setPreview(URL.createObjectURL(file));
+    setPhoto(file);
     const { data, error } = await aiRead<{ items: AiItem[]; note: string | null }>("meal", file);
     setBusy(false);
     if (error || !data) return setErr(error || "ما قدرنا نقرأ الصورة.");
@@ -124,12 +129,17 @@ export function MealPhoto({ onAdd, onCancel }: { onAdd: (items: { name: string; 
           <button type="button" className="btn btn-p" disabled={!chosen.length} onClick={() => onAdd(chosen.map((r) => ({ name: `${r.name} 📸`, amount: Number(r.g), unit: "جرام", ...scaled(r) })))}>
             أضيفيها ({total} سعرة)
           </button>
+          <button type="button" className="btn btn-s" disabled={!chosen.length} onClick={() => {
+            const sum = chosen.reduce((a, r) => { const v = scaled(r); return { cal: a.cal + v.cal, p: a.p + v.p, c: a.c + v.c, f: a.f + v.f }; }, { cal: 0, p: 0, c: 0, f: 0 });
+            setShare({ kind: "meal", photo, name: chosen.map((r) => r.name).slice(0, 3).join(" و"), ...sum });
+          }}>📤 شاركي صحنك</button>
         </>
       ) : (
         <p className="alert info">{note || "ما لقينا أكل في الصورة. جربي صورة أوضح."}</p>
       )}
       {err ? <p className="alert err">{err}</p> : null}
       <button type="button" className="btn btn-g" onClick={onCancel}>رجوع</button>
+      {share ? <ShareSheet card={share} onClose={() => setShare(null)} /> : null}
     </div>
   );
 }

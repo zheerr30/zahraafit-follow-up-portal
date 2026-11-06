@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuthGuard } from "@/lib/use-auth";
 import { useClientPlans } from "@/lib/use-client";
 import { CaloriesChart } from "@/components/CaloriesChart";
+import { Achievements } from "@/components/Achievements";
 
 type Body = { log_date: string; weight_kg: number | null; waist_cm: number | null; hips_cm: number | null };
 type WLog = { id: string; day_title: string | null; created_at: string; duration_sec: number | null; items: { sets: { w: number; r: number }[] }[] };
@@ -152,7 +153,10 @@ export default function ProgressPage() {
       </section>
 
       {cp.client ? (
-        <CaloriesChart clientId={cp.client.id} mealRow={cp.mealRow || null} />
+        <>
+          <Achievements clientId={cp.client.id} lost={base !== null && cur !== null ? Math.round((base - cur) * 10) / 10 : null} />
+          <CaloriesChart clientId={cp.client.id} mealRow={cp.mealRow || null} />
+        </>
       ) : null}
 
       <div className="sec-h">

@@ -6,6 +6,9 @@ import { ArrowLeftRight, Check, ChevronDown, FileText, Utensils, X } from "lucid
 import { ClientShell, Empty, Loading, useToast } from "@/components/ui";
 import { FoodDiary } from "@/components/FoodDiary";
 import { CalorieCard } from "@/components/CalorieCard";
+import { PlanOffer } from "@/components/PlanOffer";
+import { ShareSheet } from "@/components/ShareSheet";
+import type { ShareCard } from "@/lib/share-card";
 import { planMealFor, resolve, tickedMeals, type MealRef } from "@/lib/meal-resolve";
 import { ingredientText, todayKey, waterCups, type Meal, type MealPlanData } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
@@ -19,7 +22,7 @@ type OffItem = { t: string; cal?: number; at: string };
 type DayNote = { steps?: string; sleep?: string; notes?: string };
 type Log = { meals: Record<string, boolean | DayNote | OffItem[]>; water: number };
 type Sheet = { type: "meal"; key: string; slot: string } | { type: "ing"; key: string; original: string; options: string[] } | null;
-type Tab = "meals" | "extras" | "shop" | "diary";
+type Tab = "meals" | "shop" | "diary";
 
 
 
@@ -63,6 +66,9 @@ export default function FoodPage() {
   const [cups, setCups] = useState(10);
   const [openMeals, setOpenMeals] = useState<Set<string>>(new Set());
   const [todayDay, setTodayDay] = useState(0);
+  const [focusSnacks, setFocusSnacks] = useState(false);
+  const [share, setShare] = useState<ShareCard | null>(null);
+  const [freeTab, setFreeTab] = useState<"diary" | "meals">("diary");
   const [todayFood, setTodayFood] = useState({ cal: 0, p: 0, c: 0, f: 0 });
   const [ready, setReady] = useState(false);
   const today = todayKey();
@@ -166,7 +172,12 @@ export default function FoodPage() {
   if ((!plan || day === null) && cp.client) {
     return (
       <ClientShell title="أكلي" sub="سجلي أكلك واحسبي سعراتك">
-        <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={null} planMeal={null} />
+        <div className="seg-tabs" role="tablist" aria-label="أقسام أكلي">
+          {([["diary", "🔥 سعراتي"], ["meals", "🍽️ وجباتي"]] as ["diary" | "meals", string][]).map(([k, l]) => (
+            <button key={k} type="button" role="tab" aria-selected={freeTab === k} onClick={() => setFreeTab(k)}>{l}</button>
+          ))}
+        </div>
+        {freeTab === "diary" ? <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={null} planMeal={null} /> : <PlanOffer clientId={cp.client.id} />}
         {cp.files.length ? (
           <p className="note" style={{ textAlign: "center" }}>
             خطتك من المدربة وصلت كملف. <Link className="link" href="/app">افتحيها من الرئيسية</Link>
@@ -220,21 +231,25 @@ export default function FoodPage() {
         </button>
       );
     }
+    const shareBtn = (
+      <button type="button" className="share-btn" onClick={() => setShare({ kind: "day", eaten: eatenCal, target: target?.cal || null, p: eatenToday.p, c: eatenToday.c, f: eatenToday.f, done: eatenCount, total: todayMeals.length })}>
+        📤 شاركي يومك
+      </button>
+    );
     if (left !== null && left > 40) {
       return (
-        <button type="button" className="cal-line-btn" onClick={() => setTab("extras")}>
-          ✅ خلصتي وجبات اليوم! باقي لك <b>{left}</b> سعرة مفتوحة، خذيها من «🍎 إضافي»
-        </button>
+        <>
+          <button type="button" className="cal-line-btn" onClick={() => { setFocusSnacks(true); setTab("diary"); }}>
+            ✅ خلصتي وجبات اليوم! باقي لك <b>{left}</b> سعرة مفتوحة، اختاري من «🍎 سناكات مقترحة»
+          </button>
+          {shareBtn}
+        </>
       );
     }
-    return <>✅ خلصتي وجبات اليوم وضبطتي هدفك 👏</>;
+    return <>✅ خلصتي وجبات اليوم وضبطتي هدفك 👏<br />{shareBtn}</>;
   };
-  const extrasEaten = Object.entries(log.meals).filter(([k, v]) => k.startsWith("x-") && v === true).length;
+
   const pdf = cp.pdfs.find((f) => /غذائي/.test(f.title)) || cp.pdfs.find((f) => f.kind === "nutrition");
-  const extras = [
-    ...plan.extras.snacks.map((m, i) => ({ key: `x-snacks-${i}`, meal: { ...m, slot: m.slot || "سناك" } })),
-    ...plan.extras.salads.map((m, i) => ({ key: `x-salads-${i}`, meal: { ...m, slot: m.slot || "سلطة" } }))
-  ];
 
   function mealCard(key: string, meal: Meal, slot: string, opts: { swapped?: boolean; swapMeal?: boolean }) {
     const steps = prepSteps(meal.prep);
@@ -338,8 +353,8 @@ export default function FoodPage() {
   return (
     <ClientShell title="أكلي" action={pdf ? <a className="btn btn-g btn-sm" href={pdf.href} target={pdf.external ? "_blank" : undefined} rel="noreferrer"><FileText />PDF</a> : undefined}>
       <div className="seg-tabs" role="tablist" aria-label="أقسام أكلي">
-        {([["meals", "🍽️ وجباتي"], ["extras", "🍎 إضافي"], ["shop", "🛒 تسوق"], ["diary", "🔥 سعراتي"]] as [Tab, string][]).map(([k, l]) => (
-          <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{l}</button>
+        {([["meals", "🍽️ وجباتي"], ["diary", "🔥 سعراتي"], ["shop", "🛒 تسوق"]] as [Tab, string][]).map(([k, l]) => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => { setFocusSnacks(false); setTab(k); }}>{l}</button>
         ))}
       </div>
 
@@ -429,21 +444,7 @@ export default function FoodPage() {
       ) : null}
 
       {tab === "diary" && cp.client ? (
-        <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={plan.target.cal ? plan.target : null} planMeal={planMeal} smartLine={smartLine} />
-      ) : null}
-
-      {tab === "extras" ? (
-        <>
-          <div className="tip-card">
-            <span className="em" aria-hidden="true">🍎</span>
-            <span>سناكات وسلطات اختارتها لك المدربة. خذي منها ضمن سعراتك المفتوحة، أو بدال سناك اليوم.{extrasEaten ? ` أكلتي اليوم ${extrasEaten}.` : ""}</span>
-          </div>
-          {extras.length ? (
-            extras.map(({ key, meal }) => mealCard(key, meal, meal.slot, {}))
-          ) : (
-            <Empty icon={<Utensils />} title="ما فيه إضافات في جدولك">المدربة بتضيفها لك مع الجدول الجاي.</Empty>
-          )}
-        </>
+        <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={plan.target.cal ? plan.target : null} planMeal={planMeal} smartLine={smartLine} coachSnacks={[...plan.extras.snacks, ...plan.extras.salads]} focusSnacks={focusSnacks} />
       ) : null}
 
       {tab === "shop" ? (
@@ -526,6 +527,7 @@ export default function FoodPage() {
           </div>
         </div>
       ) : null}
+      {share ? <ShareSheet card={share} onClose={() => setShare(null)} /> : null}
       {toast.node}
     </ClientShell>
   );

@@ -9,6 +9,8 @@ import { aiRead, lookupBarcode } from "@/lib/food-scan";
 import { BarcodeScanner, MealPhoto } from "@/components/FoodScan";
 import { Restaurants } from "@/components/Restaurants";
 import { CalorieCard } from "@/components/CalorieCard";
+import { SuggestedSnacks } from "@/components/SuggestedSnacks";
+import { generalSnacks, type Snack } from "@/lib/snacks";
 import { todayKey, type Meal } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 
@@ -68,7 +70,9 @@ export function FoodDiary({
   profileId,
   planTarget,
   planMeal,
-  smartLine
+  smartLine,
+  coachSnacks,
+  focusSnacks
 }: {
   clientId: string;
   profileId: string;
@@ -77,6 +81,10 @@ export function FoodDiary({
   planMeal: ((key: string) => Meal | null) | null;
   /** Today's line under the card from the plan (next meal, open calories...), given calories eaten. */
   smartLine?: (eatenCal: number) => ReactNode;
+  /** The snacks and salads the coach put in her plan (shown as «سناكات مقترحة»). */
+  coachSnacks?: Meal[];
+  /** Scroll to «سناكات مقترحة» when opened from the line under the card. */
+  focusSnacks?: boolean;
 }) {
   const toast = useToast();
   const [date, setDate] = useState(todayKey());
@@ -179,6 +187,11 @@ export function FoodDiary({
     }
   }
 
+  useEffect(() => {
+    if (!focusSnacks || !loaded) return;
+    setTimeout(() => document.getElementById("snacks")?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
+  }, [focusSnacks, loaded]);
+
   // Photos left today, refreshed whenever the add-food sheet closes.
   useEffect(() => {
     if (sheet) return;
@@ -240,6 +253,9 @@ export function FoodDiary({
   }
 
   const left = target ? Math.round(target.cal - totals.cal) : null;
+  const snackList: Snack[] = coachSnacks && coachSnacks.length
+    ? coachSnacks.map((m) => ({ name: m.name, detail: m.ingredients.slice(0, 3).map((i) => i.n).join("، "), cal: m.cal, p: m.p, c: m.c, f: m.f }))
+    : generalSnacks(foods);
   const results = sheet?.mode === "search" ? search(foods, q) : [];
   const today = todayKey();
 
@@ -261,20 +277,26 @@ export function FoodDiary({
             </div>
           </>
         }
-        footer={
-          <div className="cal-quick">
-            <button type="button" onClick={() => { setQ(""); setSheet({ mode: "search", slot: defaultSlot() }); }}>🔍 ابحثي عن أكل</button>
-            <button type="button" onClick={() => setSheet({ mode: "barcode", slot: defaultSlot() })}>📷 باركود</button>
-            <button type="button" onClick={() => setSheet({ mode: "photo", slot: defaultSlot() })}>🤖 صوري صحنك{photosLeft !== null ? <span className="cal-badge">{photosLeft > 0 ? `باقي ${photosLeft}` : "خلصت اليوم"}</span> : null}</button>
-            <button type="button" onClick={() => setSheet({ mode: "rest", slot: defaultSlot() })}>🍔 مطاعم</button>
-          </div>
-        }
         line={
           date === today && smartLine
             ? smartLine(totals.cal)
             : genericLine(totals.cal, target, date === today)
         }
       />
+
+      <SuggestedSnacks
+        snacks={snackList}
+        fromCoach={Boolean(coachSnacks && coachSnacks.length)}
+        left={target ? Math.round(target.cal - totals.cal) : null}
+        onAdd={async (sn) => { await add("سناك", { name: sn.name, amount: 1, unit: "حصة", cal: sn.cal, p: sn.p, c: sn.c, f: sn.f }); return true; }}
+      />
+
+      <div className="quick-row">
+        <button type="button" onClick={() => { setQ(""); setSheet({ mode: "search", slot: defaultSlot() }); }}><span aria-hidden="true">🔍</span>ابحثي</button>
+        <button type="button" onClick={() => setSheet({ mode: "barcode", slot: defaultSlot() })}><span aria-hidden="true">📷</span>باركود</button>
+        <button type="button" onClick={() => setSheet({ mode: "photo", slot: defaultSlot() })}><span aria-hidden="true">🤖</span>صوري صحنك{photosLeft !== null ? <span className="cal-badge">{photosLeft > 0 ? `باقي ${photosLeft}` : "خلصت اليوم"}</span> : null}</button>
+        <button type="button" onClick={() => setSheet({ mode: "rest", slot: defaultSlot() })}><span aria-hidden="true">🍔</span>مطاعم</button>
+      </div>
 
       {SLOTS.map((slot) => {
         const plan = ticked.filter((x) => slotOf(x.meal.slot) === slot);
