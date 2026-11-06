@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { AppStatus } from "@/components/AppStatus";
+import { FirstRun } from "@/components/FirstRun";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { BadgeCheck, BookOpen, CalendarCheck, ClipboardList, Newspaper, Dumbbell, Home, Inbox, LineChart, Loader2, LogOut, UserRound, Utensils, Wrench } from "lucide-react";
+import { Users, BadgeCheck, BookOpen, CalendarCheck, ClipboardList, Newspaper, Dumbbell, Home, Inbox, LineChart, Loader2, LogOut, UserRound, Utensils, Wrench } from "lucide-react";
 import { signOut } from "@/lib/use-auth";
 import { supabase } from "@/lib/supabase";
 import { getGender, useGenderText } from "@/lib/gender";
@@ -86,6 +88,8 @@ export function ClientShell({ title, sub, action, children }: { title: ReactNode
   return (
     <div className="app" ref={root}>
       <div className="safe-top" aria-hidden="true" />
+      <AppStatus />
+      <FirstRun />
       <header className="appbar gutter">
         <div style={{ minWidth: 0 }}>
           <div className="t">{title}</div>
@@ -140,6 +144,7 @@ export function CoachShell({ children }: { children: ReactNode }) {
     { href: "/coach", label: "خطط تنتظرك", icon: <Inbox size={17} />, match: (p: string) => p === "/coach" || p.startsWith("/coach/requests") },
     { href: "/coach/subscribers", label: "المشتركات", icon: <ClipboardList size={17} />, match: (p: string) => p.startsWith("/coach/subscribers") },
     { href: "/coach/checkins", label: "المتابعات", icon: <CalendarCheck size={17} />, match: (p: string) => p.startsWith("/coach/checkins") },
+    { href: "/coach/users", label: "المستخدمين", icon: <Users size={17} />, match: (p: string) => p.startsWith("/coach/users") },
     { href: "/coach/accounts", label: "الحسابات", icon: <BadgeCheck size={17} />, match: (p: string) => p.startsWith("/coach/accounts") },
     { href: "/coach/content", label: "المحتوى", icon: <Newspaper size={17} />, match: (p: string) => p.startsWith("/coach/content") },
     { href: "/coach/tools", label: "المولدات", icon: <Wrench size={17} />, match: (p: string) => p.startsWith("/coach/tools") }

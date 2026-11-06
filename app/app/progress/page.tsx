@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { ClientShell, Loading, useToast } from "@/components/ui";
 import { formatDate } from "@/lib/format";
 import { todayKey } from "@/lib/plan-data";
+import { saveRow } from "@/lib/offline";
 import { supabase } from "@/lib/supabase";
 import { useAuthGuard } from "@/lib/use-auth";
 import { useClientPlans } from "@/lib/use-client";
@@ -128,10 +129,17 @@ export default function ProgressPage() {
 
   async function upsert(patch: Partial<Body>, msg: string) {
     if (!cp.client) return false;
-    const { error } = await supabase.from("body_logs").upsert({ client_id: cp.client.id, log_date: todayKey(), ...patch }, { onConflict: "client_id,log_date" });
-    if (error) {
+    const today = todayKey();
+    const existing = body.find((x) => x.log_date === today);
+    const r = await saveRow("body_logs", { client_id: cp.client.id, log_date: today, ...patch }, "client_id,log_date");
+    if (!r.ok) {
       toast.show("ما انحفظ. تأكدي من الاتصال وجربي مرة ثانية.");
       return false;
+    }
+    if (r.queued) {
+      setBody((b) => [...b.filter((x) => x.log_date !== today), { ...(existing || { log_date: today, weight_kg: null, waist_cm: null, hips_cm: null }), ...patch }].sort((a, c) => (a.log_date < c.log_date ? -1 : 1)));
+      toast.show(`${msg} (في جوالك لين يرجع النت)`);
+      return true;
     }
     toast.show(msg);
     await load();
@@ -318,7 +326,10 @@ export default function ProgressPage() {
                 </div>
               ))
             ) : (
-              <p className="small muted">أول تمرين تخلصينه بيطلع هنا.</p>
+              <div className="empty-mini" style={{ boxShadow: "none", padding: 0 }}>
+                <p className="small muted">تمارينك اللي تخلصينها تطلع هنا مع المدة والأوزان. أول خطوة: ابدئي تمرين اليوم.</p>
+                <a className="btn btn-s btn-sm" href="/app/workout">ابدئي أول تمرين</a>
+              </div>
             )}
           </section>
         </>

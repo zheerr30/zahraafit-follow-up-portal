@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/components/AppStatus";
 import { useEffect, useRef, useState, type PointerEvent as RPointerEvent } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import {
@@ -126,6 +127,7 @@ export function ShareSheet({ card, onClose }: { card: ShareCard; onClose: () => 
 
   const blob = () => (cardCv ? toPng(compose(cardCv, effBg, photo, place)) : Promise.reject(new Error("not ready")));
   async function doShare() {
+    track(`share:${card.kind}`);
     setBusy(true);
     const r = await shareImage(await blob());
     setBusy(false);
@@ -133,10 +135,12 @@ export function ShareSheet({ card, onClose }: { card: ShareCard; onClose: () => 
     if (r === "shared") onClose();
   }
   async function doSave() {
+    track(`save:${card.kind}`);
     downloadImage(await blob());
     setMsg("انحفظت الصورة. لو ما لقيتيها في الصور، شوفيها في الملفات أو التنزيلات.");
   }
   async function doCopy() {
+    track(`sticker:${card.kind}`);
     const ok = await copyImage(blob());
     setMsg(ok ? "انسخت ✅ افتحي الستوري واضغطي «لصق» وتطلع كستيكر." : "جوالك ما يدعم النسخ، استخدمي «احفظي بالصور».");
   }

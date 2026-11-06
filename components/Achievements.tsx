@@ -41,7 +41,17 @@ export function Achievements({ clientId, lost }: { clientId: string; lost: numbe
   const items: { em: string; title: string; sub: string; card: ShareCard; toggle: boolean }[] = [];
   if (streak >= 2) items.push({ em: "🔥", title: `${streak} أيام ورا بعض`, sub: "التزمتي بتسجيل أكلك", card: { kind: "streak", days: streak }, toggle: false });
   if (lost !== null && lost >= 0.5) items.push({ em: "🏆", title: `نزلتي ${Math.round(lost * 10) / 10} كيلو`, sub: "من أول أسبوع سجلتي فيه", card: { kind: "weight", lost }, toggle: true });
-  if (!items.length) return null;
+  if (!items.length) {
+    return (
+      <>
+        <div className="sec-h"><h2>🏆 إنجازاتك</h2></div>
+        <section className="card empty-mini">
+          <p className="small muted">إنجازاتك تطلع هنا: أيام التزامك ورا بعض، والكيلوات اللي نزلتيها. أول خطوة: سجلي أكلك يومين ورا بعض.</p>
+          <a className="btn btn-s btn-sm" href="/app/food">سجلي أكلك اليوم</a>
+        </section>
+      </>
+    );
+  }
 
   return (
     <>

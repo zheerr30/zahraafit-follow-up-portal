@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/components/AppStatus";
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Plus, Search, X } from "lucide-react";
@@ -317,7 +318,7 @@ export function FoodDiary({
       <div className="quick-row">
         <button type="button" onClick={() => { setQ(""); setSheet({ mode: "search", slot: slotNow(ramadan) }); }}><span aria-hidden="true">🔍</span>ابحثي</button>
         <button type="button" onClick={() => setSheet({ mode: "barcode", slot: slotNow(ramadan) })}><span aria-hidden="true">📷</span>باركود</button>
-        <button type="button" onClick={() => setSheet({ mode: "photo", slot: slotNow(ramadan) })}><span aria-hidden="true">🤖</span>صوري صحنك{photosLeft !== null && photosLeft >= 0 ? <span className="cal-badge">{photosLeft > 0 ? `باقي ${photosLeft} صور` : "للمشتركين"}</span> : null}</button>
+        <button type="button" onClick={() => { track("food:photo"); setSheet({ mode: "photo", slot: slotNow(ramadan) }); }}><span aria-hidden="true">🤖</span>صوري صحنك{photosLeft !== null && photosLeft >= 0 ? <span className="cal-badge">{photosLeft > 0 ? `باقي ${photosLeft} صور` : "للمشتركين"}</span> : null}</button>
         <button type="button" onClick={() => setSheet({ mode: "rest", slot: slotNow(ramadan) })}><span aria-hidden="true">🍔</span>مطاعم</button>
       </div>
 
@@ -489,7 +490,7 @@ export function FoodDiary({
                 <button type="button" className="btn btn-p" onClick={() => saveMeal(sheet.slot)}>⭐ احفظيها</button>
               </div>
             ) : sheet.mode === "barcode" ? (
-              <BarcodeScanner onCode={(code) => onBarcode(sheet.slot, code)} onCancel={() => setSheet({ mode: "search", slot: sheet.slot })} />
+              <BarcodeScanner onCode={(code) => { track("food:barcode"); onBarcode(sheet.slot, code); }} onCancel={() => setSheet({ mode: "search", slot: sheet.slot })} />
             ) : sheet.mode === "photo" && photosLeft === 0 ? (
               <div className="offer">
                 <span className="offer-em" aria-hidden="true">📸</span>

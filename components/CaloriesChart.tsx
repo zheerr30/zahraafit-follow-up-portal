@@ -65,7 +65,18 @@ export function useCalorieDays(clientId: string | null | undefined, mealRow: Pla
 /** «تقدمي»: calories she logged each day of the last week, against her target. Days without a log show as a dotted empty bar. */
 export function CaloriesChart({ rows, target }: { rows: CalDay[] | null; target: number | null }) {
   const [sel, setSel] = useState<number | null>(null);
-  if (!rows || !rows.some((r) => r.cal > 0)) return null;
+  if (!rows) return null;
+  if (!rows.some((r) => r.cal > 0)) {
+    return (
+      <>
+        <div className="sec-h"><h2>🔥 سعراتك</h2></div>
+        <section className="card empty-mini">
+          <p className="small muted">سعراتك لآخر 7 أيام تطلع هنا كأعمدة، مقارنة بهدفك. أول خطوة: سجلي أول شي أكلتيه اليوم.</p>
+          <a className="btn btn-s btn-sm" href="/app/food">سجلي أكلك</a>
+        </section>
+      </>
+    );
+  }
   const logged = rows.filter((r) => r.cal > 0);
   const avg = Math.round(logged.reduce((a, r) => a + r.cal, 0) / logged.length);
   const max = Math.max(...rows.map((r) => r.cal), target || 0, 1) * 1.12;

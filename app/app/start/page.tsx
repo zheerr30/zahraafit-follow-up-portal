@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { Brand, Loading } from "@/components/ui";
+import { FirstRun } from "@/components/FirstRun";
 import { getGender, setGender, useGenderText } from "@/lib/gender";
 import { ACTIVITY, CALC_GOALS, calcMacros, type CalcGoal, type CalcResult } from "@/lib/macros";
 import { supabase } from "@/lib/supabase";
@@ -52,6 +53,7 @@ export default function StartPage() {
   return (
     <div className="app" ref={root}>
       <div className="safe-top" aria-hidden="true" />
+      <FirstRun />
       <main className="screen gutter" style={{ paddingTop: 24, paddingBottom: 40 }}>
         <Brand />
         {done ? (

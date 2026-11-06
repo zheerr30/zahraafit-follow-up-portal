@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/components/AppStatus";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUp, Check, Dumbbell, FileText, History, Info, Play, PlayCircle, X } from "lucide-react";
@@ -165,6 +166,7 @@ export default function WorkoutPage() {
 
   async function finish() {
     if (!session || !cp.client) return;
+    track("workout:finish");
     const items: LogItem[] = session.exercises
       .map((e, i) => ({ id: e.id, name: e.name, sets: session.sets[i].filter((x) => x.done).map((x) => ({ w: Number(x.w) || 0, r: Number(x.r) || 0 })) }))
       .filter((x) => x.sets.length);

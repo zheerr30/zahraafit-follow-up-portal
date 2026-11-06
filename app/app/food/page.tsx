@@ -15,6 +15,7 @@ import { ShareSheet } from "@/components/ShareSheet";
 import type { ShareCard } from "@/lib/share-card";
 import { planMealFor, resolve, tickedMeals, type MealRef } from "@/lib/meal-resolve";
 import { ingredientText, todayKey, waterCups, type Meal, type MealPlanData } from "@/lib/plan-data";
+import { saveRow } from "@/lib/offline";
 import { supabase } from "@/lib/supabase";
 import { useAuthGuard } from "@/lib/use-auth";
 import { useClientPlans } from "@/lib/use-client";
@@ -129,9 +130,9 @@ export default function FoodPage() {
 
   async function saveLog(next: Log, msg?: string) {
     setLog(next);
-    const { error } = await supabase.from("daily_logs").upsert({ client_id: cp.client!.id, log_date: today, meals: next.meals, water: next.water }, { onConflict: "client_id,log_date" });
-    if (error) toast.show("ما انحفظ. تأكدي من الاتصال.");
-    else if (msg) toast.show(msg);
+    const r = await saveRow("daily_logs", { client_id: cp.client!.id, log_date: today, meals: next.meals, water: next.water }, "client_id,log_date");
+    if (!r.ok) toast.show("ما انحفظ. تأكدي من الاتصال.");
+    else if (msg) toast.show(r.queued ? `${msg} (في جوالك لين يرجع النت)` : msg);
   }
 
   // Ramadan with her regular plan: the same meals over فطور / وجبة بينية / سحور.

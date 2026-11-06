@@ -6,6 +6,8 @@ if (process.platform === "darwin" && !process.env.CI && !process.env.VERCEL) {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Shown in problem reports so we know which version she was on.
+  env: { NEXT_PUBLIC_APP_VERSION: (process.env.VERCEL_GIT_COMMIT_SHA || "dev").slice(0, 7) },
   // Ship the generator files with the route that serves them.
   outputFileTracingIncludes: { "/api/generators/[name]": ["./generators/**"], "/api/generators/asset/[hash]": ["./generators/**"], "/api/foods": ["./generators/**"] },
   async redirects() {

@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/components/AppStatus";
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { Camera, X } from "lucide-react";
@@ -128,6 +129,7 @@ export default function CheckinPage() {
   }
 
   async function submit(e: FormEvent) {
+    track("checkin:submit");
     e.preventDefault();
     if (!client || !info.openDate) return;
     if (!form.feeling || !form.nutrition || !form.workout) return setErr("جاوبي على شعورك والتزامك بالأكل والتمرين.");

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { CheckCircle2, ChevronLeft, Dumbbell, Flame, Plus, Scale, Share2, Utensils, X } from "lucide-react";
+import { CheckCircle2, ChevronLeft, Dumbbell, Flame, Plus, Share2, Utensils, X } from "lucide-react";
 import { ShareSheet } from "@/components/ShareSheet";
 import { CalorieCard } from "@/components/CalorieCard";
 import { streakDays } from "@/components/Achievements";
@@ -14,6 +14,8 @@ import { resolve, tickedMeals, type MealRef } from "@/lib/meal-resolve";
 import { currentPeriod, inPeriod, type PeriodLog } from "@/lib/period";
 import { todayKey, waterCups, type MealPlanData, type WorkoutPlanData } from "@/lib/plan-data";
 import { hijri, isRamadanMonth, ramadanActive, ramadanMealSlot, ramadanUntil } from "@/lib/ramadan";
+import { saveRow } from "@/lib/offline";
+import { track } from "@/components/AppStatus";
 import { supabase } from "@/lib/supabase";
 import type { Client, Plan, Profile } from "@/lib/types";
 
@@ -157,6 +159,8 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
     );
   } else if (checkinDue) {
     alert = <Link href="/app/checkin" className="alert-card"><b>📅 {fu.saturday ? "اليوم السبت! وقت تسجيلك الأسبوعي" : "وقت متابعتك الأسبوعية"}</b><span>سجلي وزنك وقياساتك وكيف كان أسبوعك.</span></Link>;
+  } else if (!acc.sub && new Date(today + "T12:00:00").getDay() === 6 && !(d.weight && d.weight.date >= addDays(today, -6))) {
+    alert = <Link href="/app/progress" className="alert-card"><b>📅 اليوم السبت! وقت وزنك الأسبوعي</b><span>سجلي وزنك وتابعي تغيره أسبوع بأسبوع.</span></Link>;
   } else if (ramadanSuggest) {
     alert = (
       <div className="alert-card">
@@ -174,7 +178,8 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
   async function addWater(n: number) {
     const w = Math.max(0, Math.min(20, d!.water + n));
     setD({ ...d!, water: w });
-    await supabase.from("daily_logs").upsert({ client_id: client.id, log_date: today, meals: d!.meals, water: w }, { onConflict: "client_id,log_date" });
+    await saveRow("daily_logs", { client_id: client.id, log_date: today, meals: d!.meals, water: w }, "client_id,log_date");
+    track("water:add");
   }
   const trainedToday = d.workouts.some((w) => w.performed_on === today);
   const weekDays = new Set(d.workouts.map((w) => w.performed_on)).size;
@@ -184,7 +189,6 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
   const workSub = !work ? "" : trainedToday ? "عافية عليك!" : weekDays >= work.days.length ? `خلصتي ${weekDays} تمارين هالأسبوع` : "تمرين اليوم";
   const cups = waterCups(d.weight?.kg);
   const lastWeight = d.weight;
-  const weightPeriod = lastWeight && profile.gender !== "male" && inPeriod(d.periods, lastWeight.date);
   const week7 = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6));
   const DAY_L = ["ح", "ن", "ث", "ر", "خ", "ج", "س"];
 
@@ -250,15 +254,6 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
           </Link>
         ) : null}
         <Link href="/app/progress" className="d-row">
-          <span className="d-ic" style={{ background: "#EEF0F6", color: "var(--navy)" }}><Scale size={18} /></span>
-          <span className="d-mid">
-            <small>الوزن</small>
-            {lastWeight ? <b className="num">{lastWeight.kg} كجم</b> : <b>سجلي وزنك</b>}
-            {weightPeriod ? <span className="note">🌸 وزن أيام الدورة، ما ينحسب</span> : lastWeight && lastWeight.date < addDays(today, -6) ? <span className="note">آخر مرة قبل أكثر من أسبوع</span> : !lastWeight ? <span className="note">مرة بالأسبوع تكفي</span> : null}
-          </span>
-          <span className="d-end">{d.weights.length > 1 ? <Spark pts={d.weights.map((w) => ({ v: w.kg, pink: profile.gender !== "male" && inPeriod(d.periods, w.date) }))} /> : null}</span>
-        </Link>
-        <Link href="/app/progress" className="d-row">
           <span className="d-ic" style={{ background: "var(--clay-tint)", color: "var(--clay)" }}><Flame size={18} /></span>
           <span className="d-mid">
             <small>الالتزام</small>
@@ -288,22 +283,5 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
         />
       ) : null}
     </>
-  );
-}
-
-/** Tiny line of the last few weights; period-day weights are pink dots. */
-function Spark({ pts }: { pts: { v: number; pink: boolean }[] }) {
-  const W = 64, H = 26, P = 4;
-  const vs = pts.map((p) => p.v);
-  let lo = Math.min(...vs), hi = Math.max(...vs);
-  if (hi - lo < 1) { const m = (hi + lo) / 2; lo = m - 0.5; hi = m + 0.5; }
-  const x = (i: number) => P + ((W - 2 * P) * i) / Math.max(1, pts.length - 1);
-  const y = (v: number) => P + ((H - 2 * P) * (hi - v)) / (hi - lo);
-  const steady = pts.map((p, i) => ({ ...p, i })).filter((p) => !p.pink);
-  return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ direction: "ltr" }} aria-hidden="true">
-      {steady.length > 1 ? <path d={steady.map((p, k) => `${k ? "L" : "M"}${x(p.i)},${y(p.v)}`).join("")} fill="none" stroke="var(--navy)" strokeWidth={1.8} strokeLinejoin="round" strokeLinecap="round" /> : null}
-      {pts.map((p, i) => <circle key={i} cx={x(i)} cy={y(p.v)} r={i === pts.length - 1 ? 3 : 2.2} fill={p.pink ? "#D4537E" : "var(--navy)"} />)}
-    </svg>
   );
 }
