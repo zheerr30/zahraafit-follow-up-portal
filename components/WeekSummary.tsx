@@ -146,7 +146,7 @@ export function WeekSummary({ clientId, plans }: { clientId: string; plans: Plan
         ) : null}
         <button type="button" className="btn btn-s btn-block" onClick={() => setShare(true)}>📤 شاركي أسبوعك</button>
       </section>
-      {share ? <ShareSheet card={{ kind: "week", days: s.committed, avgCal: s.avgCal, avgP: s.avgP, weight: s.wChange, show: false }} numberToggle={s.wChange !== null} onClose={() => setShare(false)} /> : null}
+      {share ? <ShareSheet card={{ kind: "week", on: s.dayOn, avgCal: s.avgCal, avgP: s.avgP, workouts: workoutDays ? s.workouts : null, weight: s.wChange }} onClose={() => setShare(false)} /> : null}
     </>
   );
 }

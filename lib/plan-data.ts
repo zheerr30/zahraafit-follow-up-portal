@@ -33,6 +33,9 @@ export type Exercise = {
   name: string;
   en: string;
   muscle: string;
+  /** Main and helper muscles (from the workout generator); the share card falls back to a built-in list. */
+  primary?: string[];
+  secondary?: string[];
   sets: number;
   reps: string;
   rest: string;
@@ -112,6 +115,8 @@ export function parsePlanFile(text: string): ParsedPlan {
         name: str(e.name),
         en: str(e.en),
         muscle: str(e.muscle),
+        primary: arr<string>(e.primary).map(str).filter(Boolean).slice(0, 6),
+        secondary: arr<string>(e.secondary).map(str).filter(Boolean).slice(0, 8),
         sets: Math.max(1, Math.min(10, Math.round(num(e.sets) || 3))),
         reps: str(e.reps) || "10-12",
         rest: str(e.rest) || "60-90 ث",

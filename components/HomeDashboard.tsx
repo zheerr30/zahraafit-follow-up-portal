@@ -283,9 +283,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
 
       {share ? (
         <ShareSheet
-          card={{ kind: "rings", meals: plan ? { done: doneCount, total: todayMeals.length } : null, cal: { eaten: eaten.cal, target: d.target?.cal || null }, water: { n: d.water, goal: cups }, workout: work ? trainedToday : null, show: false }}
-          numberToggle
-          toggleLabel="أظهري السعرات في الصورة"
+          card={{ kind: "day", day: { cal: eaten.cal, target: d.target?.cal || null, p: eaten.p, c: eaten.c, f: eaten.f, water: d.water, waterGoal: cups, meals: plan ? { done: doneCount, total: todayMeals.length } : null, streak: d.streak, weight: lastWeight?.kg ?? null, workout: work ? trainedToday : null } }}
           onClose={() => setShare(false)}
         />
       ) : null}

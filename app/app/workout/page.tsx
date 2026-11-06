@@ -9,6 +9,8 @@ import { supabase } from "@/lib/supabase";
 import { useAuthGuard } from "@/lib/use-auth";
 import { useClientPlans } from "@/lib/use-client";
 import { STORE_URL, accountOf } from "@/lib/account";
+import { ShareSheet } from "@/components/ShareSheet";
+import { SECONDARY, type ShareCard } from "@/lib/share-card";
 
 type SetEntry = { w: string; r: string; done: boolean };
 type LogItem = { id: string; name: string; sets: { w: number; r: number }[] };
@@ -29,7 +31,8 @@ export default function WorkoutPage() {
   const [rest, setRest] = useState<Rest | null>(null);
   const [now, setNow] = useState(Date.now());
   const [saving, setSaving] = useState(false);
-  const [done, setDone] = useState<{ title: string; sets: number; vol: number; min: number } | null>(null);
+  const [done, setDone] = useState<{ title: string; sets: number; vol: number; min: number; card: ShareCard } | null>(null);
+  const [shareDone, setShareDone] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const plan = cp.workout;
@@ -172,7 +175,18 @@ export default function WorkoutPage() {
     setSaving(false);
     if (error) return toast.show("ما انحفظ التمرين. تأكدي من الاتصال وجربي مرة ثانية.");
     const vol = items.reduce((a, it) => a + it.sets.reduce((b, s) => b + s.w * s.r, 0), 0);
-    setDone({ title: session.title, sets: items.reduce((a, it) => a + it.sets.length, 0), vol: Math.round(vol), min: Math.max(1, Math.round(dur / 60)) });
+    // Muscles worked (main and helpers) and new personal bests, for the share card.
+    const worked = session.exercises.filter((_, i) => session.sets[i].some((x) => x.done));
+    const primary = new Set(worked.flatMap((e) => (e.primary?.length ? e.primary : [e.muscle === "lats" ? "lats" : e.muscle])));
+    const secondary = new Set(worked.flatMap((e) => (e.secondary?.length ? e.secondary : SECONDARY[e.muscle] || [])).filter((m) => !primary.has(m)));
+    const prs: { name: string; w: number }[] = [];
+    for (const it of items) {
+      const best = Math.max(0, ...it.sets.map((x) => x.w));
+      const before = logs.flatMap((l) => ((l.items || []) as LogItem[]).filter((x) => x.id === it.id || x.name === it.name)).flatMap((x) => x.sets.map((y) => Number(y.w) || 0));
+      if (best > 0 && before.length && best > Math.max(...before)) prs.push({ name: it.name, w: best });
+    }
+    const sets = items.reduce((a, it) => a + it.sets.length, 0), min = Math.max(1, Math.round(dur / 60));
+    setDone({ title: session.title, sets, vol: Math.round(vol), min, card: { kind: "workout", title: session.title, min, sets, vol: Math.round(vol), primary: [...primary], secondary: [...secondary], prs } });
     setSession(null);
     setRest(null);
     loadLogs();
@@ -343,10 +357,12 @@ export default function WorkoutPage() {
               <div className="stat"><b>{done.sets}</b><span>جولة</span></div>
               <div className="stat"><b>{done.vol}</b><span>كجم رفعتيها</span></div>
             </div>
-            <button type="button" className="btn btn-p btn-block" onClick={() => setDone(null)}>تمام</button>
+            <button type="button" className="btn btn-p btn-block" onClick={() => setShareDone(true)}>📤 شاركي تمرينك</button>
+            <button type="button" className="btn btn-g btn-block" onClick={() => setDone(null)}>تمام</button>
           </div>
         </div>
       ) : null}
+      {done && shareDone ? <ShareSheet card={done.card} onClose={() => setShareDone(false)} /> : null}
       {toast.node}
     </ClientShell>
   );

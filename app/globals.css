@@ -666,3 +666,14 @@ details.msg-old[open] .sub { display: none; }
 .wk2-next { display: grid; gap: 8px; background: var(--sunken); border-radius: 14px; padding: 12px 14px; }
 .rest-pick { width: 100%; text-align: start; font: inherit; color: inherit; background: none; }
 .rest-pick + .rest-pick { border-top: 1px solid var(--line); }
+
+/* Share editor */
+.share-stage { flex-shrink: 0; position: relative; border-radius: 18px; overflow: hidden; background: var(--sunken); display: grid; place-items: center; padding: 10px; }
+.share-stage.checker { background-color: #fff; background-image: linear-gradient(45deg, #d9dce3 25%, transparent 25%), linear-gradient(-45deg, #d9dce3 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #d9dce3 75%), linear-gradient(-45deg, transparent 75%, #d9dce3 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0; }
+.share-canvas { display: block; height: 44vh; width: auto; max-width: 100%; object-fit: contain; border-radius: 12px; }
+.share-canvas.wide { height: auto; width: 100%; max-height: 44vh; }
+.share-ed { user-select: none; -webkit-user-select: none; }
+.share-designs { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 6px; }
+.chip-toggles { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-toggles button { min-height: 38px; padding: 6px 14px; border-radius: 999px; background: var(--sunken); color: var(--ink-2); font-size: 13.5px; font-weight: 600; border: 1.5px solid transparent; }
+.chip-toggles button[aria-pressed="true"] { background: var(--clay-tint); color: var(--clay-ink); border-color: var(--clay); }

@@ -246,7 +246,7 @@ export default function FoodPage() {
       );
     }
     const shareBtn = (
-      <button type="button" className="share-btn" onClick={() => setShare({ kind: "day", eaten: eatenCal, target: target?.cal || null, p: eatenToday.p, c: eatenToday.c, f: eatenToday.f, done: eatenCount, total: todayMeals.length })}>
+      <button type="button" className="share-btn" onClick={() => setShare({ kind: "day", day: { cal: eatenCal, target: target?.cal || null, p: eatenToday.p, c: eatenToday.c, f: eatenToday.f, water: log.water, waterGoal: cups, meals: todayMeals.length ? { done: eatenCount, total: todayMeals.length } : null, streak: null, weight: null, workout: null } })}>
         📤 شاركي يومك
       </button>
     );
