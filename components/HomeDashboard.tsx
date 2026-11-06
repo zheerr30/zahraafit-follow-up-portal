@@ -32,6 +32,9 @@ type Data = {
 };
 
 const SEEN_KEY = "zf-seen-reply";
+export const markReplySeen = (id: string) => {
+  try { localStorage.setItem(SEEN_KEY, id); } catch {}
+};
 const seenReply = () => {
   try { return localStorage.getItem(SEEN_KEY); } catch { return null; }
 };
@@ -115,6 +118,8 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
 
   // ── one alert, by priority ──
   const fu = followupInfo(client, today, acc.sub);
+  let replyAlert = false;
+  const markSeen = () => { if (d.followup) markReplySeen(d.followup.id); };
   const reply = d.followup?.coach_notes && d.followup.coach_replied_at && Date.now() - new Date(d.followup.coach_replied_at).getTime() < 7 * 864e5 && seenReply() !== d.followup.id ? d.followup : null;
   const checkinDue = fu.openDate && d.followup?.week_date !== fu.openDate;
   const period = profile.gender !== "male" && currentPeriod(d.periods, today);
@@ -125,7 +130,17 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
   } else if (!acc.sub && acc.expired) {
     alert = <div className="alert-card"><b>⏳ انتهى اشتراكك</b><span>بياناتك وسجلك محفوظين. جددي عشان تفتح خطتك وتمارينك.</span><a className="btn btn-p btn-sm" href={STORE_URL} target="_blank" rel="noreferrer">جددي اشتراكك</a></div>;
   } else if (reply) {
-    alert = <Link href="/app/checkin" className="alert-card ok" onClick={() => { try { localStorage.setItem(SEEN_KEY, reply.id); } catch {} }}><b>💬 المدربة ردت على تسجيلك</b><span>{reply.coach_notes!.slice(0, 110)}{reply.coach_notes!.length > 110 ? "…" : ""}</span></Link>;
+    replyAlert = true;
+    alert = (
+      <div className="alert-card coach-note">
+        <span className="coach-av" aria-hidden="true"><img src="/brand/logo-white.png" alt="" /></span>
+        <span className="coach-note-t">
+          <b>رسالة جديدة من زهراء</b>
+          <span className="one-line">{reply.coach_notes}</span>
+          <Link href="/app/progress#coach-msg" className="link" onClick={markSeen}>اقرئي الرسالة</Link>
+        </span>
+      </div>
+    );
   } else if (checkinDue) {
     alert = <Link href="/app/checkin" className="alert-card"><b>📅 {fu.saturday ? "اليوم السبت! وقت تسجيلك الأسبوعي" : "وقت متابعتك الأسبوعية"}</b><span>سجلي وزنك وقياساتك وكيف كان أسبوعك.</span></Link>;
   } else if (period) {
@@ -170,7 +185,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
       {alert && !dismissed ? (
         <div className="alert-wrap">
           {alert}
-          <button type="button" className="alert-x" aria-label="إخفاء" onClick={() => setDismissed(true)}><X size={14} /></button>
+          <button type="button" className="alert-x" aria-label="إخفاء" onClick={() => { if (replyAlert) markSeen(); setDismissed(true); }}><X size={14} /></button>
         </div>
       ) : null}
 

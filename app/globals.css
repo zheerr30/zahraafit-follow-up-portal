@@ -615,3 +615,9 @@ details.msg-old[open] .sub { display: none; }
 .wk-now b { font-size: 20px; color: var(--navy); }
 .wk-now small { color: var(--ink-3); font-size: 12px; }
 .meas-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.alert-card.coach-note { flex-direction: row; align-items: flex-start; gap: 10px; background: var(--clay-tint); border: 0; border-inline-start: 3px solid var(--clay); box-shadow: none; }
+.coach-av { width: 40px; height: 40px; border-radius: 50%; background: var(--navy); display: grid; place-items: center; flex: none; overflow: hidden; }
+.coach-av img { width: 30px; height: auto; }
+.coach-note-t { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.coach-note-t .one-line { white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.coach-note-t .link { font-size: 13.5px; font-weight: 700; color: var(--clay-ink); min-height: 0; padding: 0; }
