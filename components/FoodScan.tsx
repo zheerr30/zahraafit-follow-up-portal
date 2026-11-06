@@ -106,7 +106,7 @@ export function MealPhoto({ onAdd, onCancel }: { onAdd: (items: { name: string; 
         </>
       ) : rows.length ? (
         <>
-          <p className="small"><b>🤖 هذا تقديرنا</b>، عدلي الجرامات لو تعرفين أكثر:</p>
+          <div className="alert info">⚠️ <b>هذا تقدير تقريبي من الصورة.</b> لو تعرفين الكمية، عدلي الجرامات قبل الحفظ، والسعرات تتعدل معها.</div>
           {rows.map((r, i) => (
             <div key={i} className="diary-row" style={{ opacity: r.on ? 1 : 0.45 }}>
               <input type="checkbox" checked={r.on} aria-label={`احسبي ${r.name}`} onChange={() => setRows(rows.map((x, j) => (j === i ? { ...x, on: !x.on } : x)))} style={{ width: 20, height: 20, accentColor: "var(--clay)", flex: "none" }} />

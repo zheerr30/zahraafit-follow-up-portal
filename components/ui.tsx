@@ -85,6 +85,7 @@ export function ClientShell({ title, sub, action, children }: { title: ReactNode
   ];
   return (
     <div className="app" ref={root}>
+      <div className="safe-top" aria-hidden="true" />
       <header className="appbar gutter">
         <div style={{ minWidth: 0 }}>
           <div className="t">{title}</div>
@@ -144,6 +145,7 @@ export function CoachShell({ children }: { children: ReactNode }) {
   ];
   return (
     <div className="app wide">
+      <div className="safe-top" aria-hidden="true" />
       <header className="appbar gutter wrap" style={{ borderRadius: "0 0 18px 18px" }}>
         <div className="row wrap" style={{ gap: 16 }}>
           <LogoWhite height={34} />

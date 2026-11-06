@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Plus, Search, X } from "lucide-react";
 import { useToast } from "@/components/ui";
 import { SLOTS, SLOT_EMOJI, defaultSlot, fromBarcode, fromBase, fromCustom, scaled, search, type BarcodeProduct, type BaseFood, type CustomFood, type FoodEntry, type Pickable, type Slot } from "@/lib/foods";
 import { aiRead, lookupBarcode } from "@/lib/food-scan";
 import { BarcodeScanner, MealPhoto } from "@/components/FoodScan";
 import { Restaurants } from "@/components/Restaurants";
+import { CalorieCard } from "@/components/CalorieCard";
 import { todayKey, type Meal } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 
@@ -45,6 +46,17 @@ const dayLabel = (d: string) => {
   return new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { weekday: "long", day: "numeric", month: "long" }).format(new Date(d + "T12:00:00"));
 };
 const slotOf = (label: string): Slot => (/فطور/.test(label) ? "فطور" : /غداء/.test(label) ? "غداء" : /عشاء/.test(label) ? "عشاء" : "سناك");
+/** Line under the card when there is no plan to follow (or for another day). */
+function genericLine(eaten: number, target: Target | null, isToday: boolean): ReactNode {
+  const e = Math.round(eaten);
+  if (!isToday) return e ? <>سجلتي هاليوم <b>{e}</b> سعرة{target ? ` من ${target.cal}` : ""}.</> : <>ما سجلتي أكل هاليوم.</>;
+  if (!e) return <>👆 ابدئي بتسجيل أول شي أكلتيه اليوم.</>;
+  if (!target) return <>سجلتي <b>{e}</b> سعرة اليوم. حطي هدفك من الحاسبة عشان نقولك كم باقي.</>;
+  const left = Math.round(target.cal - eaten);
+  if (left < 0) return <>📊 زدتي <b>{-left}</b> سعرة عن هدفك اليوم. عادي يصير، بكرا يوم جديد 💪</>;
+  return <>👍 باقي لك <b>{left}</b> سعرة اليوم.</>;
+}
+
 const fmt = (v: number) => (Math.round(v * 10) / 10).toString();
 
 /**
@@ -55,13 +67,16 @@ export function FoodDiary({
   clientId,
   profileId,
   planTarget,
-  planMeal
+  planMeal,
+  smartLine
 }: {
   clientId: string;
   profileId: string;
   planTarget: Target | null;
   /** Turns a ticked key from daily_logs ("0-2", "x-snacks-1") into the meal she ate. */
   planMeal: ((key: string) => Meal | null) | null;
+  /** Today's line under the card from the plan (next meal, open calories...), given calories eaten. */
+  smartLine?: (eatenCal: number) => ReactNode;
 }) {
   const toast = useToast();
   const [date, setDate] = useState(todayKey());
@@ -73,6 +88,7 @@ export function FoodDiary({
   const [recent, setRecent] = useState<FoodEntry[]>([]);
   const [saved, setSaved] = useState<Saved[]>([]);
   const [mealName, setMealName] = useState("");
+  const [photosLeft, setPhotosLeft] = useState<number | null>(null);
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [q, setQ] = useState("");
   const [loaded, setLoaded] = useState(false);
@@ -163,6 +179,12 @@ export function FoodDiary({
     }
   }
 
+  // Photos left today, refreshed whenever the add-food sheet closes.
+  useEffect(() => {
+    if (sheet) return;
+    supabase.rpc("ai_left", { p_kind: "meal" }).then(({ data, error }) => { if (!error && typeof data === "number") setPhotosLeft(data); });
+  }, [sheet]);
+
   const favOf = (f: Pickable) => saved.find((x) => x.kind === "item" && x.data.food?.key === f.key);
 
   async function toggleFav(f: Pickable) {
@@ -223,55 +245,36 @@ export function FoodDiary({
 
   return (
     <>
-      <section className="cal-hero">
-        <div className="row between" style={{ alignItems: "center" }}>
-          <div style={{ minWidth: 0 }}>
-            <h2>🔥 حاسبة السعرات</h2>
-            <p>سجلي اللي تاكلينه ونحسب لك السعرات والبروتين والكارب والدهون تلقائي.</p>
-          </div>
-        </div>
-        <div className="cal-day" role="group" aria-label="اليوم">
-          <button type="button" aria-label="اليوم اللي قبل" onClick={() => setDate(shiftDay(date, -1))}><ChevronRight size={18} /></button>
-          <b>{dayLabel(date)}</b>
-          <button type="button" aria-label="اليوم اللي بعد" disabled={date >= today} onClick={() => setDate(shiftDay(date, 1))}><ChevronLeft size={18} /></button>
-        </div>
-        <div className="cal-main">
-          <svg viewBox="0 0 120 120" className="cal-ring" role="img" aria-label={target ? `أكلتي ${Math.round(totals.cal)} من ${target.cal} سعرة` : `أكلتي ${Math.round(totals.cal)} سعرة`}>
-            <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,.14)" strokeWidth="10" />
-            {target ? (
-              <circle cx="60" cy="60" r="52" fill="none" stroke={left! >= 0 ? "var(--clay)" : "#FF8A65"} strokeWidth="10" strokeLinecap="round"
-                strokeDasharray={`${2 * Math.PI * 52 * (target ? Math.min(1, totals.cal / target.cal) : 0)} ${2 * Math.PI * 52}`} transform="rotate(-90 60 60)" />
-            ) : null}
-            <text x="60" y="58" textAnchor="middle" fontSize="26" fontWeight="700" fill="#fff">{Math.round(totals.cal)}</text>
-            <text x="60" y="78" textAnchor="middle" fontSize="11" fill="rgba(255,255,255,.75)">{target ? `من ${target.cal}` : "سعرة"}</text>
-          </svg>
-          <div className="cal-side">
-            {target ? (
-              <>
-                <span>{left! >= 0 ? "باقي لك" : "زدتي"}</span>
-                <b style={{ color: left! >= 0 ? "#7EE2A8" : "#FFB59C" }}>{Math.abs(left!)} <small>سعرة</small></b>
-              </>
-            ) : (
-              <Link href="/app/guide?tab=calc" className="cal-goal">🎯 حطي هدفك اليومي من الحاسبة</Link>
-            )}
-            <div className="cal-macros">
-              {([["💪 بروتين", totals.p, target?.p], ["🌾 كارب", totals.c, target?.c], ["🫒 دهون", totals.f, target?.f]] as [string, number, number | undefined][]).map(([l, v, t]) => (
-                <div key={l}>
-                  <span>{l}</span>
-                  <b>{Math.round(v)}{t ? <small> / {t}g</small> : <small>g</small>}</b>
-                  {t ? <i aria-hidden="true"><i style={{ width: `${Math.min(100, (v / t) * 100)}%` }} /></i> : null}
-                </div>
-              ))}
+      <CalorieCard
+        totals={totals}
+        target={target}
+        header={
+          <>
+            <div style={{ minWidth: 0 }}>
+              <h2>🔥 حاسبة السعرات</h2>
+              <p>سجلي اللي تاكلينه ونحسب لك السعرات والبروتين والكارب والدهون تلقائي.</p>
             </div>
+            <div className="cal-day" role="group" aria-label="اليوم">
+              <button type="button" aria-label="اليوم اللي قبل" onClick={() => setDate(shiftDay(date, -1))}><ChevronRight size={18} /></button>
+              <b>{dayLabel(date)}</b>
+              <button type="button" aria-label="اليوم اللي بعد" disabled={date >= today} onClick={() => setDate(shiftDay(date, 1))}><ChevronLeft size={18} /></button>
+            </div>
+          </>
+        }
+        footer={
+          <div className="cal-quick">
+            <button type="button" onClick={() => { setQ(""); setSheet({ mode: "search", slot: defaultSlot() }); }}>🔍 ابحثي عن أكل</button>
+            <button type="button" onClick={() => setSheet({ mode: "barcode", slot: defaultSlot() })}>📷 باركود</button>
+            <button type="button" onClick={() => setSheet({ mode: "photo", slot: defaultSlot() })}>🤖 صوري صحنك{photosLeft !== null ? <span className="cal-badge">{photosLeft > 0 ? `باقي ${photosLeft}` : "خلصت اليوم"}</span> : null}</button>
+            <button type="button" onClick={() => setSheet({ mode: "rest", slot: defaultSlot() })}>🍔 مطاعم</button>
           </div>
-        </div>
-        <div className="cal-quick">
-          <button type="button" onClick={() => { setQ(""); setSheet({ mode: "search", slot: defaultSlot() }); }}>🔍 ابحثي عن أكل</button>
-          <button type="button" onClick={() => setSheet({ mode: "barcode", slot: defaultSlot() })}>📷 باركود</button>
-          <button type="button" onClick={() => setSheet({ mode: "photo", slot: defaultSlot() })}>🤖 صوري صحنك</button>
-          <button type="button" onClick={() => setSheet({ mode: "rest", slot: defaultSlot() })}>🍔 مطاعم</button>
-        </div>
-      </section>
+        }
+        line={
+          date === today && smartLine
+            ? smartLine(totals.cal)
+            : genericLine(totals.cal, target, date === today)
+        }
+      />
 
       {SLOTS.map((slot) => {
         const plan = ticked.filter((x) => slotOf(x.meal.slot) === slot);

@@ -165,6 +165,7 @@ export default function IntakePage() {
 
   const frame = (body: React.ReactNode) => (
     <div className="app" ref={root}>
+      <div className="safe-top" aria-hidden="true" />
       <header className="top gutter">
         <Link className="icon-btn" href="/app" aria-label="رجوع للرئيسية">
           <ChevronRight />

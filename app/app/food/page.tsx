@@ -5,7 +5,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeftRight, Check, ChevronDown, FileText, Utensils, X } from "lucide-react";
 import { ClientShell, Empty, Loading, useToast } from "@/components/ui";
 import { FoodDiary } from "@/components/FoodDiary";
-import { planMealFor, resolve, type MealRef } from "@/lib/meal-resolve";
+import { CalorieCard } from "@/components/CalorieCard";
+import { planMealFor, resolve, tickedMeals, type MealRef } from "@/lib/meal-resolve";
 import { ingredientText, todayKey, waterCups, type Meal, type MealPlanData } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 import { useAuthGuard } from "@/lib/use-auth";
@@ -61,6 +62,8 @@ export default function FoodPage() {
   const [sheet, setSheet] = useState<Sheet>(null);
   const [cups, setCups] = useState(10);
   const [openMeals, setOpenMeals] = useState<Set<string>>(new Set());
+  const [todayDay, setTodayDay] = useState(0);
+  const [todayFood, setTodayFood] = useState({ cal: 0, p: 0, c: 0, f: 0 });
   const [ready, setReady] = useState(false);
   const today = todayKey();
 
@@ -75,6 +78,7 @@ export default function FoodPage() {
     }
     const since = Math.max(0, Math.floor((Date.now() - new Date(row.created_at).getTime()) / 864e5));
     setDay(since % plan.days.length);
+    setTodayDay(since % plan.days.length);
     (async () => {
       supabase.from("body_logs").select("weight_kg").eq("client_id", cp.client!.id).not("weight_kg", "is", null).order("log_date", { ascending: false }).limit(1).maybeSingle()
         .then(({ data }) => setCups(waterCups(data?.weight_kg ? Number(data.weight_kg) : null)));
@@ -92,6 +96,18 @@ export default function FoodPage() {
       setReady(true);
     })();
   }, [cp.loading, plan, row, cp.client, today]);
+
+  // Food she logged in «سعراتي» today, so both tabs show the same numbers.
+  useEffect(() => {
+    if (!cp.client || tab !== "meals") return;
+    supabase.from("food_entries").select("cal, p, c, f").eq("client_id", cp.client.id).eq("log_date", today).then(({ data }) => {
+      const t = { cal: 0, p: 0, c: 0, f: 0 };
+      ((data as { cal: number; p: number; c: number; f: number }[] | null) || []).forEach((e) => {
+        t.cal += Number(e.cal); t.p += Number(e.p); t.c += Number(e.c); t.f += Number(e.f);
+      });
+      setTodayFood(t);
+    });
+  }, [cp.client, tab, today]);
 
   async function saveChoices(next: Choices) {
     setChoices(next);
@@ -176,17 +192,44 @@ export default function FoodPage() {
     );
   }
 
-  const total = meals.reduce((t, x) => ({ cal: t.cal + x.meal.cal, p: t.p + x.meal.p, c: t.c + x.meal.c, f: t.f + x.meal.f }), { cal: 0, p: 0, c: 0, f: 0 });
-  const MACROS: [string, number, number, string][] = [
-    ["💪 بروتين", total.p, plan.target.p, "var(--protein)"],
-    ["🌾 كارب", total.c, plan.target.c, "var(--carb)"],
-    ["🫒 دهون", total.f, plan.target.f, "var(--fat)"]
-  ];
-  const eatenCount = meals.filter((x) => log.meals[x.key] === true).length;
-  const offItems = Array.isArray(log.meals._off) ? (log.meals._off as OffItem[]) : [];
-  const offCal = offItems.reduce((a, x) => a + (x.cal || 0), 0);
+  // Today's numbers: ticked plan meals + food logged in «سعراتي». Starts from zero.
+  const ticked = tickedMeals(plan, choices.meals, log.meals as Record<string, unknown>);
+  const eatenToday = ticked.reduce((t, x) => ({ cal: t.cal + x.meal.cal, p: t.p + x.meal.p, c: t.c + x.meal.c, f: t.f + x.meal.f }), { ...todayFood });
+  const target = plan.target.cal ? plan.target : null;
+  const todayMeals = plan.days[todayDay]?.meals.map((_, m) => {
+    const key = `${todayDay}-${m}`;
+    return { key, meal: resolve(plan, choices.meals[key], todayDay, m), slot: plan.days[todayDay].meals[m].slot };
+  }) || [];
+  const eatenCount = todayMeals.filter((x) => log.meals[x.key] === true).length;
+
+  /** The line under the card: next meal, then open calories, or how much over. */
+  const smartLine = (eatenCal: number) => {
+    const left = target ? Math.round(target.cal - eatenCal) : null;
+    if (left !== null && left < -40) return <>📊 زدتي <b>{-left}</b> سعرة عن هدفك اليوم. عادي يصير، كملي يومك وبكرا يوم جديد 💪</>;
+    const next = todayMeals.find((x) => log.meals[x.key] !== true);
+    const goNext = () => {
+      setTab("meals");
+      setDay(todayDay);
+      setOpenMeals(new Set([next!.key]));
+      setTimeout(() => document.getElementById(`meal-${next!.key}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+    };
+    if (next) {
+      return (
+        <button type="button" className="cal-line-btn" onClick={goNext}>
+          {eatenCount ? "👏 الوجبة الجاية" : "🍽️ ابدئي يومك بـ"}: <b>{next.slot}</b> · {next.meal.name} ({next.meal.cal} سعرة)
+        </button>
+      );
+    }
+    if (left !== null && left > 40) {
+      return (
+        <button type="button" className="cal-line-btn" onClick={() => setTab("extras")}>
+          ✅ خلصتي وجبات اليوم! باقي لك <b>{left}</b> سعرة مفتوحة، خذيها من «🍎 إضافي»
+        </button>
+      );
+    }
+    return <>✅ خلصتي وجبات اليوم وضبطتي هدفك 👏</>;
+  };
   const extrasEaten = Object.entries(log.meals).filter(([k, v]) => k.startsWith("x-") && v === true).length;
-  const open = Math.round(plan.target.cal - total.cal);
   const pdf = cp.pdfs.find((f) => /غذائي/.test(f.title)) || cp.pdfs.find((f) => f.kind === "nutrition");
   const extras = [
     ...plan.extras.snacks.map((m, i) => ({ key: `x-snacks-${i}`, meal: { ...m, slot: m.slot || "سناك" } })),
@@ -204,7 +247,7 @@ export default function FoodPage() {
       setOpenMeals(next);
     };
     return (
-      <section key={key} className={`mcard ${eaten ? "eaten" : ""} ${isOpen ? "open" : ""}`} aria-label={meal.name}>
+      <section key={key} id={`meal-${key}`} className={`mcard ${eaten ? "eaten" : ""} ${isOpen ? "open" : ""}`} aria-label={meal.name}>
         <div className="mc-top">
           <button type="button" className="mc-eat" aria-pressed={eaten} aria-label={eaten ? `أكلتيها: ${meal.name}` : `علمي إنك أكلتي ${meal.name}`} onClick={() => saveLog({ ...log, meals: { ...log.meals, [key]: !eaten } })}>
             <Check />
@@ -317,41 +360,17 @@ export default function FoodPage() {
             ))}
           </div>
 
-          <section className="card stack" style={{ gap: 12 }}>
-            <div className="row between" style={{ alignItems: "center" }}>
-              <div>
-                <span className="label">🔥 سعرات اليوم {day + 1}</span>
-                <div className="row" style={{ alignItems: "baseline", gap: 6 }}>
-                  <b className="num" style={{ fontSize: 32, lineHeight: 1.1, color: "var(--navy)" }}>{Math.round(total.cal)}</b>
-                  <span className="muted small">{plan.target.cal ? `من ${plan.target.cal} سعرة` : "سعرة"}</span>
-                </div>
+          <CalorieCard
+            totals={eatenToday}
+            target={target}
+            header={
+              <div className="row between" style={{ alignItems: "center" }}>
+                <h2>🔥 سعراتك اليوم</h2>
+                {todayMeals.length ? <span className="cal-chip">✅ {eatenCount} من {todayMeals.length} وجبات</span> : null}
               </div>
-              <span className="chip green">✅ {eatenCount} من {meals.length} وجبات</span>
-            </div>
-            {offItems.length ? <p className="small" style={{ color: "var(--clay-ink)" }}>🍔 + {offCal ? `${offCal} سعرة` : `${offItems.length} أكلات`} برا الخطة اليوم</p> : null}
-            <div className="grid3">
-              {MACROS.map(([label, v, target, color]) => (
-                <div key={label} className="mtile" style={{ "--c": color, textAlign: "start" } as React.CSSProperties}>
-                  <span>{label}</span>
-                  <b>{Math.round(v)}g</b>
-                  {target ? (
-                    <>
-                      <span aria-hidden="true" style={{ display: "block", height: 5, borderRadius: 99, background: "var(--line)", overflow: "hidden", margin: "4px 0 2px" }}>
-                        <i style={{ display: "block", height: "100%", width: `${Math.min(100, (v / target) * 100)}%`, background: color }} />
-                      </span>
-                      <span>هدفك {Math.round(target)}g</span>
-                    </>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-            {open > 40 ? (
-              <div className="tip-card">
-                <span className="em" aria-hidden="true">🔓</span>
-                <span>عندك <b>{open} سعرة مفتوحة</b> اليوم. خذيها كيف ما تبين: قهوة بحليب، فاكهة، أو سناك من «إضافي».</span>
-              </div>
-            ) : null}
-          </section>
+            }
+            line={smartLine(eatenToday.cal)}
+          />
 
           <div className="tip-card">
             <span className="em" aria-hidden="true">🔁</span>
@@ -410,7 +429,7 @@ export default function FoodPage() {
       ) : null}
 
       {tab === "diary" && cp.client ? (
-        <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={plan.target.cal ? plan.target : null} planMeal={planMeal} />
+        <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={plan.target.cal ? plan.target : null} planMeal={planMeal} smartLine={smartLine} />
       ) : null}
 
       {tab === "extras" ? (

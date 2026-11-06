@@ -497,3 +497,15 @@ pre.copy-box { white-space: pre-wrap; margin: 0; padding: 14px; border-radius: v
 .rest-grid button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 4px; border-radius: 14px; background: var(--sunken); font-size: 13px; font-weight: 600; color: var(--ink); min-height: 74px; }
 .rest-grid button span { font-size: 24px; line-height: 1; }
 .rest-grid button.add { background: var(--clay-tint); color: var(--clay-ink); }
+.cal-hero h2 { font-size: 18px; }
+.cal-chip { font-size: 12px; font-weight: 600; background: rgba(126, 226, 168, .16); color: #7EE2A8; border-radius: 99px; padding: 4px 10px; white-space: nowrap; }
+.cal-eaten { font-size: 12.5px; color: rgba(255, 255, 255, .75); }
+.cal-eaten b { color: #fff; font-size: 15px; }
+.cal-line { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; font-size: 14px; line-height: 1.7; color: var(--ink); margin-top: -4px; box-shadow: var(--shadow); }
+.cal-line-btn { display: block; width: 100%; text-align: start; color: inherit; font: inherit; }
+.cal-line b { color: var(--navy); }
+.cal-quick button { position: relative; }
+.cal-badge { display: inline-block; margin-inline-start: 6px; font-size: 10.5px; font-weight: 700; background: #fff; color: var(--navy); border-radius: 99px; padding: 1px 7px; vertical-align: middle; }
+
+/* iPhone: keep the area under the clock and battery navy when the page scrolls */
+.safe-top { position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: #010B1F; z-index: 60; pointer-events: none; }
