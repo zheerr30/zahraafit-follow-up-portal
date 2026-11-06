@@ -6,21 +6,29 @@ import { todayKey, type MealPlanData } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 import type { Plan } from "@/lib/types";
 
-const DAYS = 14;
+export type CalDay = { d: string; cal: number; p: number };
+
 const short = (d: string) => new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { weekday: "short", day: "numeric" }).format(new Date(d + "T12:00:00"));
 
-/** «تقدمي»: calories she logged each day for two weeks, against her target. */
-export function CaloriesChart({ clientId, mealRow }: { clientId: string; mealRow: Plan | null }) {
-  const [rows, setRows] = useState<{ d: string; cal: number; p: number }[] | null>(null);
+/** "N days" in Arabic: يوم واحد / يومين / 3 أيام / 11 يوم. */
+export function daysText(n: number) {
+  if (n === 1) return "يوم واحد";
+  if (n === 2) return "يومين";
+  return `${n} ${n <= 10 ? "أيام" : "يوم"}`;
+}
+
+/** Calories and protein per day for the last `n` days: ticked plan meals + food logged in «سعراتي». */
+export function useCalorieDays(clientId: string | null | undefined, mealRow: Plan | null, n = 7) {
+  const [rows, setRows] = useState<CalDay[] | null>(null);
   const [target, setTarget] = useState<number | null>(null);
-  const [sel, setSel] = useState<number | null>(null);
   const plan = (mealRow?.data as MealPlanData | undefined) || null;
 
   useEffect(() => {
+    if (!clientId) return;
     const t = new Date(todayKey() + "T12:00:00");
-    const days = Array.from({ length: DAYS }, (_, i) => {
+    const days = Array.from({ length: n }, (_, i) => {
       const x = new Date(t);
-      x.setDate(t.getDate() - (DAYS - 1 - i));
+      x.setDate(t.getDate() - (n - 1 - i));
       return x.toISOString().slice(0, 10);
     });
     (async () => {
@@ -44,57 +52,68 @@ export function CaloriesChart({ clientId, mealRow }: { clientId: string; mealRow
         };
       }));
     })();
-  }, [clientId, mealRow, plan]);
+  }, [clientId, mealRow, plan, n]);
 
-  if (!rows || rows.filter((r) => r.cal > 0).length < 2) return null;
+  return { rows, target };
+}
+
+/** «تقدمي»: calories she logged each day of the last week, against her target. Days without a log show as a dotted empty bar. */
+export function CaloriesChart({ rows, target }: { rows: CalDay[] | null; target: number | null }) {
+  const [sel, setSel] = useState<number | null>(null);
+  if (!rows || !rows.some((r) => r.cal > 0)) return null;
   const logged = rows.filter((r) => r.cal > 0);
   const avg = Math.round(logged.reduce((a, r) => a + r.cal, 0) / logged.length);
-  const max = Math.max(...rows.map((r) => r.cal), target || 0) * 1.1;
-  const W = 340, H = 150, top = 8, base = H - 4;
+  const max = Math.max(...rows.map((r) => r.cal), target || 0, 1) * 1.12;
+  const W = 340, H = 150, top = 14, base = H - 4;
   const slot = W / rows.length;
-  const bw = Math.max(6, slot - 6);
+  const bw = Math.min(30, slot - 12);
   const y = (v: number) => base - (v / max) * (base - top);
+  const emptyH = (base - top) * 0.45;
   const s = sel !== null ? rows[sel] : null;
 
   return (
     <>
-    <div className="sec-h"><h2>🔥 سعراتك</h2></div>
-    <section className="card stack" aria-label="سعراتك آخر أسبوعين">
-      <div className="row between" style={{ alignItems: "flex-end" }}>
-        <div>
-          <span className="label" style={{ display: "block" }}>🔥 متوسط سعراتك (الأيام اللي سجلتي فيها)</span>
-          <b className="num" style={{ fontSize: 26, color: "var(--navy)" }}>{avg}</b>
-          {target ? <span className="small muted"> من هدف {target}</span> : null}
+      <div className="sec-h"><h2>🔥 سعراتك</h2></div>
+      <section className="card stack" aria-label="سعراتك آخر 7 أيام">
+        <div className="row between" style={{ alignItems: "flex-end" }}>
+          <div>
+            <span className="label" style={{ display: "block" }}>متوسط {daysText(logged.length)} سجلتيها</span>
+            <b className="num" style={{ fontSize: 26, color: "var(--navy)" }}>{avg}</b>
+            {target ? <span className="small muted"> من هدف {target}</span> : null}
+          </div>
+          <span className="small" style={{ textAlign: "end", minHeight: 36 }}>
+            {s ? <><b>{short(s.d)}</b><br />{s.cal ? `${s.cal} سعرة · بروتين ${s.p}g` : "ما سجلتي"}</> : <span className="note">اضغطي على أي يوم</span>}
+          </span>
         </div>
-        <span className="small" style={{ textAlign: "end", minHeight: 36 }}>
-          {s ? <><b>{short(s.d)}</b><br />{s.cal ? `${s.cal} سعرة · 💪 ${s.p}g` : "ما سجلتي"}</> : <span className="note">اضغطي على أي يوم</span>}
-        </span>
-      </div>
-      <svg viewBox={`0 0 ${W} ${H + 18}`} style={{ width: "100%", height: "auto", direction: "ltr", overflow: "visible" }} role="img"
-        aria-label={`سعراتك آخر ${DAYS} يوم، المتوسط ${avg}${target ? ` والهدف ${target}` : ""}`}>
-        <line x1="0" x2={W} y1={base} y2={base} stroke="var(--line)" strokeWidth="1" />
-        {rows.map((r, i) => {
-          const x = i * slot + (slot - bw) / 2;
-          const h = r.cal ? Math.max(4, base - y(r.cal)) : 0;
-          const over = target ? r.cal > target * 1.1 : false;
-          return (
-            <g key={r.d} onClick={() => setSel(sel === i ? null : i)} style={{ cursor: "pointer" }}>
-              <rect x={i * slot} y={top} width={slot} height={base - top} fill="transparent" />
-              {h ? <path d={`M${x},${base} v${-(h - 4)} q0,-4 4,-4 h${bw - 8} q4,0 4,4 v${h - 4} z`} fill={over ? "var(--clay-ink)" : "var(--clay)"} opacity={sel === null || sel === i ? 1 : 0.45} /> : null}
-              {i % 2 === (rows.length - 1) % 2 ? <text x={x + bw / 2} y={H + 14} textAnchor="middle" fontSize="9.5" fill="var(--ink-3)">{new Date(r.d + "T12:00:00").getDate()}</text> : null}
-              <title>{`${short(r.d)}: ${r.cal || "ما سجلتي"}`}</title>
-            </g>
-          );
-        })}
-        {target ? (
-          <>
-            <line x1="0" x2={W} y1={y(target)} y2={y(target)} stroke="var(--navy)" strokeWidth="1.5" strokeDasharray="4 4" />
-            <text x={W} y={y(target) - 4} textAnchor="end" fontSize="10" fill="var(--navy)">هدفك {target}</text>
-          </>
-        ) : null}
-      </svg>
-      <p className="note">آخر {DAYS} يوم: وجبات خطتك اللي علمتيها + اللي سجلتيه في «سعراتي». الغامق = زدتي عن هدفك بأكثر من ١٠٪.</p>
-    </section>
+        <svg viewBox={`0 0 ${W} ${H + 18}`} style={{ width: "100%", height: "auto", direction: "ltr", overflow: "visible" }} role="img"
+          aria-label={`سعراتك آخر 7 أيام، المتوسط ${avg}${target ? ` والهدف ${target}` : ""}`}>
+          <line x1="0" x2={W} y1={base} y2={base} stroke="var(--line)" strokeWidth="1" />
+          {rows.map((r, i) => {
+            const x = i * slot + (slot - bw) / 2;
+            const h = r.cal ? Math.max(4, base - y(r.cal)) : 0;
+            const over = target ? r.cal > target * 1.1 : false;
+            return (
+              <g key={r.d} onClick={() => setSel(sel === i ? null : i)} style={{ cursor: "pointer" }}>
+                <rect x={i * slot} y={top} width={slot} height={base - top} fill="transparent" />
+                {h ? (
+                  <path d={`M${x},${base} v${-(h - 4)} q0,-4 4,-4 h${bw - 8} q4,0 4,4 v${h - 4} z`} fill={over ? "var(--clay-ink)" : "var(--clay)"} opacity={sel === null || sel === i ? 1 : 0.45} />
+                ) : (
+                  <rect x={x + 0.75} y={base - emptyH} width={bw - 1.5} height={emptyH - 0.75} rx={4} fill="none" stroke="var(--ink-3)" strokeWidth="1.5" strokeDasharray="3 3" opacity={0.7} />
+                )}
+                <text x={x + bw / 2} y={H + 14} textAnchor="middle" fontSize="10" fill="var(--ink-3)">{new Date(r.d + "T12:00:00").getDate()}</text>
+                <title>{`${short(r.d)}: ${r.cal || "ما سجلتي"}`}</title>
+              </g>
+            );
+          })}
+          {target ? (
+            <>
+              <line x1="0" x2={W} y1={y(target)} y2={y(target)} stroke="var(--navy)" strokeWidth="1.5" strokeDasharray="4 4" />
+              <text x={W} y={y(target) - 4} textAnchor="end" fontSize="10" fill="var(--navy)">هدفك {target}</text>
+            </>
+          ) : null}
+        </svg>
+        <p className="note">آخر 7 أيام: وجبات خطتك اللي علمتيها مع اللي سجلتيه في «سعراتي». العمود الغامق يعني زدتي عن هدفك بأكثر من 10%، والعمود المنقط يوم ما سجلتي فيه.</p>
+      </section>
     </>
   );
 }

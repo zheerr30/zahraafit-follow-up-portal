@@ -40,7 +40,7 @@ export function Achievements({ clientId, lost }: { clientId: string; lost: numbe
 
   const items: { em: string; title: string; sub: string; card: ShareCard; toggle: boolean }[] = [];
   if (streak >= 2) items.push({ em: "🔥", title: `${streak} أيام ورا بعض`, sub: "التزمتي بتسجيل أكلك", card: { kind: "streak", days: streak }, toggle: false });
-  if (lost !== null && lost >= 0.5) items.push({ em: "🏆", title: `نزلتي ${Math.round(lost * 10) / 10} كيلو`, sub: "من أول وزن سجلتيه", card: { kind: "weight", lost, show: false }, toggle: true });
+  if (lost !== null && lost >= 0.5) items.push({ em: "🏆", title: `نزلتي ${Math.round(lost * 10) / 10} كيلو`, sub: "من أول أسبوع سجلتي فيه", card: { kind: "weight", lost, show: false }, toggle: true });
   if (!items.length) return null;
 
   return (

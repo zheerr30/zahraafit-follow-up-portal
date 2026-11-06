@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CoachShell, Loading } from "@/components/ui";
+import { CoachRecs } from "@/components/CoachRecs";
 import { COMMIT_LABEL, FEELINGS, dayName, followupInfo, type FollowupInfo } from "@/lib/followup";
 import { formatDate } from "@/lib/format";
 import { todayKey } from "@/lib/plan-data";
@@ -19,6 +20,7 @@ export default function CheckinsPage() {
   const [needSetup, setNeedSetup] = useState<{ client: Client; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [missingDb, setMissingDb] = useState(false);
+  const [names, setNames] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
     if (!auth.profile) return;
@@ -31,6 +33,7 @@ export default function CheckinsPage() {
       ]);
       if (error?.code === "42703") setMissingDb(true);
       const names = new Map(((p as Pick<Profile, "id" | "full_name">[] | null) || []).map((x) => [x.id, x.full_name]));
+      setNames(names);
       const clients = (c as Client[] | null) || [];
       setRows(clients.map((x) => ({ client: x, name: names.get(x.profile_id) || "مشتركة", info: followupInfo(x) })));
       const wants = new Set(((r as Pick<PlanRequest, "client_id">[] | null) || []).map((x) => x.client_id));
@@ -76,6 +79,7 @@ export default function CheckinsPage() {
         <span className="chip">👥 {active.length} مشتركة في المتابعة</span>
       </div>
       {missingDb ? <p className="alert err">شغلي ملف phase7-weekly-followup.sql في Supabase عشان تشتغل المتابعات.</p> : null}
+      <CoachRecs names={names} />
 
       <div className="sec-title">
         <span className="em" aria-hidden="true">💬</span>

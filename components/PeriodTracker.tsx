@@ -46,23 +46,21 @@ export function PeriodTracker({ clientId, periods, onChange }: { clientId: strin
         ) : (
           <p className="small muted">سجلي بداية ونهاية دورتك، ونفهم تغير وزنك صح ونطلع لك جدولك الخاص لو المدربة حطت لك واحد.</p>
         )}
-        <div className="row" style={{ gap: 8, alignItems: "flex-end" }}>
-          <div className="field" style={{ flex: 1 }}>
-            <label htmlFor="pd-day">اليوم</label>
-            <input id="pd-day" type="date" className="inp" value={day} max={today} onChange={(e) => setDay(e.target.value)} />
-          </div>
-          {cur ? (
-            <button type="button" className="btn btn-s" disabled={busy} onClick={end}>خلصت الدورة</button>
-          ) : (
-            <button type="button" className="btn btn-p" disabled={busy} onClick={start}>🌸 بدأت الدورة</button>
-          )}
+        <div className="field">
+          <label htmlFor="pd-day">{cur ? "يوم نهايتها" : "يوم بدايتها"}</label>
+          <input id="pd-day" type="date" className="inp" value={day} max={today} onChange={(e) => setDay(e.target.value)} />
         </div>
+        {cur ? (
+          <button type="button" className="btn btn-s btn-block" disabled={busy} onClick={end}>خلصت الدورة</button>
+        ) : (
+          <button type="button" className="btn btn-p btn-block" disabled={busy} onClick={start}>🌸 بدأت الدورة</button>
+        )}
         {err ? <p className="alert err">{err}</p> : null}
         {periods.length ? (
           <div className="stack" style={{ gap: 0 }}>
             {periods.slice(0, 4).map((p) => (
               <div key={p.id} className="diary-row small">
-                <span>{formatDate(p.start_date)} ← {p.end_date ? formatDate(p.end_date) : `${formatDate(periodEnd(p))} (تقريبًا)`}</span>
+                <span>{formatDate(p.start_date)} ← {p.end_date ? formatDate(p.end_date) : `${formatDate(periodEnd(p))} (تقريبا)`}</span>
                 <button type="button" className="link small" style={{ minHeight: 0 }} onClick={() => remove(p.id)}>حذف</button>
               </div>
             ))}

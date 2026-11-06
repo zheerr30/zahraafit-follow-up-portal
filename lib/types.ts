@@ -7,6 +7,7 @@ export type Profile = {
   role: UserRole;
   phone: string | null;
   gender?: "female" | "male" | null;
+  hide_numbers?: boolean | null;
   account_type?: "free" | "subscriber";
   subscription_end?: string | null;
   photo_credits?: number;
