@@ -1,5 +1,6 @@
 "use client";
 
+import { SecH } from "@/components/SecH";
 import { useEffect, useState } from "react";
 import { formatDate } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
@@ -28,7 +29,7 @@ export function CoachMessages({ clientId }: { clientId: string }) {
   if (!rows.length) {
     return (
       <>
-        <div className="sec-h" id="coach-msg"><h2>💬 رسالة المدربة</h2></div>
+        <SecH icon="coach" title="رسالة المدربة" id="coach-msg" />
         <section className="card empty-mini">
           <p className="small muted">ردود المدربة زهراء على تسجيلك الأسبوعي تطلع هنا. أول خطوة: سجلي تسجيلك يوم السبت.</p>
           <a className="btn btn-s btn-sm" href="/app/checkin">التسجيل الأسبوعي</a>
@@ -39,7 +40,7 @@ export function CoachMessages({ clientId }: { clientId: string }) {
   const [last, ...old] = rows;
   return (
     <>
-      <div className="sec-h" id="coach-msg" style={{ scrollMarginTop: 80 }}><h2>💬 رسالة المدربة</h2></div>
+      <SecH icon="coach" title="رسالة المدربة" id="coach-msg" />
       <section className="card stack coach-msg">
         <span className="small muted">وصلتك {sent(last)}</span>
         <p style={{ whiteSpace: "pre-line", margin: 0 }}>{last.coach_notes}</p>

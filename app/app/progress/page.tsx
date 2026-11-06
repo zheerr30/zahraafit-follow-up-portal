@@ -1,5 +1,6 @@
 "use client";
 
+import { SecH } from "@/components/SecH";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { ClientShell, Loading, useToast } from "@/components/ui";
 import { formatDate } from "@/lib/format";
@@ -202,10 +203,10 @@ export default function ProgressPage() {
   return (
     <ClientShell title="تقدمي">
       {/* 1. This week */}
-      <div className="sec-h"><h2>📅 هالأسبوع</h2></div>
+      <SecH icon="week" title="هالأسبوع" />
       {sub && saturday && !checkedToday ? (
-        <Link href="/app/checkin" className="photo-hero" style={{ textDecoration: "none" }}>
-          <span className="kicker">📅 اليوم السبت</span>
+        <Link href="/app/checkin" className="photo-hero plain" style={{ textDecoration: "none" }}>
+          <span className="kicker">اليوم السبت</span>
           <h2>سجلي تسجيلك الأسبوعي</h2>
           <p>وزنك وقياساتك وكيف كان أسبوعك، والمدربة ترد عليك.</p>
           <span className="btn btn-p btn-block">ابدئي التسجيل</span>
@@ -225,7 +226,7 @@ export default function ProgressPage() {
       <RecsHistory rows={recs} />
 
       {/* 3. Weight */}
-      <div className="sec-h"><h2>⚖️ الوزن</h2></div>
+      <SecH icon="weight" title="الوزن" />
       <section className="card stack">
         <div className="row between" style={{ alignItems: "flex-start" }}>
           <div>
@@ -260,18 +261,15 @@ export default function ProgressPage() {
       {/* 4. Measurements */}
       {sub ? (
         <>
-          <div className="sec-h">
-            <h2>📏 القياسات</h2>
-            {lastMeas ? <span className="small muted">آخر قياس {formatDate(lastMeas.log_date)}</span> : null}
-          </div>
+          <SecH icon="measure" title="القياسات" aside={lastMeas ? <span className="small muted">آخر قياس {formatDate(lastMeas.log_date)}</span> : null} />
           <section className="card stack">
             {measRows.length ? (
-              <div className="meas-grid">
+              <div className="meas-rows">
                 {measRows.map((m) => (
-                  <div key={m.k} className="stat">
+                  <div key={m.k} className="meas-row">
                     <span>{m.label}</span>
                     <b className="num">{m.last} سم</b>
-                    <span dir="ltr">{m.diff !== null ? `${sign(m.diff)} من البداية` : "أول قياس"}</span>
+                    <span className={`meas-diff ${m.diff !== null && m.diff < 0 ? "down" : ""}`}>{m.diff !== null ? <><span className="num" dir="ltr">{sign(m.diff)}</span> من البداية</> : "أول قياس"}</span>
                   </div>
                 ))}
               </div>
@@ -309,10 +307,10 @@ export default function ProgressPage() {
         </>
       ) : null}
 
-      {/* 8. Workouts */}
-      {sub ? (
+      {/* 8. Workouts (only with a workout plan) */}
+      {sub && cp.workout ? (
         <>
-          <div className="sec-h"><h2>💪 آخر التمارين</h2></div>
+          <SecH icon="workout" title="آخر التمارين" />
           <section className="card">
             {wlogs.length ? (
               wlogs.map((l, i) => (
@@ -333,7 +331,7 @@ export default function ProgressPage() {
             )}
           </section>
         </>
-      ) : (
+      ) : sub ? null : (
         <a className="offer-card" href={STORE_URL} target="_blank" rel="noreferrer">
           <span aria-hidden="true" style={{ fontSize: 30 }}>📏</span>
           <span style={{ minWidth: 0, flex: 1 }}>

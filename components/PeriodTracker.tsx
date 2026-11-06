@@ -1,5 +1,6 @@
 "use client";
 
+import { SecH } from "@/components/SecH";
 import { useEffect, useState } from "react";
 import { formatDate } from "@/lib/format";
 import { addDays } from "@/lib/followup";
@@ -67,7 +68,7 @@ export function PeriodTracker({ clientId, periods, onChange }: { clientId: strin
 
   return (
     <>
-      <div className="sec-h"><h2>🌸 الدورة</h2></div>
+      <SecH icon="period" title="الدورة" />
       <section className="card stack period-card">
         {!cur && next ? <span className="period-next">الجاية تقريبا {shortDate(next)}</span> : null}
         {cur ? (

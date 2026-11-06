@@ -1,5 +1,6 @@
 "use client";
 
+import { SecH } from "@/components/SecH";
 import { useEffect, useState } from "react";
 import { ShareSheet } from "@/components/ShareSheet";
 import type { ShareCard } from "@/lib/share-card";
@@ -44,7 +45,7 @@ export function Achievements({ clientId, lost }: { clientId: string; lost: numbe
   if (!items.length) {
     return (
       <>
-        <div className="sec-h"><h2>🏆 إنجازاتك</h2></div>
+        <SecH icon="trophy" title="إنجازاتك" />
         <section className="card empty-mini">
           <p className="small muted">إنجازاتك تطلع هنا: أيام التزامك ورا بعض، والكيلوات اللي نزلتيها. أول خطوة: سجلي أكلك يومين ورا بعض.</p>
           <a className="btn btn-s btn-sm" href="/app/food">سجلي أكلك اليوم</a>
@@ -55,7 +56,7 @@ export function Achievements({ clientId, lost }: { clientId: string; lost: numbe
 
   return (
     <>
-      <div className="sec-h"><h2>🏆 إنجازاتك</h2></div>
+      <SecH icon="trophy" title="إنجازاتك" />
       <section className="card stack" style={{ gap: 0, padding: "4px 16px" }}>
         {items.map((it) => (
           <div key={it.title} className="diary-row">

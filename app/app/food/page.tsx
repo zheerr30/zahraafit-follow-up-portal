@@ -1,7 +1,8 @@
 "use client";
 
 import { PrepBoxes } from "@/components/PrepBoxes";
-import { ShoppingExtras } from "@/components/ShoppingExtras";
+import { ShoppingList } from "@/components/ShoppingList";
+import { amountText, nameKey, unitKey } from "@/lib/shop-cats";
 import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -171,14 +172,14 @@ export default function FoodPage() {
           const chosen = choices.ings[`${key}-${meal.name}-${ing.n}`];
           if (chosen) return swapped.set(chosen, (swapped.get(chosen) || 0) + 1);
           if (toTaste(ing.a, ing.u) || typeof ing.a !== "number") return taste.add(ing.n);
-          const k = `${ing.n}|${ing.u}`;
+          const k = `${nameKey(ing.n)}|${unitKey(ing.u)}`;
           const cur = sums.get(k);
-          sums.set(k, { name: ing.n, u: ing.u, a: (cur?.a || 0) + ing.a });
+          sums.set(k, { name: cur?.name || nameKey(ing.n), u: cur?.u || ing.u, a: (cur?.a || 0) + ing.a });
         });
       })
     );
     const items = [
-      ...Array.from(sums.entries()).map(([k, v]) => ({ key: k, name: v.name, amount: `${Math.round(v.a * 10) / 10} ${v.u}` })),
+      ...Array.from(sums.entries()).map(([k, v]) => ({ key: k, name: v.name, amount: amountText(v.a, v.u) })),
       ...Array.from(swapped.entries()).map(([t, n]) => ({ key: `swap|${t}`, name: t, amount: n > 1 ? `× ${n}` : "" }))
     ].sort((a, b) => a.name.localeCompare(b.name, "ar"));
     return { items, taste: Array.from(taste).sort((a, b) => a.localeCompare(b, "ar")) };
@@ -209,8 +210,8 @@ export default function FoodPage() {
           </>
         ) : freeTab === "shop" ? (
           <>
-            <div className="tip-card"><span className="em" aria-hidden="true">🛒</span><span>قائمة تسوقك: أضيفي اللي تحتاجينه، أو من «حضري وجباتك» تنضاف المكونات الناقصة لحالها.</span></div>
-            <ShoppingExtras clientId={cp.client.id} />
+            <p className="shop-sub">أضيفي اللي تحتاجينه، أو من «حضري وجباتك» تنضاف المكونات الناقصة لحالها.</p>
+            <ShoppingList clientId={cp.client.id} />
           </>
         ) : <PlanOffer clientId={cp.client.id} sub={acc.sub} locked={Boolean(plan) && !acc.sub} />}
         {cp.files.length ? (
@@ -495,40 +496,18 @@ export default function FoodPage() {
         <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={plan.target.cal ? plan.target : null} planMeal={planMeal} smartLine={smartLine} ramadan={cp.ramadan} coachSnacks={[...plan.extras.snacks, ...plan.extras.salads]} focusSnacks={focusSnacks} planDone={Boolean(todayMeals?.length) && todayMeals!.every((x) => log.meals[x.key] === true)} afterMeals={<PrepBoxes clientId={cp.client.id} onLogged={() => window.location.reload()} />} />
       ) : null}
 
-      {tab === "shop" ? (
-        <>
-          <div className="tip-card">
-            <span className="em" aria-hidden="true">🛒</span>
-            <span>كل اللي تحتاجينه لأيام جدولك ({plan.days.length} أيام)، بعد تبديلاتك. علمي على اللي اشتريتيه. الكميات بالوزن النيء.</span>
-          </div>
-          {cp.client ? <ShoppingExtras clientId={cp.client.id} legacy={choices.extra?.length ? choices.extra.map((x) => ({ name: x.name, amount: x.amount })) : undefined} onLegacyMoved={() => saveChoices({ ...choices, extra: [] })} /> : null}
-          <section className="card" style={{ padding: "6px 16px" }}>
-            {shopping.items.map((it) => {
-              const on = Boolean(choices.shop[it.key]);
-              return (
-                <label key={it.key} className="row" style={{ padding: "11px 0", borderTop: "1px solid var(--line)", cursor: "pointer", opacity: on ? 0.55 : 1 }}>
-                  <input type="checkbox" checked={on} onChange={() => saveChoices({ ...choices, shop: { ...choices.shop, [it.key]: !on } })} style={{ width: 20, height: 20, accentColor: "var(--clay)", flexShrink: 0 }} />
-                  <span style={{ flex: 1, minWidth: 0, textDecoration: on ? "line-through" : "none" }}>{it.name}</span>
-                  <span className="amt" style={{ fontWeight: 700, color: "var(--clay-ink)" }}>{it.amount}</span>
-                </label>
-              );
-            })}
-          </section>
-          {shopping.taste.length ? (
-            <>
-              <div className="sec-title">
-                <span className="em" aria-hidden="true">🧂</span>
-                <h2>حسب الذوق</h2>
-              </div>
-              <section className="card">
-                <p className="small" style={{ lineHeight: 2 }}>{shopping.taste.join("، ")}</p>
-              </section>
-            </>
-          ) : null}
-          {Object.values(choices.shop).some(Boolean) ? (
-            <button type="button" className="btn btn-g" onClick={() => saveChoices({ ...choices, shop: {} })}>امسحي العلامات وابدئي قائمة جديدة</button>
-          ) : null}
-        </>
+      {tab === "shop" && cp.client ? (
+        <ShoppingList
+          clientId={cp.client.id}
+          planItems={shopping.items}
+          bought={choices.shop}
+          onTogglePlan={(k) => saveChoices({ ...choices, shop: { ...choices.shop, [k]: !choices.shop[k] } })}
+          onClearPlan={() => saveChoices({ ...choices, shop: {} })}
+          taste={shopping.taste}
+          days={plan.days.length}
+          legacy={choices.extra?.length ? choices.extra.map((x) => ({ name: x.name, amount: x.amount })) : undefined}
+          onLegacyMoved={() => saveChoices({ ...choices, extra: [] })}
+        />
       ) : null}
 
       {sheet ? (

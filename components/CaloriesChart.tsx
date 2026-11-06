@@ -1,5 +1,6 @@
 "use client";
 
+import { SecH } from "@/components/SecH";
 import { useEffect, useState } from "react";
 import { tickedMeals, type MealRef } from "@/lib/meal-resolve";
 import { todayKey, type MealPlanData } from "@/lib/plan-data";
@@ -69,7 +70,7 @@ export function CaloriesChart({ rows, target }: { rows: CalDay[] | null; target:
   if (!rows.some((r) => r.cal > 0)) {
     return (
       <>
-        <div className="sec-h"><h2>🔥 سعراتك</h2></div>
+        <SecH icon="cal" title="سعراتك" />
         <section className="card empty-mini">
           <p className="small muted">سعراتك لآخر 7 أيام تطلع هنا كأعمدة، مقارنة بهدفك. أول خطوة: سجلي أول شي أكلتيه اليوم.</p>
           <a className="btn btn-s btn-sm" href="/app/food">سجلي أكلك</a>
@@ -89,7 +90,7 @@ export function CaloriesChart({ rows, target }: { rows: CalDay[] | null; target:
 
   return (
     <>
-      <div className="sec-h"><h2>🔥 سعراتك</h2></div>
+      <SecH icon="cal" title="سعراتك" />
       <section className="card stack" aria-label="سعراتك آخر 7 أيام">
         <div className="row between" style={{ alignItems: "flex-end" }}>
           <div>
@@ -116,7 +117,7 @@ export function CaloriesChart({ rows, target }: { rows: CalDay[] | null; target:
                 ) : (
                   <rect x={x + 0.75} y={base - emptyH} width={bw - 1.5} height={emptyH - 0.75} rx={4} fill="none" stroke="var(--ink-3)" strokeWidth="1.5" strokeDasharray="3 3" opacity={0.7} />
                 )}
-                <text x={x + bw / 2} y={H + 14} textAnchor="middle" fontSize="10" fill="var(--ink-3)">{new Date(r.d + "T12:00:00").getDate()}</text>
+                <text x={x + bw / 2} y={H + 14} textAnchor="middle" fontSize="10" fill="var(--ink-3)">{["ح", "ن", "ث", "ر", "خ", "ج", "س"][new Date(r.d + "T12:00:00").getDay()]}</text>
                 <title>{`${short(r.d)}: ${r.cal || "ما سجلتي"}`}</title>
               </g>
             );
