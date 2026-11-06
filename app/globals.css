@@ -514,12 +514,6 @@ pre.copy-box { white-space: pre-wrap; margin: 0; padding: 14px; border-radius: v
 /* Suggested snacks in «سعراتي» */
 .snacks { display: flex; flex-direction: column; gap: 8px; }
 .snack-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x mandatory; }
-.snack { flex: 0 0 168px; scroll-snap-align: start; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 4px; box-shadow: var(--shadow); }
-.snack b { font-size: 14px; line-height: 1.45; color: var(--navy); }
-.snack .note { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 11.5px; }
-.snack-mac { font-size: 11.5px; color: var(--ink-2); }
-.snack button { margin-top: auto; display: flex; align-items: center; justify-content: center; gap: 4px; min-height: 38px; border-radius: 10px; background: var(--clay); color: #fff; font-weight: 700; font-size: 13px; }
-.snack button[aria-pressed="true"] { background: var(--green); }
 .quick-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .quick-row button { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 2px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); font-size: 12px; font-weight: 600; color: var(--ink); min-height: 66px; }
 .quick-row button > span:first-child { font-size: 22px; line-height: 1; }
@@ -757,3 +751,32 @@ details.msg-old[open] .sub { display: none; }
 .box-exp.bad { color: #C0392B; }
 .prep-cta { display: flex; align-items: center; justify-content: space-between; gap: 10px; text-decoration: none; color: var(--navy); }
 .prep-link { display: block; margin: 0 16px 10px; padding: 10px 12px; border-radius: 12px; background: var(--clay-tint); color: var(--clay-ink); font-weight: 700; font-size: 14px; text-align: center; text-decoration: none; }
+
+/* «سعراتي» review */
+.cal-day-mini { display: flex; align-items: center; gap: 4px; font-size: 13px; color: rgba(255, 255, 255, .85); }
+.cal-day-mini button { width: 26px; height: 26px; display: grid; place-items: center; color: inherit; border-radius: 50%; }
+.cal-day-mini button:disabled { opacity: .3; }
+.cal-day-mini b { font-weight: 700; }
+.log-btns { display: grid; gap: 8px; }
+.log-search { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 14px; background: var(--clay); color: #fff; font-weight: 700; font-size: 15.5px; box-shadow: 0 6px 16px rgba(250, 90, 2, .22); }
+.log-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.log-row button { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 64px; border-radius: 14px; background: var(--surface); box-shadow: var(--shadow); font-size: 12.5px; font-weight: 600; color: var(--ink); }
+.log-row button svg { color: var(--navy); stroke-width: 1.8; }
+.log-badge { position: absolute; top: -7px; inset-inline-end: 4px; font-size: 10px; font-weight: 700; background: var(--navy); color: #fff; border-radius: 99px; padding: 1px 7px; }
+.slot-empty { display: flex; align-items: center; gap: 12px; padding: 10px 16px; min-height: 0; }
+.slot-empty b { font-size: 14.5px; }
+.from-plan { color: var(--green); font-weight: 700; }
+.snacks-h { display: flex; align-items: center; gap: 8px; width: 100%; padding: 12px 14px; background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow); text-align: start; }
+.snacks-h .note { margin-inline-start: auto; }
+.snacks-chev { color: var(--ink-3); transition: transform .2s; flex: none; }
+.snacks-h[aria-expanded="true"] .snacks-chev { transform: rotate(180deg); }
+.snack { flex: 0 0 148px; width: 148px; scroll-snap-align: start; background: var(--surface); border-radius: 16px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; box-shadow: var(--shadow); }
+.snack b { font-size: 13.5px; line-height: 1.45; color: var(--navy); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.9em; }
+.snack-mac { font-size: 11px; color: var(--ink-2); }
+.snack-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 13px; font-weight: 700; color: var(--ink); }
+.snack-foot button { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--clay-tint); color: var(--clay-ink); flex: none; }
+.snack-foot button[aria-pressed="true"] { background: var(--green); color: #fff; }
+.snack.over { opacity: .55; }
+.snack-fit, .snack-over { align-self: flex-start; font-size: 10.5px; font-weight: 700; border-radius: 99px; padding: 1px 8px; }
+.snack-fit { background: #E3F5EE; color: var(--green); }
+.snack-over { background: var(--sunken); color: var(--ink-3); }

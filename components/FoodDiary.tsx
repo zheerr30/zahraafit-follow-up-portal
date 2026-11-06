@@ -4,7 +4,7 @@ import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import { track } from "@/components/AppStatus";
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight, Plus, Search, X } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, Plus, ScanBarcode, Search, Store, X } from "lucide-react";
 import { useToast } from "@/components/ui";
 import { SLOTS, SLOT_EMOJI, defaultSlot, fromBarcode, fromBase, fromCustom, scaled, search, type BarcodeProduct, type BaseFood, type CustomFood, type FoodEntry, type Pickable, type Slot } from "@/lib/foods";
 import { aiRead, lookupBarcode } from "@/lib/food-scan";
@@ -78,7 +78,9 @@ export function FoodDiary({
   smartLine,
   coachSnacks,
   focusSnacks,
-  ramadan = false
+  planDone = false,
+  ramadan = false,
+  afterMeals
 }: {
   clientId: string;
   profileId: string;
@@ -93,6 +95,10 @@ export function FoodDiary({
   focusSnacks?: boolean;
   /** Ramadan mode: meals are فطور / وجبة بينية / سحور. */
   ramadan?: boolean;
+  /** All of today's plan meals are ticked (opens «سناكات مقترحة»). */
+  planDone?: boolean;
+  /** Shown under today's meals (the ready boxes). */
+  afterMeals?: ReactNode;
 }) {
   const lbl = (sl: Slot) => (ramadan ? RAMADAN_SLOT[sl] : sl);
   const emo = (sl: Slot) => (ramadan ? RAMADAN_EMOJI[sl] : SLOT_EMOJI[sl]);
@@ -290,17 +296,11 @@ export function FoodDiary({
         totals={totals}
         target={target}
         header={
-          <>
-            <div style={{ minWidth: 0 }}>
-              <h2>🔥 حاسبة السعرات</h2>
-              <p>سجلي اللي تاكلينه ونحسب لك السعرات والبروتين والكارب والدهون تلقائي.</p>
-            </div>
-            <div className="cal-day" role="group" aria-label="اليوم">
-              <button type="button" aria-label="اليوم اللي قبل" onClick={() => setDate(shiftDay(date, -1))}><ChevronRight size={18} /></button>
-              <b>{dayLabel(date)}</b>
-              <button type="button" aria-label="اليوم اللي بعد" disabled={date >= today} onClick={() => setDate(shiftDay(date, 1))}><ChevronLeft size={18} /></button>
-            </div>
-          </>
+          <div className="cal-day-mini" role="group" aria-label="اليوم">
+            <button type="button" aria-label="اليوم اللي قبل" onClick={() => setDate(shiftDay(date, -1))}><ChevronRight size={15} /></button>
+            <b>{dayLabel(date)}</b>
+            <button type="button" aria-label="اليوم اللي بعد" disabled={date >= today} onClick={() => setDate(shiftDay(date, 1))}><ChevronLeft size={15} /></button>
+          </div>
         }
         line={
           date === today && smartLine
@@ -309,45 +309,46 @@ export function FoodDiary({
         }
       />
 
-      <SuggestedSnacks
-        snacks={snackList}
-        fromCoach={Boolean(coachSnacks && coachSnacks.length)}
-        left={target ? Math.round(target.cal - totals.cal) : null}
-        onAdd={async (sn) => { await add("سناك", { name: sn.name, amount: 1, unit: "حصة", cal: sn.cal, p: sn.p, c: sn.c, f: sn.f }); return true; }}
-      />
-
-      <div className="quick-row">
-        <button type="button" onClick={() => { setQ(""); setSheet({ mode: "search", slot: slotNow(ramadan) }); }}><span aria-hidden="true">🔍</span>ابحثي</button>
-        <button type="button" onClick={() => setSheet({ mode: "barcode", slot: slotNow(ramadan) })}><span aria-hidden="true">📷</span>باركود</button>
-        <button type="button" onClick={() => { track("food:photo"); setSheet({ mode: "photo", slot: slotNow(ramadan) }); }}><span aria-hidden="true">🤖</span>صوري صحنك{photosLeft !== null && photosLeft >= 0 ? <span className="cal-badge">{photosLeft > 0 ? `باقي ${photosLeft} صور` : "للمشتركين"}</span> : null}</button>
-        <button type="button" onClick={() => setSheet({ mode: "rest", slot: slotNow(ramadan) })}><span aria-hidden="true">🍔</span>مطاعم</button>
+      <div className="log-btns">
+        <button type="button" className="log-search" onClick={() => { setQ(""); setSheet({ mode: "search", slot: slotNow(ramadan) }); }}><Search size={20} />ابحثي عن أكل</button>
+        <div className="log-row">
+          <button type="button" onClick={() => setSheet({ mode: "barcode", slot: slotNow(ramadan) })}><ScanBarcode size={22} />باركود</button>
+          <button type="button" onClick={() => { track("food:photo"); setSheet({ mode: "photo", slot: slotNow(ramadan) }); }}>
+            <Camera size={22} />صوري صحنك
+            {photosLeft !== null && photosLeft >= 0 && photosLeft <= 10 ? <span className="log-badge">{photosLeft > 0 ? `باقي ${photosLeft}` : "للمشتركين"}</span> : null}
+          </button>
+          <button type="button" onClick={() => setSheet({ mode: "rest", slot: slotNow(ramadan) })}><Store size={22} />مطاعم</button>
+        </div>
       </div>
 
       {SLOTS.map((slot) => {
         const plan = ticked.filter((x) => slotOf(x.meal.slot) === slot);
         const mine = entries.filter((e) => e.slot === slot);
         const cal = plan.reduce((a, x) => a + x.meal.cal, 0) + mine.reduce((a, x) => a + Number(x.cal), 0);
+        const prevSame = !mine.length && prevEntries.some((x) => x.slot === slot);
+        if (!plan.length && !mine.length) {
+          return (
+            <section key={slot} className="card slot-empty">
+              <b>{emo(slot)} {lbl(slot)}</b>
+              {prevSame ? <button type="button" className="link small" style={{ minHeight: 0 }} onClick={() => copyPrev(slot)} title={prevEntries.filter((x) => x.slot === slot).map((x) => x.name).join("، ")}>↺ نفس أمس</button> : null}
+              <button type="button" className="link" style={{ minHeight: 0, marginInlineStart: "auto" }} onClick={() => { setQ(""); setSheet({ mode: "search", slot }); }}><Plus size={16} />أضيفي</button>
+            </section>
+          );
+        }
         return (
           <section key={slot} className="card stack" style={{ gap: 0, padding: "12px 16px" }}>
             <div className="row between" style={{ paddingBottom: 6 }}>
               <b>{emo(slot)} {lbl(slot)}</b>
               <span className="row" style={{ gap: 8 }}>
-                {plan.length + mine.length > 0 ? (
-                  <button type="button" className="link small" style={{ minHeight: 0 }} onClick={() => { setMealName(""); setSheet({ mode: "saveMeal", slot }); }}>⭐ احفظيها</button>
-                ) : null}
+                <button type="button" className="link small" style={{ minHeight: 0 }} onClick={() => { setMealName(""); setSheet({ mode: "saveMeal", slot }); }}>⭐ احفظيها</button>
                 <span className="small muted num">{Math.round(cal)} سعرة</span>
               </span>
             </div>
-            {!mine.length && prevEntries.some((x) => x.slot === slot) ? (
-              <button type="button" className="copy-prev" onClick={() => copyPrev(slot)}>
-                ↺ نفس {lbl(slot)} أمس ({prevEntries.filter((x) => x.slot === slot).map((x) => x.name).join("، ")})
-              </button>
-            ) : null}
             {plan.map(({ key, meal }) => (
               <div key={key} className="diary-row">
                 <span style={{ minWidth: 0 }}>
                   {meal.name}
-                  <span className="note" style={{ display: "block" }}>✅ من خطتك · <MacLine p={Math.round(meal.p)} c={Math.round(meal.c)} f={Math.round(meal.f)} /></span>
+                  <span className="note" style={{ display: "block" }}><span className="from-plan">من خطتك</span> · <MacLine p={Math.round(meal.p)} c={Math.round(meal.c)} f={Math.round(meal.f)} /></span>
                 </span>
                 <b className="num">{meal.cal}</b>
               </div>
@@ -374,6 +375,18 @@ export function FoodDiary({
           </section>
         );
       })}
+
+      {afterMeals}
+
+      {date === today ? (
+        <SuggestedSnacks
+          snacks={snackList}
+          fromCoach={Boolean(coachSnacks && coachSnacks.length)}
+          left={target ? Math.round(target.cal - totals.cal) : null}
+          open={Boolean(focusSnacks) || planDone || (target ? Math.round(target.cal - totals.cal) >= Math.min(...snackList.map((x) => x.cal), Infinity) : false)}
+          onAdd={async (sn) => { await add("سناك", { name: sn.name, amount: 1, unit: "حصة", cal: sn.cal, p: sn.p, c: sn.c, f: sn.f }); return true; }}
+        />
+      ) : null}
       {loaded && !entries.length && !ticked.length ? (
         <p className="note" style={{ textAlign: "center" }}>
           {planMeal ? "علمي على وجبات خطتك من «وجباتي» وتنحسب هنا، وأي شي ثاني أضيفيه بنفسك." : "ابدئي بإضافة أول شي أكلتيه 👆"}
@@ -472,7 +485,7 @@ export function FoodDiary({
                 add(sheet.slot, { name: sheet.food.name, amount, unit: unit.label, ...v });
               }} onBack={() => setSheet({ mode: "search", slot: sheet.slot })} />
             ) : sheet.mode === "rest" ? (
-              <Restaurants profileId={profileId} onAdd={(row) => add(sheet.slot, row)} onBack={() => setSheet({ mode: "search", slot: sheet.slot })} />
+              <Restaurants profileId={profileId} left={date === today ? left : null} onAdd={(row) => add(sheet.slot, row)} onBack={() => setSheet({ mode: "search", slot: sheet.slot })} />
             ) : sheet.mode === "saveMeal" ? (
               <div className="stack">
                 <p className="small muted">تحفظينها وبعدين تضيفينها كلها بضغطة من «أضيفي أكل».</p>

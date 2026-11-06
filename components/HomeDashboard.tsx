@@ -7,7 +7,6 @@ import { CheckCircle2, ChevronLeft, Dumbbell, Flame, Plus, Share2, Utensils, X }
 import { ShareSheet } from "@/components/ShareSheet";
 import { CalorieCard } from "@/components/CalorieCard";
 import { streakDays } from "@/components/Achievements";
-import { HomeRestaurants } from "@/components/HomeBoosts";
 import { WeekSummary } from "@/components/WeekSummary";
 import { STORE_URL, type Account } from "@/lib/account";
 import { addDays, followupInfo } from "@/lib/followup";
@@ -150,6 +149,8 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
     alert = <div className="alert-card warn"><b>⏳ {acc.daysLeft <= 0 ? "اشتراكك ينتهي اليوم" : `باقي ${acc.daysLeft} أيام على نهاية اشتراكك`}</b><span>جددي عشان ما توقف خطتك ومتابعتك.</span><a className="btn btn-p btn-sm" href={STORE_URL} target="_blank" rel="noreferrer">جددي اشتراكك</a></div>;
   } else if (!acc.sub && acc.expired) {
     alert = <div className="alert-card warn"><b>⏳ انتهى اشتراكك</b><span>بياناتك وسجلك محفوظين. جددي عشان تفتح خطتك وتمارينك.</span><a className="btn btn-p btn-sm" href={STORE_URL} target="_blank" rel="noreferrer">جددي اشتراكك</a></div>;
+  } else if (checkinDue && fu.saturday) {
+    alert = <Link href="/app/checkin" className="alert-card"><b>📅 اليوم السبت! وقت تسجيلك الأسبوعي</b><span>سجلي وزنك وقياساتك وكيف كان أسبوعك.</span></Link>;
   } else if (reply) {
     replyAlert = true;
     alert = (
@@ -264,7 +265,6 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
         <Link href="/app/progress" className="d-row">
           <span className="d-ic" style={{ background: "var(--clay-tint)", color: "var(--clay)" }}><Flame size={18} /></span>
           <span className="d-mid">
-            <small>الالتزام</small>
             {d.streak > 0 ? <b><span className="num">{d.streak}</span> {d.streak === 1 ? "يوم" : d.streak === 2 ? "يومين" : "أيام"} ورا بعض</b> : <b>ابدئي سلسلتك اليوم</b>}
             <span className="wk-circles" aria-label={`سجلتي ${week7.filter((k) => d.weekOn.has(k)).length} من آخر 7 أيام`}>
               {week7.map((k) => <i key={k} className={`${d.weekOn.has(k) ? "on" : ""} ${k === today ? "now" : ""}`}>{DAY_L[new Date(k + "T12:00:00").getDay()]}</i>)}
@@ -273,7 +273,6 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
         </Link>
       </section>
 
-      {left !== null && left > 0 ? <HomeRestaurants clientId={client.id} left={left} onAdded={load} /> : null}
 
       {new Date(today + "T12:00:00").getDay() === 5 ? <WeekSummary clientId={client.id} plans={acc.sub ? plans.filter((p) => !p.variant) : []} /> : null}
 

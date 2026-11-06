@@ -205,8 +205,7 @@ export default function FoodPage() {
         </div>
         {freeTab === "diary" ? (
           <>
-            <PrepBoxes clientId={cp.client.id} onLogged={() => window.location.reload()} />
-            <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={null} planMeal={null} ramadan={cp.ramadan} />
+            <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={null} planMeal={null} ramadan={cp.ramadan} afterMeals={<PrepBoxes clientId={cp.client.id} onLogged={() => window.location.reload()} />} />
           </>
         ) : freeTab === "shop" ? (
           <>
@@ -492,9 +491,8 @@ export default function FoodPage() {
         </>
       ) : null}
 
-      {tab === "diary" && cp.client ? <PrepBoxes clientId={cp.client.id} onLogged={() => window.location.reload()} /> : null}
       {tab === "diary" && cp.client ? (
-        <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={plan.target.cal ? plan.target : null} planMeal={planMeal} smartLine={smartLine} ramadan={cp.ramadan} coachSnacks={[...plan.extras.snacks, ...plan.extras.salads]} focusSnacks={focusSnacks} />
+        <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={plan.target.cal ? plan.target : null} planMeal={planMeal} smartLine={smartLine} ramadan={cp.ramadan} coachSnacks={[...plan.extras.snacks, ...plan.extras.salads]} focusSnacks={focusSnacks} planDone={Boolean(todayMeals?.length) && todayMeals!.every((x) => log.meals[x.key] === true)} afterMeals={<PrepBoxes clientId={cp.client.id} onLogged={() => window.location.reload()} />} />
       ) : null}
 
       {tab === "shop" ? (

@@ -5,7 +5,7 @@ import { useEffect, type RefObject } from "react";
 // The subscriber screens are written addressing a woman. For a male subscriber
 // the text on screen is switched to the masculine form with this dictionary,
 // so every screen (and the coach's plan text) reads right without writing each
-// sentence twice. Shadda (ّ) is removed for everyone.
+// sentence twice. Shadda (ّ) and tanween (ً) are removed and digits shown as 0123 for everyone.
 //
 // When you add subscriber text with a new feminine word (a verb ending in ي/ين/تي,
 // or an adjective about her), add it here.
@@ -84,7 +84,7 @@ const WORD_RE = new RegExp(`(^|[^${AR}])(و|ف|ل|ب)?(${Object.keys(WORDS).sort
 
 /** The text as this subscriber should see it. */
 export function genderText(s: string, g: Gender = current) {
-  let out = s.includes("ّ") ? s.replace(/ّ/g, "") : s;
+  let out = /[ًّ٠-٩]/.test(s) ? s.replace(/[ًّ]/g, "").replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))) : s;
   if (g !== "male" || !/[ء-ي]/.test(out)) return out;
   for (const [a, b] of PHRASES) if (out.includes(a)) out = out.split(a).join(b);
   return out.replace(WORD_RE, (_m, pre: string, p: string | undefined, w: string) => pre + (p || "") + WORDS[w]);

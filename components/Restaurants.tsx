@@ -13,12 +13,20 @@ type Row = { name: string; amount: number; unit: string; cal: number; p: number;
 type View = { v: "list" } | { v: "rest"; r: Restaurant } | { v: "item"; r: Restaurant } | { v: "menu"; r: Restaurant } | { v: "newRest" };
 
 /** «🍔 مطاعم» in «سعراتي»: pick a restaurant, add a menu item, or read a menu photo. */
-export function Restaurants({ profileId, onAdd, onBack }: { profileId: string; onAdd: (row: Row) => void; onBack: () => void }) {
+export function Restaurants({ profileId, left = null, onAdd, onBack }: { profileId: string; left?: number | null; onAdd: (row: Row) => void; onBack: () => void }) {
   const [rests, setRests] = useState<Restaurant[] | null>(null);
   const [items, setItems] = useState<RestItem[]>([]);
   const [view, setView] = useState<View>({ v: "list" });
   const [q, setQ] = useState("");
   const [err, setErr] = useState<string | null>(null);
+  const [fit, setFit] = useState<(RestItem & { restaurants: { name: string; emoji: string | null } | null })[]>([]);
+
+  useEffect(() => {
+    // «يناسب الباقي لك»: items that don't go over what's left today, the coach's picks first.
+    if (!left || left <= 0) return;
+    supabase.from("restaurant_items").select("*, restaurants(name, emoji)").lte("cal", left).gt("cal", 0).order("coach_pick", { ascending: false }).order("cal", { ascending: false }).limit(8)
+      .then(({ data }) => setFit((data as typeof fit | null) || []));
+  }, [left]);
 
   useEffect(() => {
     supabase.from("restaurants").select("id, name, emoji").order("name").then(({ data, error }) => {
@@ -51,6 +59,24 @@ export function Restaurants({ profileId, onAdd, onBack }: { profileId: string; o
           <span><Search size={16} /></span>
         </div>
         {err ? <p className="alert info">{err}</p> : null}
+        {fit.length && !q.trim() ? (
+          <>
+            <span className="label">يناسب الباقي لك ({left} سعرة)</span>
+            <div className="card" style={{ padding: "2px 12px" }}>
+              {fit.map((it) => (
+                <button key={it.id} type="button" className="diary-row rest-pick" onClick={() => onAdd({ name: `${it.name} (${it.restaurants?.name || ""})`, amount: 1, unit: "طلب", cal: Number(it.cal), p: Number(it.p) || 0, c: Number(it.c) || 0, f: Number(it.f) || 0 })}>
+                  <span aria-hidden="true" style={{ fontSize: 20, flex: "none" }}>{it.restaurants?.emoji || "🍽️"}</span>
+                  <span style={{ minWidth: 0, flex: 1 }}>
+                    {it.coach_pick ? "⭐ " : ""}{it.name}
+                    <span className="note" style={{ display: "block" }}>{it.restaurants?.name}{it.tip ? ` · 💡 ${it.tip}` : ""}</span>
+                  </span>
+                  <b className="num" style={{ flex: "none" }}>{Math.round(Number(it.cal))}</b>
+                </button>
+              ))}
+            </div>
+            <span className="label">كل المطاعم</span>
+          </>
+        ) : null}
         {rests === null ? <p className="note">لحظة...</p> : (
           <div className="rest-grid">
             {shown.map((r) => (

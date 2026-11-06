@@ -9,6 +9,9 @@ import { ClientShell, Loading } from "@/components/ui";
 import { Calculator } from "@/components/Calculator";
 import { NUTRITION_GUIDE, WORKOUT_GUIDE, type GuideSection } from "@/lib/guide-content";
 import { useAuthGuard } from "@/lib/use-auth";
+import { useClientPlans } from "@/lib/use-client";
+import { accountOf } from "@/lib/account";
+import type { MealPlanData } from "@/lib/plan-data";
 
 function Section({ s, open }: { s: GuideSection; open?: boolean }) {
   return (
@@ -56,6 +59,7 @@ function Section({ s, open }: { s: GuideSection; open?: boolean }) {
 
 export default function GuidePage() {
   const auth = useAuthGuard("client");
+  const cp = useClientPlans(auth.profile);
   const [tab, setTab] = useState<"food" | "workout" | "articles" | "calc">("food");
   const [articles, setArticles] = useState<Article[] | null>(null);
   useEffect(() => {
@@ -66,9 +70,20 @@ export default function GuidePage() {
     if (tab !== "articles" || articles || !auth.profile) return;
     supabase.from("articles").select("*").eq("published", true).order("published_at", { ascending: false }).then(({ data }) => setArticles((data as Article[] | null) || []));
   }, [tab, articles, auth.profile]);
-  if (auth.loading) return <Loading />;
+  if (auth.loading || cp.loading) return <Loading />;
   if (!auth.profile) return null;
-  const list = tab === "food" ? NUTRITION_GUIDE : tab === "workout" ? WORKOUT_GUIDE : [];
+  // Open calories: her target minus the average day of her plan (subscribers with a plan only).
+  const plan = accountOf(auth.profile).sub ? ((cp.mealRow?.data as MealPlanData | undefined) || null) : null;
+  const avgDay = plan?.days.length ? plan.days.reduce((a, d) => a + d.meals.reduce((b, m) => b + (m.cal || 0), 0), 0) / plan.days.length : 0;
+  const open = plan?.target.cal && avgDay ? Math.round((plan.target.cal - avgDay) / 10) * 10 : 0;
+  const withOpen = (secs: GuideSection[]) =>
+    secs.map((s) => ({
+      ...s,
+      items: s.items
+        ?.filter((it) => !it.open || open >= 30)
+        .map((it) => (it.open ? { ...it, title: it.title.replace("{open}", String(open)), text: it.text.replace("{open}", String(open)) } : it))
+    }));
+  const list = tab === "food" ? withOpen(NUTRITION_GUIDE) : tab === "workout" ? WORKOUT_GUIDE : [];
 
   return (
     <ClientShell title="دليلك" sub="كل اللي تحتاجين تعرفينه، من المدربة زهراء">
