@@ -10,6 +10,7 @@ import { useAuthGuard } from "@/lib/use-auth";
 import { useClientPlans } from "@/lib/use-client";
 import { CaloriesChart } from "@/components/CaloriesChart";
 import { Achievements } from "@/components/Achievements";
+import { STORE_URL, accountOf } from "@/lib/account";
 
 type Body = { log_date: string; weight_kg: number | null; waist_cm: number | null; hips_cm: number | null };
 type WLog = { id: string; day_title: string | null; created_at: string; duration_sec: number | null; items: { sets: { w: number; r: number }[] }[] };
@@ -159,6 +160,8 @@ export default function ProgressPage() {
         </>
       ) : null}
 
+      {accountOf(auth.profile).sub ? (
+      <>
       <div className="sec-h">
         <h2>القياسات</h2>
         {m1 ? <span className="small muted">آخر قياس {formatDate(m1.log_date)}</span> : null}
@@ -197,6 +200,16 @@ export default function ProgressPage() {
         )}
       </section>
       {toast.node}
+      </>
+      ) : (
+        <a className="offer-card" href={STORE_URL} target="_blank" rel="noreferrer">
+          <span aria-hidden="true" style={{ fontSize: 30 }}>📏</span>
+          <span style={{ minWidth: 0, flex: 1 }}>
+            <b>تابعي قياساتك وصورك وتمارينك</b>
+            <span>مع الاشتراك: القياسات، وصور التقدم الخاصة، وتسجيل أسبوعي كل سبت، وسجل تمارينك.</span>
+          </span>
+        </a>
+      )}
     </ClientShell>
   );
 }

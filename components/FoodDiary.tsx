@@ -9,6 +9,7 @@ import { aiRead, lookupBarcode } from "@/lib/food-scan";
 import { BarcodeScanner, MealPhoto } from "@/components/FoodScan";
 import { Restaurants } from "@/components/Restaurants";
 import { CalorieCard } from "@/components/CalorieCard";
+import { STORE_URL } from "@/lib/account";
 import { SuggestedSnacks } from "@/components/SuggestedSnacks";
 import { generalSnacks, type Snack } from "@/lib/snacks";
 import { todayKey, type Meal } from "@/lib/plan-data";
@@ -294,7 +295,7 @@ export function FoodDiary({
       <div className="quick-row">
         <button type="button" onClick={() => { setQ(""); setSheet({ mode: "search", slot: defaultSlot() }); }}><span aria-hidden="true">🔍</span>ابحثي</button>
         <button type="button" onClick={() => setSheet({ mode: "barcode", slot: defaultSlot() })}><span aria-hidden="true">📷</span>باركود</button>
-        <button type="button" onClick={() => setSheet({ mode: "photo", slot: defaultSlot() })}><span aria-hidden="true">🤖</span>صوري صحنك{photosLeft !== null ? <span className="cal-badge">{photosLeft > 0 ? `باقي ${photosLeft}` : "خلصت اليوم"}</span> : null}</button>
+        <button type="button" onClick={() => setSheet({ mode: "photo", slot: defaultSlot() })}><span aria-hidden="true">🤖</span>صوري صحنك{photosLeft !== null && photosLeft >= 0 ? <span className="cal-badge">{photosLeft > 0 ? `باقي ${photosLeft} صور` : "للمشتركين"}</span> : null}</button>
         <button type="button" onClick={() => setSheet({ mode: "rest", slot: defaultSlot() })}><span aria-hidden="true">🍔</span>مطاعم</button>
       </div>
 
@@ -464,6 +465,14 @@ export function FoodDiary({
               </div>
             ) : sheet.mode === "barcode" ? (
               <BarcodeScanner onCode={(code) => onBarcode(sheet.slot, code)} onCancel={() => setSheet({ mode: "search", slot: sheet.slot })} />
+            ) : sheet.mode === "photo" && photosLeft === 0 ? (
+              <div className="offer">
+                <span className="offer-em" aria-hidden="true">📸</span>
+                <h2>خلصت صورك المجانية</h2>
+                <p>مع الاشتراك تصورين صحنك بدون حد، وتحصلين خطة وجبات وتمارين من المدربة زهراء.</p>
+                <a className="btn btn-p btn-block" href={STORE_URL} target="_blank" rel="noreferrer">اشتركي من المتجر</a>
+                <button type="button" className="link" style={{ color: "#fff", alignSelf: "center" }} onClick={() => setSheet({ mode: "search", slot: sheet.slot })}>سجليه بالبحث بدالها</button>
+              </div>
             ) : sheet.mode === "photo" ? (
               <MealPhoto onAdd={(rows) => addMany(sheet.slot, rows)} onCancel={() => setSheet({ mode: "search", slot: sheet.slot })} />
             ) : (

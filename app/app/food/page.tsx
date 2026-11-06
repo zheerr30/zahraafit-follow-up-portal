@@ -7,6 +7,7 @@ import { ClientShell, Empty, Loading, useToast } from "@/components/ui";
 import { FoodDiary } from "@/components/FoodDiary";
 import { CalorieCard } from "@/components/CalorieCard";
 import { PlanOffer } from "@/components/PlanOffer";
+import { accountOf } from "@/lib/account";
 import { ShareSheet } from "@/components/ShareSheet";
 import type { ShareCard } from "@/lib/share-card";
 import { planMealFor, resolve, tickedMeals, type MealRef } from "@/lib/meal-resolve";
@@ -169,7 +170,8 @@ export default function FoodPage() {
   if (auth.loading || cp.loading || !ready) return <Loading />;
   if (!auth.profile) return null;
 
-  if ((!plan || day === null) && cp.client) {
+  const acc = accountOf(auth.profile);
+  if ((!plan || day === null || !acc.sub) && cp.client) {
     return (
       <ClientShell title="أكلي" sub="سجلي أكلك واحسبي سعراتك">
         <div className="seg-tabs" role="tablist" aria-label="أقسام أكلي">
@@ -177,7 +179,7 @@ export default function FoodPage() {
             <button key={k} type="button" role="tab" aria-selected={freeTab === k} onClick={() => setFreeTab(k)}>{l}</button>
           ))}
         </div>
-        {freeTab === "diary" ? <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={null} planMeal={null} /> : <PlanOffer clientId={cp.client.id} />}
+        {freeTab === "diary" ? <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={null} planMeal={null} /> : <PlanOffer clientId={cp.client.id} sub={acc.sub} locked={Boolean(plan) && !acc.sub} />}
         {cp.files.length ? (
           <p className="note" style={{ textAlign: "center" }}>
             خطتك من المدربة وصلت كملف. <Link className="link" href="/app">افتحيها من الرئيسية</Link>

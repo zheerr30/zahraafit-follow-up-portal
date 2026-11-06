@@ -8,6 +8,9 @@ import { HomeToday } from "@/components/HomeToday";
 import { WeekSummary } from "@/components/WeekSummary";
 import { CheckinCard } from "@/components/CheckinCard";
 import { ReminderNudge } from "@/components/ReminderNudge";
+import { FreeHome, RenewBanner } from "@/components/FreeHome";
+import { accountOf } from "@/lib/account";
+import { useRouter } from "next/navigation";
 import { ClientShell, Loading } from "@/components/ui";
 import { deliveryWindow, formatDay } from "@/lib/business-days";
 import { formatDate } from "@/lib/format";
@@ -24,6 +27,7 @@ function greeting() {
 
 export default function ClientHome() {
   const auth = useAuthGuard("client");
+  const router = useRouter();
   const [client, setClient] = useState<Client | null>(null);
   const [request, setRequest] = useState<PlanRequest | null>(null);
   const [plans, setPlans] = useState<(Plan & { url?: string })[]>([]);
@@ -58,8 +62,15 @@ export default function ClientHome() {
     load();
   }, [auth.profile]);
 
-  if (auth.loading || loading) return <Loading />;
   const plan = plans[0] || null;
+  const acc = accountOf(auth.profile);
+  // New accounts answer a few questions first (their daily target comes from them).
+  const needsStart = Boolean(!loading && auth.profile && client && !request && !plan && (!client.age || !auth.profile.gender) && auth.profile.account_type !== undefined);
+  useEffect(() => {
+    if (needsStart) router.replace("/app/start");
+  }, [needsStart, router]);
+
+  if (auth.loading || loading || needsStart) return <Loading />;
   if (!auth.profile) return null;
 
   const firstName = (auth.profile.full_name || "").split(" ")[0];
@@ -67,6 +78,13 @@ export default function ClientHome() {
   let main: React.ReactNode;
   if (!client) {
     main = <p className="alert err">حسابك ما انربط بملف مشتركة. تواصلي مع المدربة.</p>;
+  } else if (!acc.sub) {
+    main = (
+      <>
+        <RenewBanner daysLeft={null} expired={acc.expired} />
+        <FreeHome clientId={client.id} />
+      </>
+    );
   } else if (!request && !plan) {
     main = (
       <section className="photo-hero">
@@ -159,7 +177,7 @@ export default function ClientHome() {
             );
           })}
         </section>
-        {client ? <CheckinCard client={client} /> : null}
+        {client ? <CheckinCard client={client} saturday={acc.sub} /> : null}
         {client && plans.some((x) => x.kind !== "other" && x.data) ? <HomeToday clientId={client.id} plans={plans} /> : null}
         {client && plans.length ? <ReminderNudge /> : null}
         {client ? <WeekSummary clientId={client.id} plans={plans} /> : null}
@@ -178,9 +196,10 @@ export default function ClientHome() {
 
   return (
     <ClientShell title={`${greeting()}، ${firstName}`}>
+      {acc.sub ? <RenewBanner daysLeft={acc.daysLeft} expired={false} /> : null}
       {main}
       {client ? <HomeExtras clientId={client.id} /> : null}
-      {request || plan ? null : (
+      {request || plan || !acc.sub ? null : (
         <div className="card row" style={{ alignItems: "flex-start" }}>
           <Clock3 size={20} color="var(--clay)" style={{ flexShrink: 0, marginTop: 2 }} />
           <p className="small muted">

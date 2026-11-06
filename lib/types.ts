@@ -7,6 +7,9 @@ export type Profile = {
   role: UserRole;
   phone: string | null;
   gender?: "female" | "male" | null;
+  account_type?: "free" | "subscriber";
+  subscription_end?: string | null;
+  photo_credits?: number;
   created_at: string;
   updated_at: string;
 };
@@ -24,6 +27,7 @@ export type Client = {
   notes: string | null;
   followup_start?: string | null;
   followup_weeks?: number | null;
+  activity?: number | null;
   created_at: string;
   updated_at: string;
 };

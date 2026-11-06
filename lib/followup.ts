@@ -28,6 +28,8 @@ export type FollowupInfo = {
   openWeek: number | null;
   /** Next check-in day if none is open. */
   nextDate: string | null;
+  /** Weekly check-in every Saturday (subscribers without a coach follow-up schedule). */
+  saturday?: boolean;
 };
 
 /**
@@ -35,8 +37,16 @@ export type FollowupInfo = {
  * One can be filled from 2 days before its day until the next one opens.
  * The database reminder (push_due) uses the same days.
  */
-export function followupInfo(c: Pick<Client, "followup_start" | "followup_weeks"> | null | undefined, today = todayKey()): FollowupInfo {
+export function followupInfo(c: Pick<Client, "followup_start" | "followup_weeks"> | null | undefined, today = todayKey(), weeklySaturday = false): FollowupInfo {
   const none: FollowupInfo = { has: false, active: false, ended: false, start: "", weeks: 0, end: "", daysLeft: 0, week: 0, openDate: null, openWeek: null, nextDate: null };
+  if ((!c?.followup_start || !c.followup_weeks) && weeklySaturday) {
+    // Saturday check-in, open Saturday to Monday.
+    const dow = new Date(today + "T12:00:00").getDay(); // 6 = Saturday
+    const sinceSat = (dow + 1) % 7;
+    const lastSat = addDays(today, -sinceSat);
+    const open = sinceSat <= 2;
+    return { ...none, has: true, active: true, saturday: true, openDate: open ? lastSat : null, openWeek: null, nextDate: open ? null : addDays(lastSat, 7) };
+  }
   if (!c?.followup_start || !c.followup_weeks) return none;
   const start = c.followup_start;
   const weeks = c.followup_weeks;

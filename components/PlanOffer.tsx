@@ -4,16 +4,37 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-const STORE = "https://zahraafit.com";
+import { STORE_URL as STORE } from "@/lib/account";
 
 /** «وجباتي» for someone without a meal plan: what a plan gives, or that hers is on the way. */
-export function PlanOffer({ clientId }: { clientId: string }) {
+export function PlanOffer({ clientId, sub = false, locked = false }: { clientId: string; sub?: boolean; locked?: boolean }) {
   const [pending, setPending] = useState<boolean | null>(null);
   useEffect(() => {
     supabase.from("plan_requests").select("status").eq("client_id", clientId).in("status", ["submitted", "in_progress"]).limit(1)
       .then(({ data }) => setPending(Boolean(data && data.length)));
   }, [clientId]);
   if (pending === null) return null;
+
+  if (locked) {
+    return (
+      <section className="offer">
+        <span className="offer-em" aria-hidden="true">🔒</span>
+        <h2>خطتك محفوظة ومقفلة</h2>
+        <p>انتهى اشتراكك، بس خطتك وسجلك وكل تبديلاتك محفوظة. جددي وترجع لك على طول.</p>
+        <a className="btn btn-p btn-block" href={STORE} target="_blank" rel="noreferrer">جددي اشتراكك</a>
+      </section>
+    );
+  }
+
+  if (sub && !pending) {
+    return (
+      <section className="card stack">
+        <b style={{ fontSize: 17 }}>📋 خطوة وحدة وتبدأ خطتك</b>
+        <p className="small muted">عبي معلوماتك (هدفك وأكلك اللي تحبينه وحالتك الصحية) عشان المدربة تجهز خطتك، وتوصلك خلال ٢-٣ أيام عمل.</p>
+        <Link className="btn btn-p btn-block" href="/app/intake">عبي معلوماتي</Link>
+      </section>
+    );
+  }
 
   if (pending) {
     return (

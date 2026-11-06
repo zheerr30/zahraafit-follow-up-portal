@@ -8,6 +8,7 @@ import { muscleImage, repRange, restSeconds, type Exercise } from "@/lib/plan-da
 import { supabase } from "@/lib/supabase";
 import { useAuthGuard } from "@/lib/use-auth";
 import { useClientPlans } from "@/lib/use-client";
+import { STORE_URL, accountOf } from "@/lib/account";
 
 type SetEntry = { w: string; r: string; done: boolean };
 type LogItem = { id: string; name: string; sets: { w: number; r: number }[] };
@@ -63,6 +64,25 @@ export default function WorkoutPage() {
 
   if (auth.loading || cp.loading || !ready) return <Loading />;
   if (!auth.profile) return null;
+
+  if (!accountOf(auth.profile).sub) {
+    return (
+      <ClientShell title="تماريني">
+        <section className="offer">
+          <span className="offer-em" aria-hidden="true">💪</span>
+          <h2>جدول تمارين على هدفك</h2>
+          <p>جدول من المدربة زهراء يناسب هدفك ومستواك ومكان تمرينك (نادي أو بيت).</p>
+          <ul>
+            <li>🎥 فيديو لكل تمرين</li>
+            <li>📝 تسجلين الأوزان والتكرارات</li>
+            <li>⏱️ مؤقت الراحة بين الجولات</li>
+            <li>📈 تشوفين تطورك تمرين بتمرين</li>
+          </ul>
+          <a className="btn btn-p btn-block" href={STORE_URL} target="_blank" rel="noreferrer">اشتركي من المتجر</a>
+        </section>
+      </ClientShell>
+    );
+  }
 
   if (!plan || !row) {
     return (

@@ -8,6 +8,7 @@ import { Loading } from "@/components/ui";
 import { unpackDoc } from "@/lib/doc-pack";
 import { supabase } from "@/lib/supabase";
 import { useAuthGuard } from "@/lib/use-auth";
+import { STORE_URL, accountOf } from "@/lib/account";
 import type { Plan } from "@/lib/types";
 
 /** Her plan in the coach's own design, with a button to save it as PDF. */
@@ -43,8 +44,18 @@ export default function PrintPage() {
     }
   }
 
-  if (auth.loading || (!html && !missing)) return <Loading />;
+  if (auth.loading) return <Loading />;
   const back = auth.profile?.role === "admin" ? "/coach" : "/app";
+  if (auth.profile && !accountOf(auth.profile).sub) {
+    return (
+      <main className="screen gutter" style={{ paddingTop: 40 }}>
+        <p className="alert info">تحميل الخطة PDF للمشتركين. جددي اشتراكك عشان تحملينها.</p>
+        <a className="btn btn-p" href={STORE_URL} target="_blank" rel="noreferrer">جددي اشتراكك</a>
+        <a className="link" href={back}>رجوع</a>
+      </main>
+    );
+  }
+  if (!html && !missing) return <Loading />;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>

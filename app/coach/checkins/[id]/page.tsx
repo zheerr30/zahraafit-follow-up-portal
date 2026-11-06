@@ -92,7 +92,7 @@ export default function CheckinDetail() {
       <div className="row between wrap">
         <div>
           <h1 style={{ fontSize: 24 }}>{name}</h1>
-          <p className="small muted">متابعة الأسبوع {wk || "—"} من {info.weeks || "—"} · {dayName(f.week_date)} · أرسلتها {formatDate(f.created_at)}</p>
+          <p className="small muted">{info.has ? `متابعة الأسبوع ${wk} من ${info.weeks}` : "📅 تسجيل السبت"} · {dayName(f.week_date)} · أرسلتها {formatDate(f.created_at)}</p>
         </div>
         <Link className="btn btn-g btn-sm" href={`/coach/subscribers/${client.id}`}>صفحتها وتسجيلاتها</Link>
       </div>

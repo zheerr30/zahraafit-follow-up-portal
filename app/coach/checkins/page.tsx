@@ -32,7 +32,7 @@ export default function CheckinsPage() {
       if (error?.code === "42703") setMissingDb(true);
       const names = new Map(((p as Pick<Profile, "id" | "full_name">[] | null) || []).map((x) => [x.id, x.full_name]));
       const clients = (c as Client[] | null) || [];
-      setRows(clients.filter((x) => x.followup_start).map((x) => ({ client: x, name: names.get(x.profile_id) || "مشتركة", info: followupInfo(x) })));
+      setRows(clients.map((x) => ({ client: x, name: names.get(x.profile_id) || "مشتركة", info: followupInfo(x) })));
       const wants = new Set(((r as Pick<PlanRequest, "client_id">[] | null) || []).map((x) => x.client_id));
       setNeedSetup(clients.filter((x) => !x.followup_start && wants.has(x.id)).map((x) => ({ client: x, name: names.get(x.profile_id) || "مشتركة" })));
       setFus((f as WeeklyFollowup[] | null) || []);
@@ -53,13 +53,13 @@ export default function CheckinsPage() {
 
   const fRow = (f: WeeklyFollowup) => {
     const r = byClient.get(f.client_id)!;
-    const wk = Math.round((new Date(f.week_date).getTime() - new Date(r.info.start).getTime()) / (7 * 864e5));
+    const wk = r.info.has ? Math.round((new Date(f.week_date).getTime() - new Date(r.info.start).getTime()) / (7 * 864e5)) : 0;
     return (
       <Link key={f.id} href={`/coach/checkins/${f.id}`} className="list-row">
         <span className="avatar" aria-hidden="true" style={{ fontSize: 22, background: "var(--sunken)" }}>{f.feeling ? FEELINGS[f.feeling - 1] : "📅"}</span>
         <span style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
           <b>{r.name}</b>
-          <span className="small muted">الأسبوع {wk} من {r.info.weeks} · {formatDate(f.created_at)}</span>
+          <span className="small muted">{r.info.has ? `الأسبوع ${wk} من ${r.info.weeks}` : "📅 تسجيل السبت"} · {formatDate(f.created_at)}</span>
           <span className="small">
             {f.nutrition_commitment ? `🍽️ ${COMMIT_LABEL[f.nutrition_commitment - 1]}` : ""}{f.workout_commitment ? ` · 💪 ${COMMIT_LABEL[f.workout_commitment - 1]}` : ""}
             {f.changes_requested ? " · ✏️ طلبت تعديل" : ""}

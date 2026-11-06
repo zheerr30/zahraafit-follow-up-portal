@@ -6,6 +6,7 @@ import { Camera, X } from "lucide-react";
 import { ClientShell, Loading, useToast } from "@/components/ui";
 import { COMMIT_LABEL, FEELINGS, FEELING_LABEL, addDays, dayName, followupInfo, shrinkPhoto } from "@/lib/followup";
 import { formatDate } from "@/lib/format";
+import { accountOf } from "@/lib/account";
 import { todayKey } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 import { useAuthGuard } from "@/lib/use-auth";
@@ -56,7 +57,7 @@ export default function CheckinPage() {
   const [ready, setReady] = useState(false);
 
   const client = cp.client;
-  const info = followupInfo(client);
+  const info = followupInfo(client, undefined, accountOf(auth.profile).sub);
   const current = info.openDate ? list.find((x) => x.week_date === info.openDate) || null : null;
 
   useEffect(() => {
@@ -206,12 +207,18 @@ export default function CheckinPage() {
   }
 
   return (
-    <ClientShell title="متابعتي الأسبوعية" sub={info.has ? `الأسبوع ${info.week} من ${info.weeks}` : undefined}>
+    <ClientShell title="متابعتي الأسبوعية" sub={info.saturday ? "كل سبت" : info.has ? `الأسبوع ${info.week} من ${info.weeks}` : undefined}>
       {!info.has ? (
         <section className="card stack">
           <b style={{ fontSize: 17 }}>📅 المتابعة الأسبوعية</b>
           <p className="small muted">هذي لمشتركات المتابعة: كل أسبوع تعبين متابعتك (وزنك وقياساتك وصورك وكيف كان أسبوعك)، والمدربة ترد عليك وتعدل خطتك.</p>
           <p className="small muted">لو اشتركتي بالمتابعة، المدربة بتفعلها لك أول ما تبدأ خطتك.</p>
+        </section>
+      ) : info.saturday ? (
+        <section className="card stack" style={{ gap: 6 }}>
+          <b style={{ color: "var(--navy)" }}>📅 تسجيلك الأسبوعي كل سبت</b>
+          <p className="small muted">كل سبت سجلي وزنك وقياساتك وصورك وكيف كان أسبوعك، وتشوفين تطورك أسبوع بأسبوع. صورك ما يشوفها غيرك وغير المدربة 🔒</p>
+          {!info.openDate && info.nextDate ? <p className="small">📅 تسجيلك الجاي <b>{dayName(info.nextDate)}</b>. نذكرك فيه.</p> : null}
         </section>
       ) : (
         <section className="card stack" style={{ gap: 10 }}>
@@ -232,7 +239,7 @@ export default function CheckinPage() {
         <>
           <div className="sec-title">
             <span className="em" aria-hidden="true">✅</span>
-            <h2>متابعة الأسبوع {info.openWeek}</h2>
+            <h2>{info.openWeek ? `متابعة الأسبوع ${info.openWeek}` : "متابعة هالأسبوع"}</h2>
             {!current.coach_notes ? <button type="button" className="aside link" onClick={() => startEdit(current)}>تعديل</button> : null}
           </div>
           <section className="card"><Summary f={current} /></section>
@@ -243,7 +250,7 @@ export default function CheckinPage() {
         <form className="stack" onSubmit={submit}>
           <div className="sec-title">
             <span className="em" aria-hidden="true">📝</span>
-            <h2>متابعة الأسبوع {info.openWeek}</h2>
+            <h2>{info.openWeek ? `متابعة الأسبوع ${info.openWeek}` : "متابعة هالأسبوع"}</h2>
             <span className="aside">{dayName(info.openDate!)}</span>
           </div>
 

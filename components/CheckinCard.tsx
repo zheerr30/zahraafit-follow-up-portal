@@ -8,8 +8,8 @@ import { supabase } from "@/lib/supabase";
 import type { Client, WeeklyFollowup } from "@/lib/types";
 
 /** Home: where she is with this week's check-in. Only for follow-up subscribers. */
-export function CheckinCard({ client }: { client: Client }) {
-  const info = followupInfo(client);
+export function CheckinCard({ client, saturday = false }: { client: Client; saturday?: boolean }) {
+  const info = followupInfo(client, undefined, saturday);
   const [latest, setLatest] = useState<WeeklyFollowup | null | undefined>(undefined);
 
   useEffect(() => {
@@ -26,13 +26,13 @@ export function CheckinCard({ client }: { client: Client }) {
   if (info.ended) {
     em = "🌟"; title = "انتهت مدة متابعتك"; text = "تبين تكملين؟ جددي اشتراكك من المتجر.";
   } else if (info.openDate && !doneNow) {
-    em = "📝"; title = `وقت متابعة الأسبوع ${info.openWeek}!`; text = "عبيها عشان المدربة تشوف أسبوعك وتعدل لك."; cls = "hot";
+    em = "📝"; title = info.openWeek ? `وقت متابعة الأسبوع ${info.openWeek}!` : "وقت تسجيلك الأسبوعي! 📅"; text = "عبيها عشان المدربة تشوف أسبوعك وتعدل لك."; cls = "hot";
   } else if (freshReply) {
     em = "💬"; title = "المدربة ردت على متابعتك"; text = latest!.coach_notes!.slice(0, 90);
   } else if (doneNow) {
     em = "✅"; title = "وصلت متابعتك للمدربة"; text = "بترد عليك قريب.";
   } else {
-    title = `الأسبوع ${info.week} من ${info.weeks}`; text = info.nextDate ? `متابعتك الجاية ${dayName(info.nextDate)}` : "";
+    title = info.saturday ? "📅 تسجيلك الأسبوعي كل سبت" : `الأسبوع ${info.week} من ${info.weeks}`; text = info.nextDate ? `${info.saturday ? "تسجيلك" : "متابعتك"} الجاي${info.saturday ? "" : "ة"} ${dayName(info.nextDate)}` : "";
   }
 
   return (
