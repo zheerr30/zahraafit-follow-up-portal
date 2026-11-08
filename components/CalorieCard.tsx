@@ -12,7 +12,7 @@ export type Target = { cal: number; p: number; c: number; f: number };
  * The ring shows what is left and fills as she eats; the macro rows show what is
  * left of each. It starts from zero eaten: only ticked meals and logged food count.
  */
-export function CalorieCard({ totals, target, header, footer, line }: { totals: Totals; target: Target | null; header?: ReactNode; footer?: ReactNode; line?: ReactNode }) {
+export function CalorieCard({ totals, target, header, footer, line, details }: { totals: Totals; target: Target | null; header?: ReactNode; footer?: ReactNode; line?: ReactNode; details?: ReactNode }) {
   const eaten = Math.round(totals.cal);
   const left = target ? Math.round(target.cal - totals.cal) : 0;
   const fill = target && target.cal ? Math.min(1, totals.cal / target.cal) : 0;
@@ -54,6 +54,7 @@ export function CalorieCard({ totals, target, header, footer, line }: { totals: 
             </div>
           </div>
         </div>
+        {details}
         {footer}
       </section>
       {line ? <div className="cal-line">{line}</div> : null}

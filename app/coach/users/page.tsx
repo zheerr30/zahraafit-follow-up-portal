@@ -60,7 +60,7 @@ export default function UsersPage() {
   const [filter, setFilter] = useState<"all" | "idle" | "sub" | "free">("all");
   const [missing, setMissing] = useState(false);
   const [showDone, setShowDone] = useState(false);
-  const [offs, setOffs] = useState<Map<string, { limit: number; weekday: number | null; days: string[] }>>(new Map());
+  const [offs, setOffs] = useState<Map<string, { limit: number; weekday: number | null; days: string[]; hideMicros: boolean }>>(new Map());
 
   const load = useCallback(async () => {
     const [{ data: u, error }, { data: r }] = await Promise.all([
@@ -72,11 +72,11 @@ export default function UsersPage() {
     // Off days: each subscriber's weekly limit, the plan's fixed free day, and this week's picks.
     const since = new Date(Date.now() - 7 * DAY).toISOString().slice(0, 10);
     const [{ data: cs }, { data: od }] = await Promise.all([
-      supabase.from("clients").select("id, off_limit, off_weekday"),
+      supabase.from("clients").select("id, off_limit, off_weekday, hide_micros"),
       supabase.from("off_days").select("client_id, day").gte("day", since).order("day")
     ]);
-    const m = new Map<string, { limit: number; weekday: number | null; days: string[] }>();
-    ((cs as { id: string; off_limit?: number; off_weekday?: number | null }[] | null) || []).forEach((c) => m.set(c.id, { limit: c.off_limit ?? 1, weekday: c.off_weekday ?? null, days: [] }));
+    const m = new Map<string, { limit: number; weekday: number | null; days: string[]; hideMicros: boolean }>();
+    ((cs as { id: string; off_limit?: number; off_weekday?: number | null; hide_micros?: boolean }[] | null) || []).forEach((c) => m.set(c.id, { limit: c.off_limit ?? 1, weekday: c.off_weekday ?? null, days: [], hideMicros: Boolean(c.hide_micros) }));
     ((od as { client_id: string; day: string }[] | null) || []).forEach((o) => m.get(o.client_id)?.days.push(o.day));
     setOffs(m);
     const reps = (r as Report[] | null) || [];
@@ -146,6 +146,14 @@ export default function UsersPage() {
                             const { error: er } = await supabase.from("clients").update({ off_limit: v }).eq("id", u.client_id!);
                             if (!er) setOffs((m) => new Map(m).set(u.client_id!, { ...m.get(u.client_id!)!, limit: v }));
                           }}>{[0, 1, 2, 3].map((n) => <option key={n} value={n}>{n}</option>)}</select>
+                        </label>
+                        <label>
+                          <input type="checkbox" checked={offs.get(u.client_id)!.hideMicros} style={{ width: 18, height: 18, accentColor: "var(--clay)" }} onChange={async (e) => {
+                            const v = e.target.checked;
+                            const { error: er } = await supabase.from("clients").update({ hide_micros: v }).eq("id", u.client_id!);
+                            if (!er) setOffs((m) => new Map(m).set(u.client_id!, { ...m.get(u.client_id!)!, hideMicros: v }));
+                          }} />
+                          إخفاء «تفاصيل أكثر» (ألياف، صوديوم...)
                         </label>
                         {u.account_type === "subscriber" ? (
                           <label>يوم حر ثابت

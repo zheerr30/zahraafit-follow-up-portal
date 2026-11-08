@@ -1,4 +1,4 @@
--- ZahraaFit — Phase 21: off days (a day without counting calories)
+-- ZahraaFit — Phase 21: off days (a day without counting calories), and fiber/sodium/potassium/sugar on logged food
 -- Run this whole file once in the Supabase SQL Editor (after phase20-meal-prep.sql).
 -- Safe to run again.
 
@@ -65,6 +65,20 @@ begin
 end $$;
 revoke all on function public.cancel_off_day(date) from public, anon;
 grant execute on function public.cancel_off_day(date) to authenticated;
+
+-- «تفاصيل أكثر» in the calorie card: values for logged food (null = no data for it).
+alter table public.food_entries add column if not exists fiber numeric(7, 1);
+alter table public.food_entries add column if not exists sodium numeric(8, 1);
+alter table public.food_entries add column if not exists potassium numeric(8, 1);
+alter table public.food_entries add column if not exists sugar numeric(7, 1);
+do $$ begin
+  alter table public.food_entries add constraint food_entries_micros check (
+    (fiber is null or fiber between 0 and 500) and (sodium is null or sodium between 0 and 50000)
+    and (potassium is null or potassium between 0 and 50000) and (sugar is null or sugar between 0 and 2000));
+exception when duplicate_object then null; end $$;
+
+-- The coach can hide «تفاصيل أكثر» for any subscriber.
+alter table public.clients add column if not exists hide_micros boolean not null default false;
 
 notify pgrst, 'reload schema';
 

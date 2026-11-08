@@ -1,4 +1,5 @@
 import type { BaseFood } from "@/lib/foods";
+import { MICRO_DATA } from "@/lib/micro-data";
 
 /** Reads DEFAULT_INGR (values per 100 g) out of the coach's generator HTML. Server only. */
 export function extractFoods(html: string): BaseFood[] {
@@ -26,7 +27,8 @@ export function extractFoods(html: string): BaseFood[] {
         c: x.carb || 0,
         f: x.fat || 0,
         note: x.note && !m ? x.note : "",
-        piece: m ? { label: m[1], g: Number(m[2]) } : undefined
+        piece: m ? { label: m[1], g: Number(m[2]) } : undefined,
+        m: MICRO_DATA[x.name] ? { fib: MICRO_DATA[x.name].fib, na: MICRO_DATA[x.name].na, k: MICRO_DATA[x.name].k, sug: MICRO_DATA[x.name].sug } : undefined
       };
     });
 }

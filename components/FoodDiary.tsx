@@ -1,5 +1,6 @@
 "use client";
 
+import { DayDetails } from "@/components/CalorieDetails";
 import { NO_OFF, isOff, loadOff, setOff, type OffInfo } from "@/lib/off-days";
 import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import { track } from "@/components/AppStatus";
@@ -81,7 +82,8 @@ export function FoodDiary({
   focusSnacks,
   planDone = false,
   ramadan = false,
-  afterMeals
+  afterMeals,
+  details = null
 }: {
   clientId: string;
   profileId: string;
@@ -100,6 +102,8 @@ export function FoodDiary({
   planDone?: boolean;
   /** Shown under today's meals (the ready boxes). */
   afterMeals?: ReactNode;
+  /** «تفاصيل أكثر» in the card (fiber, sodium...): null hides it (hide_numbers or the coach hid it). */
+  details?: { male: boolean } | null;
 }) {
   const lbl = (sl: Slot) => (ramadan ? RAMADAN_SLOT[sl] : sl);
   const emo = (sl: Slot) => (ramadan ? RAMADAN_EMOJI[sl] : SLOT_EMOJI[sl]);
@@ -173,11 +177,17 @@ export function FoodDiary({
   }, [ticked, entries]);
 
   async function add(slot: Slot, row: Omit<FoodEntry, "id" | "client_id" | "log_date" | "slot" | "created_at">) {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("food_entries")
       .insert({ client_id: clientId, log_date: date, slot, ...row })
       .select("*")
       .single();
+    if (error && /fiber|sodium|potassium|sugar/.test(error.message)) {
+      // before phase21 adds these columns: save without them
+      const { fiber: _a, sodium: _b, potassium: _c, sugar: _d, ...plain } = row as typeof row & { fiber?: unknown; sodium?: unknown; potassium?: unknown; sugar?: unknown };
+      void _a; void _b; void _c; void _d;
+      ({ data, error } = await supabase.from("food_entries").insert({ client_id: clientId, log_date: date, slot, ...plain }).select("*").single());
+    }
     if (error || !data) return toast.show("ما انحفظ. تأكدي من الاتصال.");
     setEntries((cur) => [...cur, data as FoodEntry]);
     setRecent((cur) => [data as FoodEntry, ...cur.filter((x) => x.name !== row.name)].slice(0, 12));
@@ -300,6 +310,7 @@ export function FoodDiary({
       <CalorieCard
         totals={totals}
         target={target}
+        details={details ? <DayDetails clientId={clientId} date={date} meals={ticked.map((x) => x.meal)} male={details.male} refresh={entries.length} /> : undefined}
         header={
           <div className="row between" style={{ alignItems: "center" }}>
             <div className="cal-day-mini" role="group" aria-label="اليوم">

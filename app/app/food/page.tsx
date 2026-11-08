@@ -1,5 +1,6 @@
 "use client";
 
+import { DayDetails } from "@/components/CalorieDetails";
 import { PrepBoxes } from "@/components/PrepBoxes";
 import { ShoppingList } from "@/components/ShoppingList";
 import { amountText, nameKey, unitKey } from "@/lib/shop-cats";
@@ -197,6 +198,9 @@ export default function FoodPage() {
   if (!auth.profile) return null;
 
   const acc = accountOf(auth.profile);
+  // «تفاصيل أكثر»: hidden when she chose no numbers, or the coach hid it for her.
+  const showDetails = !auth.profile.hide_numbers && !(cp.client as { hide_micros?: boolean } | null)?.hide_micros;
+  const detailsProp = showDetails ? { male: auth.profile.gender === "male" } : null;
   if ((!plan || day === null || !acc.sub) && cp.client) {
     return (
       <ClientShell title="أكلي" sub="سجلي أكلك واحسبي سعراتك">
@@ -207,7 +211,7 @@ export default function FoodPage() {
         </div>
         {freeTab === "diary" ? (
           <>
-            <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={null} planMeal={null} ramadan={cp.ramadan} afterMeals={<PrepBoxes clientId={cp.client.id} onLogged={() => window.location.reload()} />} />
+            <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={null} planMeal={null} ramadan={cp.ramadan} details={detailsProp} afterMeals={<PrepBoxes clientId={cp.client.id} onLogged={() => window.location.reload()} />} />
           </>
         ) : freeTab === "shop" ? (
           <>
@@ -435,6 +439,7 @@ export default function FoodPage() {
               </div>
             }
             line={smartLine(eatenToday.cal)}
+            details={showDetails && cp.client ? <DayDetails clientId={cp.client.id} date={today} meals={ticked.map((x) => x.meal)} male={auth.profile.gender === "male"} refresh={Math.round(todayFood.cal)} /> : undefined}
           />
 
           <div className="tip-card">
@@ -494,7 +499,7 @@ export default function FoodPage() {
       ) : null}
 
       {tab === "diary" && cp.client ? (
-        <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={plan.target.cal ? plan.target : null} planMeal={planMeal} smartLine={smartLine} ramadan={cp.ramadan} coachSnacks={[...plan.extras.snacks, ...plan.extras.salads]} focusSnacks={focusSnacks} planDone={Boolean(todayMeals?.length) && todayMeals!.every((x) => log.meals[x.key] === true)} afterMeals={<PrepBoxes clientId={cp.client.id} onLogged={() => window.location.reload()} />} />
+        <FoodDiary details={detailsProp} clientId={cp.client.id} profileId={auth.profile.id} planTarget={plan.target.cal ? plan.target : null} planMeal={planMeal} smartLine={smartLine} ramadan={cp.ramadan} coachSnacks={[...plan.extras.snacks, ...plan.extras.salads]} focusSnacks={focusSnacks} planDone={Boolean(todayMeals?.length) && todayMeals!.every((x) => log.meals[x.key] === true)} afterMeals={<PrepBoxes clientId={cp.client.id} onLogged={() => window.location.reload()} />} />
       ) : null}
 
       {tab === "shop" && cp.client ? (
