@@ -1,5 +1,6 @@
 "use client";
 
+import { isOff, loadOff } from "@/lib/off-days";
 import { SecH } from "@/components/SecH";
 import { useEffect, useState } from "react";
 import { tickedMeals, type MealRef } from "@/lib/meal-resolve";
@@ -7,7 +8,7 @@ import { todayKey, type MealPlanData } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 import type { Plan } from "@/lib/types";
 
-export type CalDay = { d: string; cal: number; p: number };
+export type CalDay = { d: string; cal: number; p: number; off?: boolean };
 
 const short = (d: string) => new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { weekday: "short", day: "numeric" }).format(new Date(d + "T12:00:00"));
 
@@ -38,11 +39,12 @@ export function useCalorieDays(clientId: string | null | undefined, mealRow: Pla
       return x.toISOString().slice(0, 10);
     });
     (async () => {
-      const [{ data: d }, { data: e }, ch, tg] = await Promise.all([
+      const [{ data: d }, { data: e }, ch, tg, off] = await Promise.all([
         supabase.from("daily_logs").select("log_date, meals").eq("client_id", clientId).gte("log_date", days[0]),
         supabase.from("food_entries").select("log_date, cal, p").eq("client_id", clientId).gte("log_date", days[0]),
         mealRow ? supabase.from("plan_choices").select("data").eq("plan_id", mealRow.id).maybeSingle() : Promise.resolve({ data: null }),
-        plan?.target.cal ? Promise.resolve({ data: null }) : supabase.from("food_targets").select("cal").eq("client_id", clientId).maybeSingle()
+        plan?.target.cal ? Promise.resolve({ data: null }) : supabase.from("food_targets").select("cal").eq("client_id", clientId).maybeSingle(),
+        loadOff(clientId, days[0])
       ]);
       setTarget(plan?.target.cal || (tg.data as { cal: number } | null)?.cal || null);
       const swaps = ((ch.data as { data?: { meals?: Record<string, MealRef> } } | null)?.data?.meals) || {};
@@ -52,6 +54,7 @@ export function useCalorieDays(clientId: string | null | undefined, mealRow: Pla
         const tk = tickedMeals(plan, swaps, logs.get(day));
         const de = ent.filter((x) => x.log_date === day);
         return {
+          off: isOff(off, day),
           d: day,
           cal: Math.round(tk.reduce((a, x) => a + x.meal.cal, 0) + de.reduce((a, x) => a + Number(x.cal), 0)),
           p: Math.round(tk.reduce((a, x) => a + x.meal.p, 0) + de.reduce((a, x) => a + Number(x.p), 0))
@@ -67,7 +70,7 @@ export function useCalorieDays(clientId: string | null | undefined, mealRow: Pla
 export function CaloriesChart({ rows, target }: { rows: CalDay[] | null; target: number | null }) {
   const [sel, setSel] = useState<number | null>(null);
   if (!rows) return null;
-  if (!rows.some((r) => r.cal > 0)) {
+  if (!rows.some((r) => r.cal > 0 && !r.off)) {
     return (
       <>
         <SecH icon="cal" title="سعراتك" />
@@ -78,7 +81,7 @@ export function CaloriesChart({ rows, target }: { rows: CalDay[] | null; target:
       </>
     );
   }
-  const logged = rows.filter((r) => r.cal > 0);
+  const logged = rows.filter((r) => r.cal > 0 && !r.off);
   const avg = Math.round(logged.reduce((a, r) => a + r.cal, 0) / logged.length);
   const max = Math.max(...rows.map((r) => r.cal), target || 0, 1) * 1.12;
   const W = 340, H = 150, top = 14, base = H - 4;
@@ -99,7 +102,7 @@ export function CaloriesChart({ rows, target }: { rows: CalDay[] | null; target:
             {target ? <span className="small muted"> من هدف {target}</span> : null}
           </div>
           <span className="small" style={{ textAlign: "end", minHeight: 36 }}>
-            {s ? <><b>{short(s.d)}</b><br />{s.cal ? `${s.cal} سعرة · بروتين ${s.p}g` : "ما سجلتي"}</> : <span className="note">اضغطي على أي يوم</span>}
+            {s ? <><b>{short(s.d)}</b><br />{s.off ? "يوم أوف" : s.cal ? `${s.cal} سعرة · بروتين ${s.p}g` : "ما سجلتي"}</> : <span className="note">اضغطي على أي يوم</span>}
           </span>
         </div>
         <svg viewBox={`0 0 ${W} ${H + 18}`} style={{ width: "100%", height: "auto", direction: "ltr", overflow: "visible" }} role="img"
@@ -112,13 +115,18 @@ export function CaloriesChart({ rows, target }: { rows: CalDay[] | null; target:
             return (
               <g key={r.d} onClick={() => setSel(sel === i ? null : i)} style={{ cursor: "pointer" }}>
                 <rect x={i * slot} y={top} width={slot} height={base - top} fill="transparent" />
-                {h ? (
+                {r.off ? (
+                  <>
+                    <rect x={x} y={base - emptyH * 0.6} width={bw} height={emptyH * 0.6} rx={4} fill="var(--line-2)" opacity={0.7} />
+                    <text x={x + bw / 2} y={base - emptyH * 0.6 - 6} textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--ink-3)">أوف</text>
+                  </>
+                ) : h ? (
                   <path d={`M${x},${base} v${-(h - 4)} q0,-4 4,-4 h${bw - 8} q4,0 4,4 v${h - 4} z`} fill={over ? "var(--clay-ink)" : "var(--clay)"} opacity={sel === null || sel === i ? 1 : 0.45} />
                 ) : (
                   <rect x={x + 0.75} y={base - emptyH} width={bw - 1.5} height={emptyH - 0.75} rx={4} fill="none" stroke="var(--ink-3)" strokeWidth="1.5" strokeDasharray="3 3" opacity={0.7} />
                 )}
                 <text x={x + bw / 2} y={H + 14} textAnchor="middle" fontSize="10" fill="var(--ink-3)">{["ح", "ن", "ث", "ر", "خ", "ج", "س"][new Date(r.d + "T12:00:00").getDay()]}</text>
-                <title>{`${short(r.d)}: ${r.cal || "ما سجلتي"}`}</title>
+                <title>{`${short(r.d)}: ${r.off ? "يوم أوف" : r.cal || "ما سجلتي"}`}</title>
               </g>
             );
           })}
@@ -129,7 +137,7 @@ export function CaloriesChart({ rows, target }: { rows: CalDay[] | null; target:
             </>
           ) : null}
         </svg>
-        <p className="note">آخر 7 أيام: وجبات خطتك اللي علمتيها مع اللي سجلتيه في «سعراتي». العمود الغامق يعني زدتي عن هدفك بأكثر من 10%، والعمود المنقط يوم ما سجلتي فيه.</p>
+        <p className="note">آخر 7 أيام: وجبات خطتك اللي علمتيها مع اللي سجلتيه في «سعراتي». العمود الغامق يعني زدتي عن هدفك بأكثر من 10%، والعمود المنقط يوم ما سجلتي فيه.{rows.some((r) => r.off) ? " والرمادي يوم أوف، ما يدخل في المتوسط." : ""}</p>
       </section>
     </>
   );

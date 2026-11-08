@@ -1,5 +1,6 @@
 "use client";
 
+import { isOff, loadOff } from "@/lib/off-days";
 import { SecH } from "@/components/SecH";
 import { useEffect, useState } from "react";
 import { ShareSheet } from "@/components/ShareSheet";
@@ -21,11 +22,20 @@ export async function streakDays(clientId: string) {
     if (Object.entries(x.meals || {}).some(([k, v]) => v === true && (/^\d+-\d+$/.test(k) || k.startsWith("x-")))) days.add(x.log_date);
   });
   ((e as { log_date: string }[] | null) || []).forEach((x) => days.add(x.log_date));
+  // Off days neither add to the streak nor break it.
+  const off = await loadOff(clientId, from);
+  const key = (x: Date) => x.toISOString().slice(0, 10);
   const t = new Date(todayKey() + "T12:00:00");
-  if (!days.has(t.toISOString().slice(0, 10))) t.setDate(t.getDate() - 1);
+  if (!days.has(key(t))) t.setDate(t.getDate() - 1);
   let n = 0;
-  while (days.has(t.toISOString().slice(0, 10))) {
-    n++;
+  for (let i = 0; i < 92; i++) {
+    const k = key(t);
+    if (isOff(off, k) && !days.has(k)) {
+      t.setDate(t.getDate() - 1);
+      continue;
+    }
+    if (!days.has(k)) break;
+    if (!isOff(off, k)) n++;
     t.setDate(t.getDate() - 1);
   }
   return n;

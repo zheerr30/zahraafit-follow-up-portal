@@ -1,5 +1,6 @@
 "use client";
 
+import { isOff, loadOff, type OffInfo } from "@/lib/off-days";
 import { boxDaysLeft, loadBoxes, type Box } from "@/components/PrepBoxes";
 import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
@@ -35,6 +36,7 @@ type Data = {
   ramadanUntil: string | null;
   newPurchase: boolean;
   boxes: Box[];
+  off: OffInfo;
 };
 
 const SEEN_KEY = "zf-seen-reply";
@@ -63,7 +65,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
 
   const load = useCallback(async () => {
     const weekAgo = addDays(today, -7);
-    const [dl, fe, tg, ch, wl, bl, fu, pl, rp, np, streak, wk, wf, bx] = await Promise.all([
+    const [dl, fe, tg, ch, wl, bl, fu, pl, rp, np, streak, wk, wf, bx, off] = await Promise.all([
       supabase.from("daily_logs").select("meals, water").eq("client_id", client.id).eq("log_date", today).maybeSingle(),
       supabase.from("food_entries").select("cal, p, c, f").eq("client_id", client.id).eq("log_date", today),
       plan?.target.cal ? Promise.resolve({ data: null }) : supabase.from("food_targets").select("cal, p, c, f").eq("client_id", client.id).maybeSingle(),
@@ -77,7 +79,8 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
       streakDays(client.id),
       supabase.from("daily_logs").select("log_date, meals").eq("client_id", client.id).gte("log_date", addDays(today, -6)),
       supabase.from("food_entries").select("log_date").eq("client_id", client.id).gte("log_date", addDays(today, -6)),
-      loadBoxes(client.id)
+      loadBoxes(client.id),
+      loadOff(client.id, addDays(today, -7))
     ]);
     const weekOn = new Set<string>(((wf.data as { log_date: string }[] | null) || []).map((x) => x.log_date));
     ((wk.data as { log_date: string; meals: Record<string, unknown> }[] | null) || []).forEach((x) => {
@@ -103,7 +106,8 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
       periods: (pl.data as PeriodLog[] | null) || [],
       ramadanUntil: ((rp.data as { ramadan_until?: string | null } | null)?.ramadan_until) || null,
       newPurchase: np.data === true,
-      boxes: bx || []
+      boxes: bx || [],
+      off
     });
   }, [client.id, profile.id, profile.gender, today, plan, mealRow]);
 
@@ -210,14 +214,21 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
         </div>
       ) : null}
 
-      {readyHero || (
+      {readyHero || (isOff(d.off, today) ? (
+        <section className="cal-hero off-hero">
+          <span className="off-kicker">😌 يوم أوف</span>
+          <h2>اليوم يومك، استمتعي فيه</h2>
+          <p>ما نحسب السعرات اليوم، وسلسلتك ما تنكسر. بكرا نرجع للخطة 💪</p>
+          <Link href="/app/food?tab=diary" className="off-log">سجلي أكلك لو تبين</Link>
+        </section>
+      ) : (
         <CalorieCard totals={eaten} target={d.target} header={
           <div className="row between" style={{ alignItems: "center" }}>
             <h2>🔥 سعراتك اليوم</h2>
             <Link href="/app/food" className="cal-chip" style={{ color: "#fff", background: "rgba(255,255,255,.12)" }}>{todayMeals.length ? `✅ ${doneCount} من ${todayMeals.length} وجبات` : "أكلي"} ‹</Link>
           </div>
         } line={line} />
-      )}
+      ))}
       {!acc.sub ? (
         <a className="offer-link" href={STORE_URL} target="_blank" rel="noreferrer">🍽️ تبين خطة جاهزة على سعراتك؟ <ChevronLeft size={16} /></a>
       ) : null}
@@ -267,7 +278,9 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
           <span className="d-mid">
             {d.streak > 0 ? <b><span className="num">{d.streak}</span> {d.streak === 1 ? "يوم" : d.streak === 2 ? "يومين" : "أيام"} ورا بعض</b> : <b>ابدئي سلسلتك اليوم</b>}
             <span className="wk-circles" aria-label={`سجلتي ${week7.filter((k) => d.weekOn.has(k)).length} من آخر 7 أيام`}>
-              {week7.map((k) => <i key={k} className={`${d.weekOn.has(k) ? "on" : ""} ${k === today ? "now" : ""}`}>{DAY_L[new Date(k + "T12:00:00").getDay()]}</i>)}
+              {week7.map((k) => isOff(d.off, k) && !d.weekOn.has(k)
+                ? <i key={k} className={`off ${k === today ? "now" : ""}`} title="يوم أوف">أوف</i>
+                : <i key={k} className={`${d.weekOn.has(k) && !isOff(d.off, k) ? "on" : isOff(d.off, k) ? "off" : ""} ${k === today ? "now" : ""}`}>{isOff(d.off, k) ? "أوف" : DAY_L[new Date(k + "T12:00:00").getDay()]}</i>)}
             </span>
           </span>
         </Link>

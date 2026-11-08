@@ -83,7 +83,8 @@ export default function FoodPage() {
   const [freeTab, setFreeTab] = useState<"diary" | "meals" | "shop">("diary");
   useEffect(() => {
     // «علب جاهزة» opens on the diary tab
-    if (new URLSearchParams(window.location.search).get("boxes") === "1") {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get("boxes") === "1" || sp.get("tab") === "diary") {
       setTab("diary");
       setFreeTab("diary");
     }

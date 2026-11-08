@@ -1,5 +1,6 @@
 "use client";
 
+import { WEEKDAYS } from "@/lib/off-days";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CoachShell, Loading } from "@/components/ui";
 import { formatDate } from "@/lib/format";
@@ -59,6 +60,7 @@ export default function UsersPage() {
   const [filter, setFilter] = useState<"all" | "idle" | "sub" | "free">("all");
   const [missing, setMissing] = useState(false);
   const [showDone, setShowDone] = useState(false);
+  const [offs, setOffs] = useState<Map<string, { limit: number; weekday: number | null; days: string[] }>>(new Map());
 
   const load = useCallback(async () => {
     const [{ data: u, error }, { data: r }] = await Promise.all([
@@ -67,6 +69,16 @@ export default function UsersPage() {
     ]);
     if (error) setMissing(true);
     setUsers((u as User[] | null) || []);
+    // Off days: each subscriber's weekly limit, the plan's fixed free day, and this week's picks.
+    const since = new Date(Date.now() - 7 * DAY).toISOString().slice(0, 10);
+    const [{ data: cs }, { data: od }] = await Promise.all([
+      supabase.from("clients").select("id, off_limit, off_weekday"),
+      supabase.from("off_days").select("client_id, day").gte("day", since).order("day")
+    ]);
+    const m = new Map<string, { limit: number; weekday: number | null; days: string[] }>();
+    ((cs as { id: string; off_limit?: number; off_weekday?: number | null }[] | null) || []).forEach((c) => m.set(c.id, { limit: c.off_limit ?? 1, weekday: c.off_weekday ?? null, days: [] }));
+    ((od as { client_id: string; day: string }[] | null) || []).forEach((o) => m.get(o.client_id)?.days.push(o.day));
+    setOffs(m);
     const reps = (r as Report[] | null) || [];
     setReports(await Promise.all(reps.map(async (x) => {
       if (!x.photo_path) return x;
@@ -124,7 +136,31 @@ export default function UsersPage() {
                       <span className={idle(u) ? "warn" : ""}>👁️ آخر دخول: {ago(u.last_seen_at)}</span>
                       <span>✅ التزام هالأسبوع: <b className="num">{u.days_this_week}</b> من 7</span>
                       <span>📅 آخر تسجيل سبت: {u.last_checkin ? formatDate(u.last_checkin) : "ما سجلت"}</span>
+                      {u.client_id && offs.get(u.client_id)?.days.length ? <span>😌 أوف: {offs.get(u.client_id)!.days.map((d) => formatDate(d)).join("، ")}</span> : null}
                     </div>
+                    {u.client_id && offs.has(u.client_id) ? (
+                      <div className="off-ctrl">
+                        <label>أيام أوف بالأسبوع
+                          <select className="inp" value={offs.get(u.client_id)!.limit} onChange={async (e) => {
+                            const v = Number(e.target.value);
+                            const { error: er } = await supabase.from("clients").update({ off_limit: v }).eq("id", u.client_id!);
+                            if (!er) setOffs((m) => new Map(m).set(u.client_id!, { ...m.get(u.client_id!)!, limit: v }));
+                          }}>{[0, 1, 2, 3].map((n) => <option key={n} value={n}>{n}</option>)}</select>
+                        </label>
+                        {u.account_type === "subscriber" ? (
+                          <label>يوم حر ثابت
+                            <select className="inp" value={offs.get(u.client_id)!.weekday ?? ""} onChange={async (e) => {
+                              const v = e.target.value === "" ? null : Number(e.target.value);
+                              const { error: er } = await supabase.from("clients").update({ off_weekday: v }).eq("id", u.client_id!);
+                              if (!er) setOffs((m) => new Map(m).set(u.client_id!, { ...m.get(u.client_id!)!, weekday: v }));
+                            }}>
+                              <option value="">بدون</option>
+                              {WEEKDAYS.map((w, i) => <option key={w} value={i}>{w}</option>)}
+                            </select>
+                          </label>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                   {wa ? <a className="btn btn-s btn-sm" href={wa} target="_blank" rel="noreferrer">💬 أرسلي رسالة</a> : idle(u) ? <span className="note">ما فيه رقم</span> : null}
                 </div>

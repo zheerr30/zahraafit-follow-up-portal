@@ -1,5 +1,6 @@
 "use client";
 
+import { isOff, loadOff } from "@/lib/off-days";
 import { useEffect, useState } from "react";
 import { todayKey, waterCups, type MealPlanData } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
@@ -39,22 +40,25 @@ export function WeekSummary({ clientId, plans }: { clientId: string; plans: Plan
   useEffect(() => {
     const days = dayKeys(7);
     (async () => {
-      const [{ data: d }, { data: w }, { data: b }, { data: pl }, { data: fe }, { data: tg }] = await Promise.all([
+      const [{ data: d }, { data: w }, { data: b }, { data: pl }, { data: fe }, { data: tg }, offInfo] = await Promise.all([
         supabase.from("daily_logs").select("log_date, meals, water").eq("client_id", clientId).gte("log_date", days[6]),
         supabase.from("workout_logs").select("performed_on").eq("client_id", clientId).gte("performed_on", days[6]),
         supabase.from("body_logs").select("log_date, weight_kg").eq("client_id", clientId).not("weight_kg", "is", null).gte("log_date", dayKeys(14)[13]).order("log_date", { ascending: true }),
         supabase.from("period_logs").select("*").eq("client_id", clientId).order("start_date", { ascending: false }).limit(3),
         supabase.from("food_entries").select("log_date, cal, p, c, f").eq("client_id", clientId).gte("log_date", days[6]),
-        meal?.target.cal ? Promise.resolve({ data: null }) : supabase.from("food_targets").select("cal, p, c, f").eq("client_id", clientId).maybeSingle()
+        meal?.target.cal ? Promise.resolve({ data: null }) : supabase.from("food_targets").select("cal, p, c, f").eq("client_id", clientId).maybeSingle(),
+        loadOff(clientId, days[6])
       ]);
+      // Off days: what she ate is kept but not counted here.
+      const onDay = (day: string) => !isOff(offInfo, day);
       // Calories and protein per day: ticked plan meals + logged food.
       const perDayTotals = new Map<string, { cal: number; p: number; c: number; f: number }>();
       const bump = (day: string, cal: number, p: number, c: number, f: number) => { const t = perDayTotals.get(day) || { cal: 0, p: 0, c: 0, f: 0 }; perDayTotals.set(day, { cal: t.cal + cal, p: t.p + p, c: t.c + (c || 0), f: t.f + (f || 0) }); };
-      ((d as { log_date: string; meals: Record<string, unknown> }[] | null) || []).forEach((x) => tickedMeals(meal || null, {}, x.meals).forEach((t) => bump(x.log_date, t.meal.cal, t.meal.p, t.meal.c, t.meal.f)));
-      ((fe as { log_date: string; cal: number; p: number; c: number; f: number }[] | null) || []).forEach((x) => bump(x.log_date, Number(x.cal), Number(x.p), Number(x.c), Number(x.f)));
+      ((d as { log_date: string; meals: Record<string, unknown> }[] | null) || []).filter((x) => onDay(x.log_date)).forEach((x) => tickedMeals(meal || null, {}, x.meals).forEach((t) => bump(x.log_date, t.meal.cal, t.meal.p, t.meal.c, t.meal.f)));
+      ((fe as { log_date: string; cal: number; p: number; c: number; f: number }[] | null) || []).filter((x) => onDay(x.log_date)).forEach((x) => bump(x.log_date, Number(x.cal), Number(x.p), Number(x.c), Number(x.f)));
       const counted = Array.from(perDayTotals.values()).filter((t) => t.cal > 0);
       const periods = (pl as PeriodLog[] | null) || [];
-      const logs = (d as { log_date: string; meals: Record<string, unknown>; water: number }[] | null) || [];
+      const logs = ((d as { log_date: string; meals: Record<string, unknown>; water: number }[] | null) || []).filter((x) => onDay(x.log_date));
       const eaten = logs.reduce((a, x) => a + Object.entries(x.meals || {}).filter(([k, v]) => /^\d+-\d+$/.test(k) && v === true).length, 0);
       const steps = logs.map((x) => Number((x.meals?._day as { steps?: string } | undefined)?.steps?.replace(/\D/g, "")) || 0).filter(Boolean);
       const off = logs.reduce((a, x) => a + (Array.isArray(x.meals?._off) ? (x.meals._off as unknown[]).length : 0), 0);

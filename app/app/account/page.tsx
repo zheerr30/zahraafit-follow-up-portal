@@ -1,5 +1,6 @@
 "use client";
 
+import { OffDays } from "@/components/OffDays";
 import { FormEvent, useEffect, useState } from "react";
 import { LogOut } from "lucide-react";
 import { ClientShell, Loading, useToast } from "@/components/ui";
@@ -100,6 +101,7 @@ export default function AccountPage() {
       </div>
       <Reminders profileId={p.id} mealsPerDay={cp.meal?.days[0]?.meals.length || 3} subscriber={accountOf(p).sub} />
 
+      {cp.client ? <OffDays clientId={cp.client.id} /> : null}
       <RamadanToggle profileId={p.id} />
       <HideNumbersToggle initial={Boolean(p.hide_numbers)} />
 

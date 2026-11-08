@@ -188,7 +188,7 @@ export default function ProgressPage() {
   const weekChange = thisWk && prevWk ? r1(thisWk.w - prevWk.w) : null;
 
   // This week (last 7 days): days with food logged and their average.
-  const loggedDays = (cal.rows || []).filter((r) => r.cal > 0);
+  const loggedDays = (cal.rows || []).filter((r) => r.cal > 0 && !r.off);
   const avgCal = loggedDays.length ? Math.round(loggedDays.reduce((a, r) => a + r.cal, 0) / loggedDays.length) : null;
   const saturday = new Date(today + "T12:00:00").getDay() === 6;
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { NO_OFF, isOff, loadOff, setOff, type OffInfo } from "@/lib/off-days";
 import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import { track } from "@/components/AppStatus";
 import Link from "next/link";
@@ -103,6 +104,10 @@ export function FoodDiary({
   const lbl = (sl: Slot) => (ramadan ? RAMADAN_SLOT[sl] : sl);
   const emo = (sl: Slot) => (ramadan ? RAMADAN_EMOJI[sl] : SLOT_EMOJI[sl]);
   const toast = useToast();
+  const [off, setOff2] = useState<OffInfo>(NO_OFF);
+  useEffect(() => {
+    loadOff(clientId).then(setOff2);
+  }, [clientId]);
   const [date, setDate] = useState(todayKey());
   const [entries, setEntries] = useState<FoodEntry[]>([]);
   const [prevEntries, setPrevEntries] = useState<FoodEntry[]>([]);
@@ -296,14 +301,28 @@ export function FoodDiary({
         totals={totals}
         target={target}
         header={
-          <div className="cal-day-mini" role="group" aria-label="اليوم">
-            <button type="button" aria-label="اليوم اللي قبل" onClick={() => setDate(shiftDay(date, -1))}><ChevronRight size={15} /></button>
-            <b>{dayLabel(date)}</b>
-            <button type="button" aria-label="اليوم اللي بعد" disabled={date >= today} onClick={() => setDate(shiftDay(date, 1))}><ChevronLeft size={15} /></button>
+          <div className="row between" style={{ alignItems: "center" }}>
+            <div className="cal-day-mini" role="group" aria-label="اليوم">
+              <button type="button" aria-label="اليوم اللي قبل" onClick={() => setDate(shiftDay(date, -1))}><ChevronRight size={15} /></button>
+              <b>{dayLabel(date)}</b>
+              <button type="button" aria-label="اليوم اللي بعد" disabled={date >= today} onClick={() => setDate(shiftDay(date, 1))}><ChevronLeft size={15} /></button>
+            </div>
+            {isOff(off, date) ? (
+              <span className="off-chip">😌 يوم أوف</span>
+            ) : date >= today && off.limit > 0 ? (
+              <button type="button" className="off-chip" onClick={async () => {
+                const err = await setOff(date);
+                if (err) return toast.show(err);
+                setOff2(await loadOff(clientId));
+                toast.show("صار اليوم يوم أوف 😌 استمتعي");
+              }}>يوم أوف؟</button>
+            ) : null}
           </div>
         }
         line={
-          date === today && smartLine
+          isOff(off, date)
+            ? <>😌 يوم أوف: سجلي أكلك لو تبين، ينحفظ بس ما يدخل في متوسطك ولا ملخصك.</>
+            : date === today && smartLine
             ? smartLine(totals.cal)
             : genericLine(totals.cal, target, date === today)
         }

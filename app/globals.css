@@ -800,3 +800,14 @@ details.msg-old[open] .sub { display: none; }
 .meas-diff { font-size: 12.5px; color: var(--ink-3); min-width: 92px; text-align: end; }
 .meas-diff.down { color: var(--green); font-weight: 700; }
 .card > .diary-row:first-child, .card.stack > .diary-row:first-child { border-top: 0; }
+
+/* Off days */
+.off-hero { gap: 8px; }
+.off-kicker { font-size: 13px; font-weight: 700; color: #FFB27F; }
+.off-hero h2 { font-size: 21px; }
+.off-log { align-self: flex-start; font-size: 13px; font-weight: 700; color: #fff; background: rgba(255, 255, 255, .12); border-radius: 999px; padding: 7px 14px; text-decoration: none; }
+.wk-circles i.off { background: #E7E3F4; color: #6B5FA8; font-size: 8.5px; }
+.off-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 3px 10px; background: rgba(255, 255, 255, .14); color: #fff; }
+.off-ctrl { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 8px; }
+.off-ctrl label { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2); }
+.off-ctrl select.inp { min-height: 34px; padding: 2px 8px; width: auto; font-size: 13px; }
