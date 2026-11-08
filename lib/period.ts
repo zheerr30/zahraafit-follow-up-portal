@@ -13,7 +13,7 @@ export function inPeriod(logs: PeriodLog[], day: string) {
   return logs.some((p) => p.start_date <= day && day <= periodEnd(p));
 }
 
-/** The period she is in today, if any. */
+/** The period she is in now: started and not ended yet (once she taps «خلصت الدورة» it's over, even if it ended today). */
 export function currentPeriod(logs: PeriodLog[], today = todayKey()) {
-  return logs.find((p) => p.start_date <= today && today <= periodEnd(p)) || null;
+  return logs.find((p) => !p.end_date && p.start_date <= today && today <= periodEnd(p)) || null;
 }
