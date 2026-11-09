@@ -13,6 +13,7 @@ type GenWindow = Window & { eval: (code: string) => unknown };
 export function GeneratorPanel({ kind = "meal", answers, name, clientId, onClose, onUse }: { kind?: "meal" | "workout"; answers: unknown; name: string; clientId?: string; onClose: () => void; onUse: (p: ParsedPlan) => void }) {
   const rated = useRef<{ liked: string[]; disliked: string[] } | undefined>(undefined);
   const frame = useRef<HTMLIFrameElement>(null);
+  const token = useRef("");
   const [html, setHtml] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [plans, setPlans] = useState<MealPlanData[] | null>(null);
@@ -21,6 +22,7 @@ export function GeneratorPanel({ kind = "meal", answers, name, clientId, onClose
   useEffect(() => {
     (async () => {
       const { data: s } = await supabase.auth.getSession();
+      token.current = s.session?.access_token || "";
       const res = await fetch(`/api/generators/${kind}`, { headers: { Authorization: `Bearer ${s.session?.access_token || ""}` }, cache: "no-store" });
       if (!res.ok) {
         setError(res.status === 401 || res.status === 403 ? "المولد يفتح لحساب المدربة بس. سجلي خروج وادخلي مرة ثانية." : "ما قدرنا نفتح المولد. حدثي الصفحة وجربي مرة ثانية.");
@@ -47,7 +49,7 @@ export function GeneratorPanel({ kind = "meal", answers, name, clientId, onClose
     const w = win();
     if (!w) return;
     try {
-      w.eval(kind === "workout" ? FILL_WORKOUT_SCRIPT(workoutGeneratorState(answers)) : FILL_SCRIPT(mealGeneratorFields(answers, rated.current)));
+      w.eval(kind === "workout" ? FILL_WORKOUT_SCRIPT(workoutGeneratorState(answers), token.current) : FILL_SCRIPT(mealGeneratorFields(answers, rated.current)));
     } catch {
       // The generator still opens; she can fill it by hand.
     }

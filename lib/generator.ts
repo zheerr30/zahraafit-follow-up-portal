@@ -117,7 +117,14 @@ export function workoutGeneratorState(raw: unknown) {
 }
 
 /** Runs inside the workout generator: puts her settings in and opens the setup step. */
-export const FILL_WORKOUT_SCRIPT = (st: ReturnType<typeof workoutGeneratorState>) => `(function(V){
+export const FILL_WORKOUT_SCRIPT = (st: ReturnType<typeof workoutGeneratorState>, token = "") => `(function(V,T){
+  // Her «توليد بالذكاء الاصطناعي» calls /api/generate: send it with her session so only she can use it.
+  try{
+    if(T && !window.__zfFetch){
+      window.__zfFetch = window.fetch;
+      window.fetch = function(u,o){ o=o||{}; if(String(u).indexOf("/api/generate")===0){ o.headers=Object.assign({},o.headers||{},{Authorization:"Bearer "+T}); } return window.__zfFetch(u,o); };
+    }
+  }catch(e){}
   try{
     Object.assign(S.client, V.client);
     if(V.env) S.env=V.env;
@@ -129,7 +136,7 @@ export const FILL_WORKOUT_SCRIPT = (st: ReturnType<typeof workoutGeneratorState>
     if(typeof go==="function") go(0); else if(typeof render==="function") render();
   }catch(e){}
   return true;
-})(${JSON.stringify(st)})`;
+})(${JSON.stringify(st)}, ${JSON.stringify(token)})`;
 
 /** Runs inside the workout generator: the plan it shows, in the platform's workout-plan format. */
 export const READ_WORKOUT_SCRIPT = `(function(){
