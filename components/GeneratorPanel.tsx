@@ -2,15 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, Loader2, Send, X } from "lucide-react";
-import { FILL_SCRIPT, READ_DOC_SCRIPT, READ_PLANS_SCRIPT, mealGeneratorFields } from "@/lib/generator";
+import { FILL_SCRIPT, FILL_WORKOUT_SCRIPT, READ_DOC_SCRIPT, READ_PLANS_SCRIPT, READ_WORKOUT_SCRIPT, mealGeneratorFields, workoutGeneratorState } from "@/lib/generator";
 import { packDoc } from "@/lib/doc-pack";
 import { parsePlanFile, type MealPlanData, type ParsedPlan } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 
 type GenWindow = Window & { eval: (code: string) => unknown };
 
-/** Full-screen meal generator, filled with the subscriber's answers. */
-export function GeneratorPanel({ answers, name, clientId, onClose, onUse }: { answers: unknown; name: string; clientId?: string; onClose: () => void; onUse: (p: ParsedPlan) => void }) {
+/** Full-screen meal or workout generator, filled with the subscriber's answers. */
+export function GeneratorPanel({ kind = "meal", answers, name, clientId, onClose, onUse }: { kind?: "meal" | "workout"; answers: unknown; name: string; clientId?: string; onClose: () => void; onUse: (p: ParsedPlan) => void }) {
   const rated = useRef<{ liked: string[]; disliked: string[] } | undefined>(undefined);
   const frame = useRef<HTMLIFrameElement>(null);
   const [html, setHtml] = useState<string | null>(null);
@@ -21,12 +21,12 @@ export function GeneratorPanel({ answers, name, clientId, onClose, onUse }: { an
   useEffect(() => {
     (async () => {
       const { data: s } = await supabase.auth.getSession();
-      const res = await fetch("/api/generators/meal", { headers: { Authorization: `Bearer ${s.session?.access_token || ""}` }, cache: "no-store" });
+      const res = await fetch(`/api/generators/${kind}`, { headers: { Authorization: `Bearer ${s.session?.access_token || ""}` }, cache: "no-store" });
       if (!res.ok) {
         setError(res.status === 401 || res.status === 403 ? "المولد يفتح لحساب المدربة بس. سجلي خروج وادخلي مرة ثانية." : "ما قدرنا نفتح المولد. حدثي الصفحة وجربي مرة ثانية.");
         return;
       }
-      if (clientId) {
+      if (clientId && kind === "meal") {
         // Her 👍/👎 on the current plan's meals, so the next plan avoids what she disliked.
         const { data: pl } = await supabase.from("plans").select("id").eq("client_id", clientId).eq("kind", "nutrition").order("created_at", { ascending: false }).limit(1).maybeSingle();
         if (pl) {
@@ -37,7 +37,7 @@ export function GeneratorPanel({ answers, name, clientId, onClose, onUse }: { an
       }
       setHtml(await res.text());
     })();
-  }, [clientId]);
+  }, [clientId, kind]);
 
   function win(): GenWindow | null {
     return (frame.current?.contentWindow as GenWindow | null) || null;
@@ -47,7 +47,7 @@ export function GeneratorPanel({ answers, name, clientId, onClose, onUse }: { an
     const w = win();
     if (!w) return;
     try {
-      w.eval(FILL_SCRIPT(mealGeneratorFields(answers, rated.current)));
+      w.eval(kind === "workout" ? FILL_WORKOUT_SCRIPT(workoutGeneratorState(answers)) : FILL_SCRIPT(mealGeneratorFields(answers, rated.current)));
     } catch {
       // The generator still opens; she can fill it by hand.
     }
@@ -57,6 +57,20 @@ export function GeneratorPanel({ answers, name, clientId, onClose, onUse }: { an
     const w = win();
     if (!w) return;
     setReading(true);
+    if (kind === "workout") {
+      try {
+        const out = String(w.eval(READ_WORKOUT_SCRIPT) || "");
+        if (!out) setError("ما فيه جدول للحين. ولدي الجدول في المولد، بعدها اضغطي «أرسلي هذا الجدول».");
+        else {
+          onUse(parsePlanFile(out));
+          onClose();
+        }
+      } catch {
+        setError("ما قدرنا نقرأ الجدول من المولد. إذا عدلتي على طريقة حفظ الجدول فيه، أرسليه لي أشوفه.");
+      }
+      setReading(false);
+      return;
+    }
     try {
       const list = JSON.parse(String(w.eval(READ_PLANS_SCRIPT))) as MealPlanData[];
       const usable = list.filter((p) => p.days?.length);
@@ -92,13 +106,13 @@ export function GeneratorPanel({ answers, name, clientId, onClose, onUse }: { an
   const sorted = plans ? [...plans].sort((a, b) => Number(Boolean(b.name && first && b.name.includes(first))) - Number(Boolean(a.name && first && a.name.includes(first)))) : null;
 
   return (
-    <div className="overlay" role="dialog" aria-modal="true" aria-label="مولد الأكل" style={{ display: "flex", flexDirection: "column" }}>
+    <div className="overlay" role="dialog" aria-modal="true" aria-label={kind === "workout" ? "مولد التمارين" : "مولد الأكل"} style={{ display: "flex", flexDirection: "column" }}>
       <div className="s-top gutter" style={{ flexWrap: "wrap" }}>
         <button type="button" className="icon-btn" aria-label="إغلاق المولد" onClick={onClose}>
           <X />
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <b style={{ display: "block" }}>مولد الأكل · {name || "مشتركة"}</b>
+          <b style={{ display: "block" }}>{kind === "workout" ? "مولد التمارين" : "مولد الأكل"} · {name || "مشتركة"}</b>
           <span className="small muted">معلوماتها معباة. ولدي الجدول وعدلي عليه زي العادة.</span>
         </div>
         <button type="button" className="btn btn-p btn-sm" disabled={!html || reading} onClick={read}>
@@ -144,7 +158,7 @@ export function GeneratorPanel({ answers, name, clientId, onClose, onUse }: { an
 
       <div style={{ flex: 1, minHeight: 0 }}>
         {html ? (
-          <iframe ref={frame} title="مولد الأكل" srcDoc={html} onLoad={() => setTimeout(fill, 400)} style={{ width: "100%", height: "100%", border: 0, background: "#fff" }} />
+          <iframe ref={frame} title={kind === "workout" ? "مولد التمارين" : "مولد الأكل"} srcDoc={html} onLoad={() => setTimeout(fill, 400)} style={{ width: "100%", height: "100%", border: 0, background: "#fff" }} />
         ) : !error ? (
           <div className="loading">
             <span className="row small">

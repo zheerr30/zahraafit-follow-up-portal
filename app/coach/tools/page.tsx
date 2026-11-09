@@ -43,7 +43,7 @@ export default function GeneratorsPage() {
           <span className="avatar"><Dumbbell size={20} /></span>
           <div>
             <b>مولد التمارين</b>
-            <div className="small muted">الجاي. لين ذاك الوقت انسخي معلوماتها من صفحة الطلب، وارفعي الـPDF.</div>
+            <div className="small muted">صار داخل المنصة: من صفحة الطلب اضغطي «ولدي الجدول الرياضي» ويفتح ومعلوماتها معباة، وبعدها «أرسلي هذا الجدول».</div>
           </div>
         </div>
       </section>

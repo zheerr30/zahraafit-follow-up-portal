@@ -27,6 +27,16 @@ node -e "const h=require('fs').readFileSync('generators/meal.html','utf8');const
 
 Then commit to `main` and push: Vercel publishes it within minutes. Tell her in one line what changed and that it is live in a few minutes.
 
+## Editing the workout generator
+
+`generators/workout.html` is her workout generator (same rules: edit it directly, keep her style). The platform drives it from `lib/generator.ts` (`workoutGeneratorState`, `FILL_WORKOUT_SCRIPT`, `READ_WORKOUT_SCRIPT`) and `components/GeneratorPanel.tsx` (`kind="workout"`). Keep these working:
+
+- Global `const S` with `client` (`name age height weight phone gender`), `env` (`gym` `home` `bodyweight`), `level` (1-3), `days`, `goal` (`strength` `hypertrophy` `cutting` `general`), `conditions` (ids from `CONDITIONS`), `aiRequest`, and `S.plan` = days of `{title, exercises[]}` after `generate()`.
+- Globals `go(step)`, `render()`, `altFor(ex)`, `videoLinks`, and `CONTRIB_OVERRIDE` / `CONTRIB_BY_GROUP` (helper muscles for the share card's body map).
+- Exercise fields in `EX`: `id name en group muscle pattern type sets reps rest tip video`; `muscle` uses the keys in `MUSCLES` (chest, upperback, midback, lats, frontdelt, reardelt, sidedelt, biceps, triceps, absfront, absside, quads, adductors, hamstrings, glutes, calves).
+
+Parse check: same command as above with `generators/workout.html`.
+
 ## Rest of the app
 
 - Subscriber text is written addressing a woman, without shadda (ّ). For male subscribers (`profiles.gender`) it is switched on screen by the dictionary in `lib/gender.ts`: when you add subscriber text with a new feminine verb or adjective, add its masculine form there. Push notification texts have both forms in SQL (`push_due`).

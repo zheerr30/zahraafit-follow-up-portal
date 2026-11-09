@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 // Serves the coach's generator files (generators/*.html) to the coach only.
 // The page sends her Supabase access token; we check it belongs to an admin.
 
-const FILES: Record<string, string> = { meal: "meal.html" };
+const FILES: Record<string, string> = { meal: "meal.html", workout: "workout.html" };
 
 export const dynamic = "force-dynamic";
 

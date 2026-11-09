@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ChevronRight, ClipboardCopy, FileText, ShieldCheck, Undo2, Utensils } from "lucide-react";
+import { ChevronRight, ClipboardCopy, FileText, ShieldCheck, Undo2, Utensils, Dumbbell } from "lucide-react";
 import { GeneratorPanel } from "@/components/GeneratorPanel";
 import type { ParsedPlan } from "@/lib/plan-data";
 import { PlanDelivery } from "@/components/PlanDelivery";
@@ -36,7 +36,7 @@ export default function CoachRequestPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [genOpen, setGenOpen] = useState(false);
+  const [genOpen, setGenOpen] = useState<"meal" | "workout" | null>(null);
   const [incoming, setIncoming] = useState<ParsedPlan | null>(null);
 
   useEffect(() => {
@@ -129,14 +129,20 @@ export default function CoachRequestPage() {
             </p>
           </div>
           {req.wants_nutrition ? (
-            <button type="button" className="btn btn-p btn-block" onClick={() => { setGenOpen(true); if (req.status === "submitted") update({ status: "in_progress", started_at: new Date().toISOString() }, "صارت في «شغالة عليها»"); }}>
+            <button type="button" className="btn btn-p btn-block" onClick={() => { setGenOpen("meal"); if (req.status === "submitted") update({ status: "in_progress", started_at: new Date().toISOString() }, "صارت في «شغالة عليها»"); }}>
               <Utensils />
               ولدي الجدول الغذائي
             </button>
           ) : null}
-          <button type="button" className={`btn btn-block ${req.wants_nutrition ? "btn-g" : "btn-p"}`} onClick={() => { copy(); if (req.status === "submitted") update({ status: "in_progress", started_at: new Date().toISOString() }, "نسخت معلوماتها، وصارت في «شغالة عليها»"); }}>
+          {req.wants_workout ? (
+            <button type="button" className="btn btn-p btn-block" onClick={() => { setGenOpen("workout"); if (req.status === "submitted") update({ status: "in_progress", started_at: new Date().toISOString() }, "صارت في «شغالة عليها»"); }}>
+              <Dumbbell />
+              ولدي الجدول الرياضي
+            </button>
+          ) : null}
+          <button type="button" className="btn btn-block btn-g" onClick={() => { copy(); if (req.status === "submitted") update({ status: "in_progress", started_at: new Date().toISOString() }, "نسخت معلوماتها، وصارت في «شغالة عليها»"); }}>
             <ClipboardCopy />
-            انسخي معلوماتها{req.wants_workout ? " (لمولد التمارين)" : ""}
+            انسخي معلوماتها
           </button>
           {req.status === "in_progress" ? (
             <div className="row between wrap small">
@@ -153,7 +159,7 @@ export default function CoachRequestPage() {
       ) : null}
 
       <PlanDelivery req={req} onDelivered={setReq} toast={toast.show} incoming={incoming} />
-      {genOpen ? <GeneratorPanel answers={req.answers} name={a.full_name} clientId={req.client_id} onClose={() => setGenOpen(false)} onUse={(p) => { setIncoming(p); toast.show("الجدول صار في الخطوة ٢. راجعيه وأرسليه"); }} /> : null}
+      {genOpen ? <GeneratorPanel kind={genOpen} answers={req.answers} name={a.full_name} clientId={req.client_id} onClose={() => setGenOpen(null)} onUse={(p) => { setIncoming(p); toast.show("الجدول صار في الخطوة ٢. راجعيه وأرسليه"); }} /> : null}
 
       <section className="card stack">
         <div className="row between wrap">

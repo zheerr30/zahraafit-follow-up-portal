@@ -89,3 +89,68 @@ export const READ_PLANS_SCRIPT = `(function(){
   if(!list||!list.length){try{list=JSON.parse(localStorage.getItem("zfv5_plans")||"[]");}catch(e){list=[];}}
   return JSON.stringify(list.slice(-8).reverse().map(exp));
 })()`;
+
+// ── Workout generator (generators/workout.html) ──────────────────────────────
+// Her own tool, unchanged. The platform drives it from the outside:
+//   global `S` (client, env, level, days, goal, conditions, plan), `go(step)`,
+//   `render()`, `generate()`, `altFor(ex)`, and EX entries' `group`/`muscle`.
+//   CONTRIB_OVERRIDE / CONTRIB_BY_GROUP give the helper muscles for the share card.
+
+const INJURY_TO_CONDITION: [RegExp, string][] = [
+  [/ركب/, "knee"], [/ظهر|قطن|ديسك|فقرات/, "lowerback"], [/كتف|أكتاف/, "shoulder"],
+  [/رسغ|معصم/, "wrist"], [/رقب/, "neck"], [/انفصال|ديستاسس|بعد الولادة/, "diastasis"]
+];
+
+/** The generator's settings from the subscriber's answers (S fields). */
+export function workoutGeneratorState(raw: unknown) {
+  const a: IntakeAnswers = normalizeAnswers(raw);
+  const env = a.workout.place === "gym" ? "gym" : a.workout.place === "home_weights" ? "home" : a.workout.place === "bodyweight" ? "bodyweight" : null;
+  const level = a.workout.level === "advanced" ? 3 : a.workout.level === "intermediate" ? 2 : a.workout.level === "beginner" ? 1 : null;
+  const goal = a.goal === "muscle" ? "hypertrophy" : a.goal === "lose" ? "cutting" : a.goal === "shape" ? "hypertrophy" : null;
+  const injuries = [...a.workout.injuries, a.workout.notes, ...a.health].join(" ");
+  const conditions = INJURY_TO_CONDITION.filter(([re]) => re.test(injuries)).map(([, c]) => c);
+  return {
+    client: { name: a.full_name, age: a.age ? String(a.age) : "", height: a.height_cm ? String(a.height_cm) : "", weight: a.weight_kg ? String(a.weight_kg) : "", phone: a.phone.replace(/[^\d+]/g, ""), gender: a.gender || "female" },
+    env, level, days: a.workout.days && a.workout.days >= 2 && a.workout.days <= 6 ? a.workout.days : null, goal, conditions,
+    notes: [a.workout.notes, a.goal_details].filter(Boolean).join("\n")
+  };
+}
+
+/** Runs inside the workout generator: puts her settings in and opens the setup step. */
+export const FILL_WORKOUT_SCRIPT = (st: ReturnType<typeof workoutGeneratorState>) => `(function(V){
+  try{
+    Object.assign(S.client, V.client);
+    if(V.env) S.env=V.env;
+    if(V.level) S.level=V.level;
+    if(V.days) S.days=V.days;
+    if(V.goal) S.goal=V.goal;
+    if(V.conditions && V.conditions.length) S.conditions=V.conditions;
+    if(V.notes && !S.aiRequest) S.aiRequest=V.notes;
+    if(typeof go==="function") go(0); else if(typeof render==="function") render();
+  }catch(e){}
+  return true;
+})(${JSON.stringify(st)})`;
+
+/** Runs inside the workout generator: the plan it shows, in the platform's workout-plan format. */
+export const READ_WORKOUT_SCRIPT = `(function(){
+  var MAP={chest:["chest"],back:["upperback","midback","lats"],shoulders:["frontdelt","sidedelt","reardelt"],biceps:["biceps"],triceps:["triceps"],
+    quads:["quads"],hams:["hamstrings"],glutes:["glutes"],adductors:["adductors"],calves:["calves"],abs:["absfront","absside"]};
+  function helpers(e){
+    var c=null;try{c=(CONTRIB_OVERRIDE&&CONTRIB_OVERRIDE[e.id])||(CONTRIB_BY_GROUP&&CONTRIB_BY_GROUP[e.group]);}catch(x){}
+    var out=[];if(!c)return out;
+    Object.keys(c).forEach(function(g){if(g===e.group||c[g]>=1)return;
+      var ms=MAP[g]||[];
+      // pressing works the front of the shoulder, pulling the back of it
+      if(g==="shoulders") ms=e.pattern==="push"?["frontdelt"]:e.pattern==="pull"?["reardelt"]:ms;
+      if(g==="back") ms=e.pattern==="pull"?["lats","midback"]:["midback"];
+      ms.forEach(function(m){if(m!==e.muscle&&out.indexOf(m)<0)out.push(m);});});
+    return out;
+  }
+  function vid(e){try{return (videoLinks&&videoLinks[e.id])||e.video||"";}catch(x){return e.video||"";}}
+  function ex(e){var a=null;try{a=altFor(e);}catch(x){}
+    return {id:String(e.id||""),name:String(e.name||""),en:String(e.en||""),muscle:String(e.muscle||""),sets:Number(e.sets)||3,reps:String(e.reps||""),rest:String(e.rest||""),tip:String(e.tip||""),
+      video:vid(e),alt:a?{name:String(a.name||""),video:vid(a)}:null,primary:e.muscle?[String(e.muscle)]:[],secondary:helpers(e)};}
+  if(!S||!S.plan||!S.plan.length) return "";
+  return JSON.stringify({format:"zahraafit-workout-plan",v:1,exportedAt:new Date().toISOString(),name:String((S.client&&S.client.name)||""),env:String(S.env||""),
+    days:S.plan.map(function(d,i){return {n:i+1,title:String(d.title||("اليوم "+(i+1))),exercises:(d.exercises||[]).map(ex)};})});
+})()`;
