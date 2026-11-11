@@ -1,5 +1,7 @@
 "use client";
 
+import { ExerciseSheet } from "@/components/ExerciseSheet";
+import { mediaFor, mediaSrc } from "@/lib/exercise-media";
 import { track } from "@/components/AppStatus";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -34,6 +36,8 @@ export default function WorkoutPage() {
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState<{ title: string; sets: number; vol: number; min: number; card: ShareCard } | null>(null);
   const [shareDone, setShareDone] = useState(false);
+  const [info, setInfo] = useState<Exercise | null>(null);
+  const female = auth.profile?.gender !== "male";
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const plan = cp.workout;
@@ -227,14 +231,17 @@ export default function WorkoutPage() {
           </div>
           {d.exercises.map((e, k) => {
             const img = muscleImage(e.muscle);
+            const m = mediaFor(e.id);
             return (
               <div key={k} className="xrow">
-                {img ? <img src={img} alt="" onError={(ev) => { ev.currentTarget.style.visibility = "hidden"; }} /> : null}
-                <div className="nm">
-                  <b>{e.name}</b>
-                  {e.en ? <div className="en">{e.en}</div> : null}
-                  {e.alt ? <div className="note">↔ بديل: {e.alt.name}</div> : null}
-                </div>
+                <button type="button" className="xrow-btn" onClick={() => setInfo(e)} aria-label={`عن تمرين ${e.name}`}>
+                  {m ? <img className="ex-thumb" src={`${mediaSrc(m, female)}.jpg`} alt="" /> : img ? <img src={img} alt="" onError={(ev) => { ev.currentTarget.style.visibility = "hidden"; }} /> : null}
+                  <div className="nm">
+                    <b>{e.name}</b>
+                    {e.en ? <div className="en">{e.en}</div> : null}
+                    {e.alt ? <div className="note">↔ بديل: {e.alt.name}</div> : null}
+                  </div>
+                </button>
                 <div className="xstats">
                   <div><b>{e.sets}</b><span>جولات</span></div>
                   <div><b>{e.reps}</b><span>عدة</span></div>
@@ -284,14 +291,17 @@ export default function WorkoutPage() {
                 const hitTop = last && last.sets.length && last.sets.every((x) => x.r >= hi);
                 const complete = session.sets[i].every((x) => x.done);
                 const img = muscleImage(e.muscle);
+                const m = mediaFor(e.id);
                 return (
                   <article key={i} className={`exc ${complete ? "complete" : ""}`}>
                     <div className="exc-media">
-                      {img ? <img src={img} alt="" onError={(e) => { e.currentTarget.style.display = "none"; }} /> : null}
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <h3 style={{ fontSize: 16.5 }}>{e.name}</h3>
-                        <span className="small muted">{e.sets} جولات × {e.reps} · راحة {e.rest}</span>
-                      </div>
+                      <button type="button" className="xrow-btn" onClick={() => setInfo(e)} aria-label={`عن تمرين ${e.name}`}>
+                        {m ? <img className="ex-thumb" src={`${mediaSrc(m, female)}.jpg`} alt="" /> : img ? <img src={img} alt="" onError={(ev) => { ev.currentTarget.style.display = "none"; }} /> : null}
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <h3 style={{ fontSize: 16.5 }}>{e.name}</h3>
+                          <span className="small muted">{e.sets} جولات × {e.reps} · راحة {e.rest}</span>
+                        </div>
+                      </button>
                       {e.video ? (
                         <a className="icon-btn" href={e.video} target="_blank" rel="noreferrer" aria-label={`فيديو ${e.name}`} style={{ color: "#E03A2F" }}>
                           <PlayCircle />
@@ -364,6 +374,7 @@ export default function WorkoutPage() {
           </div>
         </div>
       ) : null}
+      {info ? <ExerciseSheet ex={info} logs={logs as never} female={female} onClose={() => setInfo(null)} /> : null}
       {done && shareDone ? <ShareSheet card={done.card} onClose={() => setShareDone(false)} /> : null}
       {toast.node}
     </ClientShell>

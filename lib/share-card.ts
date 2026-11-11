@@ -152,8 +152,8 @@ function ring(ctx: CanvasRenderingContext2D, p: Pen, cx: number, cy: number, r: 
 const g = (v: number) => `${Math.round(v)}g`;
 
 // ── body map (front and back), muscles colored: main dark, helpers light ──
-type Shape = [number, number, number, number, number?]; // cx, cy, rx, ry, rotation
-const FRONT: Record<string, Shape[]> = {
+export type Shape = [number, number, number, number, number?]; // cx, cy, rx, ry, rotation
+export const FRONT: Record<string, Shape[]> = {
   frontdelt: [[63, 92, 13, 15, -0.3], [137, 92, 13, 15, 0.3]],
   sidedelt: [[54, 98, 8, 14, -0.2], [146, 98, 8, 14, 0.2]],
   chest: [[83, 112, 17, 13], [117, 112, 17, 13]],
@@ -165,7 +165,7 @@ const FRONT: Record<string, Shape[]> = {
   adductors: [[94, 245, 6, 22], [106, 245, 6, 22]],
   calves: [[83, 350, 10, 28], [117, 350, 10, 28]]
 };
-const BACK: Record<string, Shape[]> = {
+export const BACK: Record<string, Shape[]> = {
   upperback: [[100, 96, 32, 14]],
   reardelt: [[62, 95, 12, 13, -0.3], [138, 95, 12, 13, 0.3]],
   sidedelt: [[54, 98, 8, 14, -0.2], [146, 98, 8, 14, 0.2]],
