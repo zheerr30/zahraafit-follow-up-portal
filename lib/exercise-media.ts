@@ -24,6 +24,17 @@ export const EXERCISE_MEDIA: Record<string, ExerciseMedia> = {
       "كرري العدد المطلوب."
     ]
   },
+  hipthrustbb: {
+    file: "0057",
+    desc: "الهيب ثرست بالبار من أقوى تمارين المؤخرة. ظهرك العلوي على مقعد والبار على حوضك، وتقدرين ترفعين فيه أوزان عالية بمدى حركة كامل.",
+    steps: [
+      "اجلسي على الأرض وظهرك العلوي مسنود على مقعد، والبار فوق حوضك وعليه وسادة.",
+      "حطي رجليك على الأرض بعرض الحوض، وركبتك مثنية.",
+      "ادفعي من كعبك وارفعي حوضك لين يصير جسمك خط مستقيم من الركبة للكتف.",
+      "اعصري المؤخرة فوق.",
+      "نزلي حوضك بتحكم، وكرري العدد المطلوب."
+    ]
+  },
   lateral: {
     file: "0096",
     desc: "الرفرفة الجانبية أهم تمرين عزل للكتف الجانبي. ترفعين يدينك للجنب، وتوسع الكتف وتعطيه الشكل الدائري.",
@@ -37,6 +48,5 @@ export const EXERCISE_MEDIA: Record<string, ExerciseMedia> = {
   }
 };
 
-/** Barbell hip thrust (0057) is in the pack too; her generator has the machine and dumbbell versions, so it isn't linked yet. */
 export const mediaFor = (id: string) => EXERCISE_MEDIA[id] || null;
 export const mediaSrc = (m: ExerciseMedia, female: boolean) => `/exercises/${female && m.fileFemale ? m.fileFemale : m.file}`;
