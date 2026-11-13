@@ -452,7 +452,7 @@ export function FoodDiary({
                       <button key={f.key} type="button" className="opt" onClick={() => setSheet({ mode: "amount", slot: sheet.slot, food: f })}>
                         <span style={{ minWidth: 0 }}>
                           <span className="opt-t">{favOf(f) ? "⭐ " : ""}{f.name}</span>
-                          <span className="opt-s">{f.cal} سعرة {f.basis === "100g" ? "لكل ١٠٠ جم" : `لكل ${f.units[0].label}`}{f.hint ? ` · ${f.hint}` : ""}</span>
+                          <span className="opt-s">{f.cal} سعرة {f.basis === "100g" ? "لكل 100 غ" : `لكل ${f.units[0].label}`}{f.hint ? ` · ${f.hint}` : ""}</span>
                         </span>
                       </button>
                     ))}
@@ -589,7 +589,7 @@ function AmountPicker({ food, fav, onFav, onAdd, onBack }: { food: Pickable; fav
           <span className="chip" style={{ marginBottom: 10 }}>{unit.label}</span>
         )}
       </div>
-      {unit.label !== "جرام" && food.basis === "100g" ? <p className="note">{unit.label} ≈ {unit.g} جم</p> : null}
+      {unit.label !== "جرام" && food.basis === "100g" ? <p className="note">{unit.label} ≈ {unit.g} غ</p> : null}
       <div className="grid2" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
         {([["🔥", v.cal, "سعرة"], ["p", v.p, "بروتين"], ["c", v.c, "كارب"], ["f", v.f, "دهون"]] as [string, number, string][]).map(([em, val, l]) => (
           <div key={l} className="stat" style={{ padding: 10 }}>
@@ -665,7 +665,7 @@ function NewFood({ initialName, barcode, profileId, onSaved }: { initialName: st
           const row = { barcode, name: f.name.trim(), brand: null, cal: Number(f.cal), p: Number(f.p) || 0, c: Number(f.c) || 0, f: Number(f.f) || 0, serving_g: sg, serving_label: sg ? f.label.trim() || "حصة" : null, source: "label", added_by: profileId };
           const { error } = await supabase.from("barcode_products").insert(row);
           setBusy(false);
-          if (error) return setErr("ما انحفظ. تأكدي إن الأرقام لكل ١٠٠ جم معقولة.");
+          if (error) return setErr("ما انحفظ. تأكدي إن الأرقام لكل 100 غ معقولة.");
           return onSaved(fromBarcode(row as BarcodeProduct));
         }
         const { data, error } = await supabase
@@ -690,7 +690,7 @@ function NewFood({ initialName, barcode, profileId, onSaved }: { initialName: st
       </div>
       <div className="seg-tabs" role="group" aria-label="الأرقام لكل">
         <button type="button" aria-selected={f.basis === "serving"} onClick={() => setF({ ...f, basis: "serving" })}>لكل حصة / حبة</button>
-        <button type="button" aria-selected={f.basis === "100g"} onClick={() => setF({ ...f, basis: "100g" })}>لكل ١٠٠ جم</button>
+        <button type="button" aria-selected={f.basis === "100g"} onClick={() => setF({ ...f, basis: "100g" })}>لكل 100 غ</button>
       </div>
       <div className="grid2">
         <div className="field">

@@ -67,7 +67,7 @@ export default function StartPage() {
             </div>
             <div className="cal-macros">
               {([["p", done.p], ["c", done.c], ["f", done.f]] as ["p" | "c" | "f", number][]).map(([l, v]) => (
-                <div key={l}><span><MacLabel k={l} /></span><b>{v}g</b></div>
+                <div key={l}><span><MacLabel k={l} /></span><b>{v} غ</b></div>
               ))}
             </div>
             <p style={{ marginTop: 6 }}>🎯 {done.note}</p>

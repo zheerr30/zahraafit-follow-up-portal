@@ -14,21 +14,19 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#010B1F" },
-    { media: "(prefers-color-scheme: dark)", color: "#010B1F" }
+    { media: "(prefers-color-scheme: light)", color: "#F3F2EF" },
+    { media: "(prefers-color-scheme: dark)", color: "#16171A" }
   ]
 };
 
+const THEME_SCRIPT = `try{var t=localStorage.getItem("zf-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}`;
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap"
-        />
+        {/* Light or dark as chosen in «حسابي» (otherwise the phone's setting), before the first paint. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body>{children}</body>
     </html>

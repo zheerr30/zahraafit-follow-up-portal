@@ -34,17 +34,17 @@ export function CalorieDetails({ d, male }: { d: DayMicros | null; male: boolean
             <div className="cd-row">
               <span>الألياف</span>
               <b className="num">{Math.round(d.fib)} غ <small>من 25-35 غ</small></b>
-              {bar(d.fib, 25, "#7EE2A8")}
+              {bar(d.fib, 25, "#F2A27F")}
             </div>
             <div className="cd-row">
               <span>الصوديوم</span>
-              <b className="num" style={{ color: d.na > 2300 ? "#FF8A80" : undefined }}>{Math.round(d.na).toLocaleString("en-US")} ملغ <small>حد أعلى 2,300 ملغ</small></b>
-              {bar(d.na, 2300, d.na > 2300 ? "#FF6B5E" : "#9DB4D8")}
+              <b className="num" style={{ color: d.na > 2300 ? "#E8602C" : undefined }}>{Math.round(d.na).toLocaleString("en-US")} ملغ <small>حد أعلى 2,300 ملغ</small></b>
+              {bar(d.na, 2300, d.na > 2300 ? "#E8602C" : "#8FA0C4")}
             </div>
             <div className="cd-row">
               <span>البوتاسيوم</span>
               <b className="num">{Math.round(d.k).toLocaleString("en-US")} ملغ <small>من {kGoal.toLocaleString("en-US")} ملغ</small></b>
-              {bar(d.k, kGoal, "#B9A7F0")}
+              {bar(d.k, kGoal, "#8FA0C4")}
             </div>
             <div className="cd-row">
               <span>السكر</span>

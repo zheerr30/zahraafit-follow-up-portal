@@ -86,7 +86,7 @@ export function Calculator({ profileId }: { profileId: string }) {
             {([["p", res.p, "var(--protein)"], ["c", res.c, "var(--carb)"], ["f", res.f, "var(--fat)"]] as ["p" | "c" | "f", number, string][]).map(([l, v, c]) => (
               <div key={l} className="mtile" style={{ "--c": c, textAlign: "start" } as React.CSSProperties}>
                 <span><MacLabel k={l} /></span>
-                <b>{v}g</b>
+                <b>{v} غ</b>
               </div>
             ))}
           </div>

@@ -303,7 +303,7 @@ export default function WorkoutPage() {
                         </div>
                       </button>
                       {e.video ? (
-                        <a className="icon-btn" href={e.video} target="_blank" rel="noreferrer" aria-label={`فيديو ${e.name}`} style={{ color: "#E03A2F" }}>
+                        <a className="icon-btn" href={e.video} target="_blank" rel="noreferrer" aria-label={`فيديو ${e.name}`} style={{ color: "#E8602C" }}>
                           <PlayCircle />
                         </a>
                       ) : null}

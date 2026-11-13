@@ -93,7 +93,7 @@ function WeightChart({ steady, period, weeks }: { steady: Pt[]; period: Pt[]; we
         </g>
       ))}
       {steady.map((p) => <circle key={p.d} cx={x(ts(p.d))} cy={y(p.w)} r={3} fill="var(--clay)" opacity={0.28}><title>{`${short(ts(p.d))}: ${p.w}`}</title></circle>)}
-      {period.map((p) => <circle key={p.d} cx={x(ts(p.d))} cy={y(p.w)} r={4} fill="#E85D9A" opacity={0.85}><title>{`${short(ts(p.d))}: ${p.w} (أيام الدورة)`}</title></circle>)}
+      {period.map((p) => <circle key={p.d} cx={x(ts(p.d))} cy={y(p.w)} r={4} fill="#F2A27F" opacity={0.85}><title>{`${short(ts(p.d))}: ${p.w} (أيام الدورة)`}</title></circle>)}
       <defs>
         <linearGradient id="wfill" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0" stopColor="var(--clay)" stopOpacity=".22" />
@@ -111,6 +111,16 @@ function WeightChart({ steady, period, weeks }: { steady: Pt[]; period: Pt[]; we
 
 export default function ProgressPage() {
   const auth = useAuthGuard("client");
+  // «+» → «وزن اليوم» opens here with the weight box ready.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("weight") !== "1") return;
+    const t = setTimeout(() => {
+      const el = document.getElementById("w") as HTMLInputElement | null;
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      el?.focus();
+    }, 700);
+    return () => clearTimeout(t);
+  }, []);
   const cp = useClientPlans(auth.profile);
   const toast = useToast();
   const cal = useCalorieDays(cp.client?.id, cp.mealRow || null, 7);
@@ -260,7 +270,7 @@ export default function ProgressPage() {
         {weeks.length > 1 ? (
           <>
             <WeightChart steady={steady} period={period} weeks={weeks} />
-            <p className="note">الخط متوسط كل أسبوع، والنقاط الفاتحة أوزانك اليومية.{period.length ? " النقاط الوردية أيام الدورة، ما تدخل في الخط ولا في الفرق." : ""}</p>
+            <p className="note">الخط متوسط كل أسبوع، والنقاط الفاتحة أوزانك اليومية.{period.length ? " النقاط البرتقالية الفاتحة أيام الدورة، ما تدخل في الخط ولا في الفرق." : ""}</p>
           </>
         ) : (
           <p className="note">سجلي وزنك أسبوعين عشان يطلع لك الرسم.</p>

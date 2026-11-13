@@ -29,6 +29,7 @@ const ATTRS = ["placeholder", "aria-label", "title", "alt"];
 
 function fixNode(node: Node) {
   if (node.nodeType === Node.TEXT_NODE) {
+    if (node.parentElement?.closest(".emo")) return;
     const v = node.nodeValue || "";
     const n = genderText(v);
     if (n !== v) {
@@ -45,7 +46,7 @@ function fixNode(node: Node) {
   const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
   for (let t = walk.nextNode(); t; t = walk.nextNode()) {
     const p = t.parentElement;
-    if (p && (p.tagName === "TEXTAREA" || p.tagName === "SCRIPT" || p.tagName === "STYLE")) continue;
+    if (p && (p.tagName === "TEXTAREA" || p.tagName === "SCRIPT" || p.tagName === "STYLE" || p.closest(".emo"))) continue;
     const v = t.nodeValue || "";
     const n = genderText(v);
     if (n !== v) {

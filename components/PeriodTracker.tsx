@@ -9,7 +9,7 @@ import { daysText } from "@/components/CaloriesChart";
 import { todayKey } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 
-const PINK = "#D4537E";
+const PINK = "#F2A27F";
 const DAY = 864e5;
 const diffDays = (a: string, b: string) => Math.round((new Date(b + "T12:00:00").getTime() - new Date(a + "T12:00:00").getTime()) / DAY);
 const shortDate = (d: string) => new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "long" }).format(new Date(d + "T12:00:00"));

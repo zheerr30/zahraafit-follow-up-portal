@@ -68,7 +68,7 @@ export function cardSetup(card: ShareCard): { designs: Design[]; toggles: Toggle
 const W = 1080;
 const H = 1920;
 const CW = 960; // card width
-const FONT = '"IBM Plex Sans Arabic", system-ui, sans-serif';
+const FONT = "-apple-system, \"SF Arabic\", system-ui, sans-serif";
 const NAVY = "#010B1F";
 const CLAY = "#FA5A02";
 const BLUE = "#3B8BEB";
@@ -149,7 +149,7 @@ function ring(ctx: CanvasRenderingContext2D, p: Pen, cx: number, cy: number, r: 
   }
 }
 
-const g = (v: number) => `${Math.round(v)}g`;
+const g = (v: number) => `${Math.round(v)} غ`;
 
 // ── body map (front and back), muscles colored: main dark, helpers light ──
 export type Shape = [number, number, number, number, number?]; // cx, cy, rx, ry, rotation
@@ -389,7 +389,7 @@ export async function drawCard(card: ShareCard, o: Opts, shadow: boolean): Promi
     }
     const rows: [string, string][] = [];
     if (S.cal && card.avgCal) rows.push(["متوسط السعرات", String(card.avgCal)]);
-    if (S.macros && card.avgP) rows.push(["متوسط البروتين", `${card.avgP}g`]);
+    if (S.macros && card.avgP) rows.push(["متوسط البروتين", `${card.avgP} غ`]);
     if (card.workouts !== null) rows.push(["التمارين", String(card.workouts)]);
     if (S.weight && card.weight !== null) rows.push(["تغير الوزن", `${card.weight > 0 ? "+" : ""}${card.weight} كجم`]);
     rows.forEach(([l, v]) => {

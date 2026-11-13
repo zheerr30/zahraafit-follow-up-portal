@@ -102,7 +102,7 @@ export function CaloriesChart({ rows, target }: { rows: CalDay[] | null; target:
             {target ? <span className="small muted"> من هدف {target}</span> : null}
           </div>
           <span className="small" style={{ textAlign: "end", minHeight: 36 }}>
-            {s ? <><b>{short(s.d)}</b><br />{s.off ? "يوم أوف" : s.cal ? `${s.cal} سعرة · بروتين ${s.p}g` : "ما سجلتي"}</> : <span className="note">اضغطي على أي يوم</span>}
+            {s ? <><b>{short(s.d)}</b><br />{s.off ? "يوم أوف" : s.cal ? `${s.cal} سعرة · بروتين ${s.p} غ` : "ما سجلتي"}</> : <span className="note">اضغطي على أي يوم</span>}
           </span>
         </div>
         <svg viewBox={`0 0 ${W} ${H + 18}`} style={{ width: "100%", height: "auto", direction: "ltr", overflow: "visible" }} role="img"

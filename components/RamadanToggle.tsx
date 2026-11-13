@@ -50,7 +50,7 @@ export function RamadanSuggest({ profileId }: { profileId: string }) {
     <section className="offer-card" style={{ alignItems: "center" }}>
       <span aria-hidden="true" style={{ fontSize: 30 }}>🌙</span>
       <span style={{ minWidth: 0, flex: 1 }}>
-        <b>رمضان كريم! نشغل وضع رمضان؟</b>
+        <b>رمضان كريم، نشغل وضع رمضان؟</b>
         <span>وجباتك تصير فطور ووجبة بينية وسحور، وتذكير الماء بين المغرب والفجر.</span>
       </span>
       <button type="button" className="btn btn-p btn-sm" onClick={async () => { if (await save(profileId, ramadanUntil())) window.location.reload(); }}>شغليه</button>

@@ -112,6 +112,9 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
 
   useEffect(() => {
     load();
+    // «+» → water (or anything else) saved from outside this screen.
+    window.addEventListener("zf-data", load);
+    return () => window.removeEventListener("zf-data", load);
   }, [load]);
 
   if (!d) return null;
@@ -133,7 +136,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
   if (left !== null && left < -40) line = <>📊 زدتي <b>{-left}</b> سعرة عن هدفك اليوم. عادي يصير، بكرا يوم جديد 💪</>;
   else if (next && remaining.length === 1 && doneCount) line = <Link href="/app/food" className="cal-line-btn">💪 باقي وجبة وحدة: <b>{next.slot}</b> · {next.meal.name}</Link>;
   else if (next) line = <Link href="/app/food" className="cal-line-btn">{doneCount ? "👏 الوجبة الجاية" : "🍽️ ابدئي يومك بـ"}: <b>{next.slot}</b> · {next.meal.name}</Link>;
-  else if (plan && left !== null && left > 40) line = <Link href="/app/food" className="cal-line-btn">✅ خلصتي وجبات اليوم! باقي لك <b>{left}</b> سعرة مفتوحة، اختاري من «🍎 سناكات مقترحة»</Link>;
+  else if (plan && left !== null && left > 40) line = <Link href="/app/food" className="cal-line-btn">✅ خلصتي وجبات اليوم، باقي لك <b>{left}</b> سعرة مفتوحة، اختاري من «🍎 سناكات مقترحة»</Link>;
   else if (plan) line = <>✅ خلصتي وجبات اليوم وضبطتي هدفك 👏</>;
   else if (!eaten.cal) line = <Link href="/app/food" className="cal-line-btn">👆 سجلي أول شي أكلتيه اليوم</Link>;
   else if (left !== null) line = <>👍 باقي لك <b>{left}</b> سعرة اليوم.</>;
@@ -153,16 +156,16 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
   } else if (!acc.sub && acc.expired) {
     alert = <div className="alert-card warn"><b>⏳ انتهى اشتراكك</b><span>بياناتك وسجلك محفوظين. جددي عشان تفتح خطتك وتمارينك.</span><a className="btn btn-p btn-sm" href={STORE_URL} target="_blank" rel="noreferrer">جددي اشتراكك</a></div>;
   } else if (checkinDue) {
-    alert = <Link href="/app/checkin" className="alert-card"><b>📅 اليوم السبت! وقت تسجيلك الأسبوعي</b><span>سجلي وزنك وقياساتك وكيف كان أسبوعك.</span></Link>;
+    alert = <Link href="/app/checkin" className="alert-card"><b>📅 اليوم السبت، وقت تسجيلك الأسبوعي</b><span>سجلي وزنك وقياساتك وكيف كان أسبوعك.</span></Link>;
   } else if (!acc.sub && isSaturday && !(d.weight && d.weight.date >= addDays(today, -6))) {
-    alert = <Link href="/app/progress" className="alert-card"><b>📅 اليوم السبت! وقت وزنك الأسبوعي</b><span>سجلي وزنك وتابعي تغيره أسبوع بأسبوع.</span></Link>;
+    alert = <Link href="/app/progress" className="alert-card"><b>📅 اليوم السبت، وقت وزنك الأسبوعي</b><span>سجلي وزنك وتابعي تغيره أسبوع بأسبوع.</span></Link>;
   } else if (soonBox) {
     const dl = boxDaysLeft(soonBox, today);
     alert = <Link href="/app/food?boxes=1" className="alert-card"><b>🍱 {dl < 0 ? `علبة ${soonBox.name} انتهت مدتها` : `علبة ${soonBox.name} ${dl === 0 ? "كليها اليوم" : "كليها بكرة بالكثير"}`}</b><span>{dl < 0 ? "شيليها من الثلاجة، وسجلي الباقي أول بأول." : "اضغطي «أكلت علبة» وتنسجل بسعراتها."}</span></Link>;
   } else if (ramadanSuggest) {
     alert = (
       <div className="alert-card">
-        <b>🌙 رمضان كريم! نشغل وضع رمضان؟</b>
+        <b>🌙 رمضان كريم، نشغل وضع رمضان؟</b>
         <span>وجباتك تصير فطور ووجبة بينية وسحور، وتذكير الماء بين المغرب والفجر.</span>
         <button type="button" className="btn btn-p btn-sm" onClick={async () => {
           await supabase.from("reminder_prefs").upsert({ profile_id: profile.id, ramadan_until: ramadanUntil() }, { onConflict: "profile_id" });
@@ -193,7 +196,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
   const lastW = d.workouts[0];
   const nextWorkout = work ? work.days[lastW && lastW.plan_id === workRow?.id ? (lastW.day_index + 1) % work.days.length : 0]?.title : null;
   const workValue = !work ? null : trainedToday ? "✅ تمرنتي اليوم" : weekDays >= work.days.length ? "يوم راحة 😌" : nextWorkout || "—";
-  const workSub = !work ? "" : trainedToday ? "عافية عليك!" : weekDays >= work.days.length ? `خلصتي ${weekDays} تمارين هالأسبوع` : "تمرين اليوم";
+  const workSub = !work ? "" : trainedToday ? "عافية عليك" : weekDays >= work.days.length ? `خلصتي ${weekDays} تمارين هالأسبوع` : "تمرين اليوم";
   const cups = waterCups(d.weight?.kg);
   // A plan that arrived in the last 3 days (and she hasn't closed its strip).
   const newPlan = acc.sub && !readyHero
@@ -237,7 +240,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
       ) : (
         <>
           <section className="card gauges" aria-label="يومك بالأرقام">
-            <Gauge label="بروتين" value={eaten.p} goal={d.target?.p || null} unit="g" color="var(--navy)" />
+            <Gauge label="بروتين" value={eaten.p} goal={d.target?.p || null} unit="غ" color="var(--navy)" />
             <Gauge label="سعرات" value={eaten.cal} goal={d.target?.cal || null} color="var(--clay)" big />
             <Gauge label="ماء" value={d.water} goal={cups} unit="أكواب" color="var(--navy-soft)" />
           </section>

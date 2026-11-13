@@ -78,6 +78,13 @@ export const stripEmoji = (s: string) => (EMOJI.test(s) ? ((EMOJI.lastIndex = 0)
 export function toGender(s: string, g: Gender) {
   EMOJI.lastIndex = 0;
   let out = stripEmoji(/[ًّ٠-٩]/.test(s) ? s.replace(/[ًّ]/g, "").replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))) : s);
+  // Units in Arabic: غ، ملغ، مل، كجم.
+  if (/\d\s?(?:g|gm|mg|ml|kg|جرام|جم)(?![A-Za-z\u0621-\u064A])/.test(out))
+    out = out
+      .replace(/(\d)\s?mg(?![A-Za-z])/g, "$1 ملغ")
+      .replace(/(\d)\s?ml(?![A-Za-z])/g, "$1 مل")
+      .replace(/(\d)\s?kg(?![A-Za-z])/g, "$1 كجم")
+      .replace(/(\d)\s?(?:gm|g|جرام|جم)(?![A-Za-z\u0621-\u064A])/g, "$1 غ");
   if (g !== "male" || !/[ء-ي]/.test(out)) return out;
   for (const [a, b] of PHRASES) if (out.includes(a)) out = out.split(a).join(b);
   return out.replace(WORD_RE, (_m, pre: string, p: string | undefined, w: string) => pre + (p || "") + WORDS[w]);

@@ -282,7 +282,7 @@ export default function FoodPage() {
       return (
         <>
           <button type="button" className="cal-line-btn" onClick={() => { setFocusSnacks(true); setTab("diary"); }}>
-            ✅ خلصتي وجبات اليوم! باقي لك <b>{left}</b> سعرة مفتوحة، اختاري من «🍎 سناكات مقترحة»
+            ✅ خلصتي وجبات اليوم، باقي لك <b>{left}</b> سعرة مفتوحة، اختاري من «🍎 سناكات مقترحة»
           </button>
           {shareBtn}
         </>
@@ -329,9 +329,9 @@ export default function FoodPage() {
         {isOpen ? (
         <>
         <div className="mrow">
-          <div className="mtile" style={{ "--c": "var(--protein)" } as React.CSSProperties}><b>{Math.round(meal.p)}g</b><span><MacLabel k="p" /></span></div>
-          <div className="mtile" style={{ "--c": "var(--carb)" } as React.CSSProperties}><b>{Math.round(meal.c)}g</b><span><MacLabel k="c" /></span></div>
-          <div className="mtile" style={{ "--c": "var(--fat)" } as React.CSSProperties}><b>{Math.round(meal.f)}g</b><span><MacLabel k="f" /></span></div>
+          <div className="mtile" style={{ "--c": "var(--protein)" } as React.CSSProperties}><b>{Math.round(meal.p)} غ</b><span><MacLabel k="p" /></span></div>
+          <div className="mtile" style={{ "--c": "var(--carb)" } as React.CSSProperties}><b>{Math.round(meal.c)} غ</b><span><MacLabel k="c" /></span></div>
+          <div className="mtile" style={{ "--c": "var(--fat)" } as React.CSSProperties}><b>{Math.round(meal.f)} غ</b><span><MacLabel k="f" /></span></div>
         </div>
         <div className="ings">
           {meal.ingredients.map((ing) => {
@@ -381,7 +381,7 @@ export default function FoodPage() {
                 if (on) delete rates[meal.name];
                 else rates[meal.name] = v;
                 saveChoices({ ...choices, rates });
-                if (!on) toast.show(v === 1 ? "حلو! بتعرف المدربة إنها عجبتك" : "وصلت ملاحظتك، المدربة بتشوفها بالخطة الجاية");
+                if (!on) toast.show(v === 1 ? "حلو، بتعرف المدربة إنها عجبتك" : "وصلت ملاحظتك، المدربة بتشوفها بالخطة الجاية");
               }}>{em}</button>
             );
           })}
@@ -453,7 +453,7 @@ export default function FoodPage() {
 
           <button type="button" className="tip-card" style={{ width: "100%", textAlign: "start" }} onClick={() => { setTab("diary"); window.scrollTo(0, 0); }}>
             <span className="em" aria-hidden="true">🍔</span>
-            <span><b>أكلتي شي برا الخطة؟</b> عادي يصير! سجليه في <b>🔥 سعراتي</b> ونحسب لك سعراته.</span>
+            <span><b>أكلتي شي برا الخطة؟</b> عادي يصير، سجليه في <b>🔥 سعراتي</b> ونحسب لك سعراته.</span>
           </button>
 
           <div className="sec-title">

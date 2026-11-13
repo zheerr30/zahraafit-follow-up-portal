@@ -23,10 +23,10 @@ function dayKeys(n: number) {
 }
 
 function headline(s: Stats) {
-  if (s.mealPct !== null && s.mealPct >= 85) return "🌟 أسبوع بطل! التزامك يفرق، كملي كذا";
+  if (s.mealPct !== null && s.mealPct >= 85) return "🌟 أسبوع قوي، التزامك يفرق. كملي كذا";
   if (s.mealPct !== null && s.mealPct >= 65) return "👏 أسبوع حلو، شوي بس وتوصلين للقمة";
   if (s.days >= 4) return "💪 كل يوم تسجلين فيه خطوة، الأسبوع الجاي نرفع الالتزام";
-  return "🌱 بداية! سجلي أكلك وماك كل يوم وبتشوفين الفرق";
+  return "🌱 سجلي أكلك وماك كل يوم، وبتشوفين الفرق";
 }
 
 /** "Your week" on the home screen: last 7 days at a glance. Hidden until she has logged at least two days. */
@@ -130,7 +130,7 @@ export function WeekSummary({ clientId, plans }: { clientId: string; plans: Plan
         {s.avgCal || s.avgP ? (
           <div className="wk2-pair">
             {s.avgCal ? <div><small>متوسط السعرات</small><b className="num">{s.avgCal}</b><small>من {loggedDaysText(s.committed)}</small></div> : null}
-            {s.avgP ? <div><small>متوسط البروتين</small><b className="num">{s.avgP}g</b><small>من {loggedDaysText(s.committed)}</small></div> : null}
+            {s.avgP ? <div><small>متوسط البروتين</small><b className="num">{s.avgP} غ</b><small>من {loggedDaysText(s.committed)}</small></div> : null}
           </div>
         ) : null}
         {s.wAllPeriod ? (

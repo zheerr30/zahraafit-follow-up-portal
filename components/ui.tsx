@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AppStatus } from "@/components/AppStatus";
+import { QuickAdd } from "@/components/QuickAdd";
 import { FirstRun } from "@/components/FirstRun";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
@@ -128,6 +129,7 @@ export function ClientShell({ title, sub, action, children }: { title: ReactNode
           ))}
         </div>
       </nav>
+      <QuickAdd />
     </div>
   );
 }

@@ -2,8 +2,8 @@
 
 import { BACK, FRONT, type Shape } from "@/lib/share-card";
 
-const MAIN = "#E2553A";
-const HELP = "#5B8DEF";
+const MAIN = "#E8602C";
+const HELP = "#F2A27F";
 
 /** Front and back body: main muscles in red, helper muscles in blue (like the exercise apps). */
 function Body({ map, primary, secondary, label }: { map: Record<string, Shape[]>; primary: Set<string>; secondary: Set<string>; label: string }) {

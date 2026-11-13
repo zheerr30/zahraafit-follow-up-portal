@@ -70,7 +70,7 @@ export function IosGuide({ onClose }: { onClose: () => void }) {
         <ol className="ios-steps">
           <li>
             <span className="ios-shot" aria-hidden="true">
-              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12" /><path d="M8 7l4-4 4 4" /><path d="M6 11v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-8" /></svg>
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#050F2C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12" /><path d="M8 7l4-4 4 4" /><path d="M6 11v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-8" /></svg>
             </span>
             <span>اضغطي زر <b>المشاركة</b> تحت في سفاري (المربع اللي طالع منه سهم).</span>
           </li>
@@ -82,7 +82,7 @@ export function IosGuide({ onClose }: { onClose: () => void }) {
             <span>انزلي واختاري <b>«إضافة إلى الشاشة الرئيسية»</b>.</span>
           </li>
           <li>
-            <span className="ios-shot" aria-hidden="true"><b style={{ color: "#007AFF", fontSize: 17 }}>إضافة</b></span>
+            <span className="ios-shot" aria-hidden="true"><b style={{ color: "#050F2C", fontSize: 17 }}>إضافة</b></span>
             <span>اضغطي <b>«إضافة»</b> فوق، وبيطلع لك شعار ZahraaFit مع تطبيقاتك.</span>
           </li>
         </ol>

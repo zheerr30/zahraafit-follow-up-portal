@@ -6,6 +6,7 @@ import { LogOut } from "lucide-react";
 import { Brand, ClientShell, Loading, useToast } from "@/components/ui";
 import { Reminders } from "@/components/Reminders";
 import { RamadanToggle } from "@/components/RamadanToggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { HideNumbersToggle } from "@/components/HideNumbersToggle";
 import { DeleteAccount, LegalLinks, MyDetails, ReportProblem } from "@/components/AccountExtras";
 import { formatDate } from "@/lib/format";
@@ -103,6 +104,7 @@ export default function AccountPage() {
       <Reminders profileId={p.id} mealsPerDay={cp.meal?.days[0]?.meals.length || 3} subscriber={accountOf(p).sub} />
 
       {cp.client ? <OffDays clientId={cp.client.id} /> : null}
+      <ThemeToggle />
       <RamadanToggle profileId={p.id} />
       <HideNumbersToggle initial={Boolean(p.hide_numbers)} />
 

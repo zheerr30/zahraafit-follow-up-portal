@@ -28,7 +28,7 @@ export function CalorieCard({ totals, target, header, footer, line, details }: {
           <svg viewBox="0 0 120 120" className="cal-ring" role="img" aria-label={label} style={{ direction: "ltr" }}>
             <circle cx="60" cy="60" r={R} fill="none" stroke="rgba(255,255,255,.14)" strokeWidth="10" />
             {fill > 0 ? (
-              <circle cx="60" cy="60" r={R} fill="none" stroke={left >= 0 ? "var(--clay)" : "#FF8A65"} strokeWidth="10" strokeLinecap="round"
+              <circle cx="60" cy="60" r={R} fill="none" stroke={left >= 0 ? "var(--clay)" : "#E8602C"} strokeWidth="10" strokeLinecap="round"
                 strokeDasharray={`${C * fill} ${C}`} transform="rotate(-90 60 60)" />
             ) : null}
             <text x="60" y="58" textAnchor="middle" fontSize="26" fontWeight="700" fill="#fff">{target ? (left >= 0 ? left : `+${-left}`) : eaten}</text>
@@ -46,7 +46,7 @@ export function CalorieCard({ totals, target, header, footer, line, details }: {
                 return (
                   <div key={l}>
                     <span><MacLabel k={l} /></span>
-                    <b style={{ color: `var(--${l === "p" ? "protein" : l === "c" ? "carb" : "fat"})` }}>{t ? (rest >= 0 ? <>باقي {rest}g</> : <>زيادة {-rest}g</>) : <>{Math.round(v)}g</>}</b>
+                    <b style={{ color: `var(--${l === "p" ? "protein" : l === "c" ? "carb" : "fat"})` }}>{t ? (rest >= 0 ? <>باقي {rest} غ</> : <>زيادة {-rest} غ</>) : <>{Math.round(v)} غ</>}</b>
                     {t ? <i aria-hidden="true"><i style={{ width: `${Math.min(100, (v / t) * 100)}%`, background: `var(--${l === "p" ? "protein" : l === "c" ? "carb" : "fat"})` }} /></i> : null}
                   </div>
                 );

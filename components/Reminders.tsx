@@ -56,7 +56,7 @@ export function Reminders({ profileId, mealsPerDay, subscriber = true }: { profi
       const e = await turnOnPush(profileId);
       if (e) setErr(e);
       else {
-        await save(prefs!, "🔔 تم! التذكيرات شغالة على جوالك");
+        await save(prefs!, "🔔 تم، التذكيرات شغالة على جوالك");
         setState("on");
       }
     } catch {
