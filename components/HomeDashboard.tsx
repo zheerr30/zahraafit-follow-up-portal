@@ -192,6 +192,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
   const lastW = d.workouts[0];
   const cups = waterCups(d.weight?.kg);
   const hide = Boolean(profile.hide_numbers);
+  const restDay = Boolean(work && weekDays >= work.days.length);
   const lastNote = d.followup?.coach_notes || null;
   const todayWork = work ? work.days[lastW && lastW.plan_id === workRow?.id ? (trainedToday ? lastW.day_index : (lastW.day_index + 1) % work.days.length) : 0] || null : null;
   const workMinutes = todayWork ? Math.max(5, Math.round(todayWork.exercises.reduce((t, e) => t + e.sets * (40 + restSeconds(e.rest)), 0) / 60 / 5) * 5) : 0;
@@ -223,14 +224,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
           act: () => { try { localStorage.setItem(`zf-newplan-${newPlan.id}`, "1"); } catch {} } }} onClose={() => { try { localStorage.setItem(`zf-newplan-${newPlan.id}`, "1"); } catch {} setPlanGone(true); }} hidden={planGone} />
       ) : null}
 
-      {readyHero || (acc.sub && work && !plan && todayWork ? (
-        <Link href="/app/workout" className="work-hero">
-          <span className="wh-kicker">{trainedToday ? "تمرنتي اليوم، عافية عليك" : "تمرين اليوم"}</span>
-          <b className="wh-title">{muscleTitle(todayWork.title)}</b>
-          <span className="wh-meta"><span className="num">{todayWork.exercises.length}</span> تمارين · <span className="num">{todayWork.exercises.reduce((t, e) => t + e.sets, 0)}</span> مجموعة · <span className="num">{workMinutes}</span> دقيقة</span>
-          <span className="btn btn-p wh-go">{trainedToday ? "شوفي جدولك" : "ابدئي التمرين"}</span>
-        </Link>
-      ) : <PlateCard eaten={eaten} target={d.target} off={isOff(d.off, today)} hide={hide} free={!acc.sub} />)}
+      {readyHero || <PlateCard eaten={eaten} target={d.target} off={isOff(d.off, today)} hide={hide} free={!acc.sub || !plan} />}
 
       <DaySummaryCard profileId={profile.id} today={today} />
 
@@ -273,14 +267,21 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
           <button type="button" className="d-plus" aria-label={`أضيفي كوب ماء، شربتي ${d.water} من ${cups}`} onClick={() => addWater(1)}><Plus size={20} /></button>
         </div>
         {work && todayWork ? (
-          <Link href="/app/workout" className="d-row">
-            <span className="emo" aria-hidden="true">🏋️</span>
-            <span className="d-mid">
-              <b className="trunc">{trainedToday ? "تمرنتي اليوم" : muscleTitle(todayWork.title)}</b>
-              <small>{trainedToday ? "عافية عليك" : <><span className="num">{todayWork.exercises.length}</span> تمارين · <span className="num">{workMinutes}</span> دقيقة</>}</small>
-            </span>
-            <span className="d-end"><ChevronLeft size={16} /></span>
-          </Link>
+          <div className="d-row">
+            <Link href="/app/workout" className="d-link">
+              <span className="emo" aria-hidden="true">🏋️</span>
+              <span className="d-mid">
+                {trainedToday ? (
+                  <><b>تمرنتي اليوم</b><small>عافية عليك</small></>
+                ) : restDay ? (
+                  <><b>يوم راحة</b><small>خلصتي تمارين هالأسبوع</small></>
+                ) : (
+                  <><b className="trunc">{muscleTitle(todayWork.title)}</b><small><span className="num">{todayWork.exercises.length}</span> تمارين · <span className="num">{workMinutes}</span> دقيقة</small></>
+                )}
+              </span>
+            </Link>
+            {!trainedToday && !restDay ? <Link href="/app/workout?start=1" className="btn btn-p btn-sm d-act">ابدئي</Link> : null}
+          </div>
         ) : null}
         <Link href="/app/progress" className="d-row">
           <span className="emo" aria-hidden="true">🔥</span>

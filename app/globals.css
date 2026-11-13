@@ -1348,3 +1348,5 @@ svg.lucide { stroke-width: 1.8; }
 .plan-msg { background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--r-lg); padding: 14px 16px; font-size: 15px; line-height: 1.75; white-space: pre-line; color: var(--ink); }
 /* room under the last card: tab bar 62 + 14 + safe area + 24 */
 .screen { padding-bottom: calc(62px + 14px + env(safe-area-inset-bottom, 0px) + 24px); }
+/* 42: Zahraa's message shows in full on home */
+.coach-card2 p { display: block; -webkit-line-clamp: unset; overflow: visible; }

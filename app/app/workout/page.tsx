@@ -39,6 +39,11 @@ export default function WorkoutPage() {
   const [info, setInfo] = useState<Exercise | null>(null);
   const female = auth.profile?.gender !== "male";
   const overlayRef = useRef<HTMLDivElement>(null);
+  // «ابدئي» from home: /app/workout?start=1 opens today's workout right away.
+  const autoStart = useRef(false);
+  useEffect(() => {
+    autoStart.current = new URLSearchParams(window.location.search).get("start") === "1";
+  }, []);
 
   const plan = cp.workout;
   const row = cp.workoutRow;
@@ -130,6 +135,11 @@ export default function WorkoutPage() {
     return null;
   };
   const pdf = cp.pdfs.find((f) => /رياضي/.test(f.title)) || cp.pdfs.find((f) => f.kind === "workout");
+
+  if (autoStart.current && !session) {
+    autoStart.current = false;
+    setTimeout(() => start(nextIdx), 0);
+  }
 
   function start(i: number) {
     const d = plan!.days[i];
