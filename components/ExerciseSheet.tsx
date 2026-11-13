@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { PlayCircle, X } from "lucide-react";
 import { MuscleMap } from "@/components/MuscleMap";
 import { InlineVideo } from "@/components/VideoSheet";
 import { mediaFor, mediaSrc } from "@/lib/exercise-media";
 import { formatDate } from "@/lib/format";
-import type { Exercise } from "@/lib/plan-data";
+import { muscleImage, type Exercise } from "@/lib/plan-data";
 import { SECONDARY } from "@/lib/share-card";
 
 type Log = { id: string; created_at: string; items: { id: string; name: string; sets: { w: number; r: number }[] }[] };
@@ -14,6 +14,7 @@ type Log = { id: string; created_at: string; items: { id: string; name: string; 
 /** Tap an exercise: animation, muscles, steps (about), every time she did it (history), and her best weight over time (progress). */
 export function ExerciseSheet({ ex, logs, female, onClose }: { ex: Exercise; logs: Log[]; female: boolean; onClose: () => void }) {
   const [tab, setTab] = useState<"about" | "log" | "progress">("about");
+  const [yt, setYt] = useState(false);
   const media = mediaFor(ex.id);
   const primary = ex.primary?.length ? ex.primary : ex.muscle ? [ex.muscle] : [];
   const secondary = ex.secondary?.length ? ex.secondary : SECONDARY[ex.muscle] || [];
@@ -44,8 +45,17 @@ export function ExerciseSheet({ ex, logs, female, onClose }: { ex: Exercise; log
           <>
             {media ? (
               <video className="ex-video" src={`${mediaSrc(media, female)}.mp4`} poster={`${mediaSrc(media, female)}.jpg`} autoPlay muted loop playsInline aria-label={`طريقة أداء ${ex.name}`} />
+            ) : (
+              <div className="ex-video ex-video-soon">
+                {muscleImage(ex.muscle) ? <img src={muscleImage(ex.muscle)!} alt="" /> : null}
+                <span>فيديو الأداء بينضاف هنا قريب</span>
+              </div>
+            )}
+            {ex.video ? (
+              yt ? <InlineVideo url={ex.video} title={ex.name} /> : (
+                <button type="button" className="btn btn-s btn-block yt-extra" onClick={() => setYt(true)}><PlayCircle size={18} />شاهدي الفيديو في يوتيوب</button>
+              )
             ) : null}
-            {ex.video ? (media ? <details className="ex-more-video"><summary>فيديو الشرح</summary><InlineVideo url={ex.video} title={ex.name} /></details> : <InlineVideo url={ex.video} title={ex.name} />) : null}
             {media?.desc ? <p className="small" style={{ margin: 0, lineHeight: 1.8 }}>{media.desc}</p> : null}
             <b className="ex-h">العضلات المستهدفة</b>
             <MuscleMap primary={primary} secondary={secondary} />

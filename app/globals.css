@@ -1375,3 +1375,11 @@ svg.lucide { stroke-width: 1.8; }
 .set-ctrl { display: flex; gap: 8px; margin-top: 10px; }
 .set-ctrl .btn { flex: 1; min-height: 38px; }
 body:has(.overlay) .fab { display: none; }
+/* the exercise sheet: our own performance video first; YouTube only as an extra */
+.ex-video-soon { position: relative; display: grid; place-items: center; background: #fff; overflow: hidden; }
+.ex-video-soon img { width: 70%; height: 70%; object-fit: contain; }
+.ex-video-soon span { position: absolute; bottom: 12px; left: 12px; right: 12px; text-align: center; font-size: 13px; font-weight: 600; color: #050F2C; background: rgba(255, 255, 255, .85); border-radius: 999px; padding: 6px 10px; }
+.yt-extra { color: var(--ink-2); font-weight: 600; }
+.ex-sheet { z-index: 30; }
+.ex-video { flex: none; }
+.ex-video-soon { height: auto; min-height: 240px; aspect-ratio: 1; }

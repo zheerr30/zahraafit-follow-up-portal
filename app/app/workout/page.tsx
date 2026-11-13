@@ -280,11 +280,9 @@ export default function WorkoutPage() {
                   <div><b>{e.sets}</b><span>جولات</span></div>
                   <div><b>{e.reps}</b><span>عدة</span></div>
                 </div>
-                {e.video ? (
-                  <button type="button" className="yt" onClick={() => setVid({ url: e.video, title: e.name })} aria-label={`فيديو ${e.name}`}>
-                    <Play />
-                  </button>
-                ) : null}
+                <button type="button" className="yt" onClick={() => setInfo(e)} aria-label={`طريقة أداء ${e.name}`}>
+                  <Play />
+                </button>
               </div>
             );
           })}
@@ -336,11 +334,9 @@ export default function WorkoutPage() {
                           <span className="small muted">{e.sets} جولات × {e.reps} · راحة {e.rest}</span>
                         </div>
                       </button>
-                      {e.video ? (
-                        <button type="button" className="icon-btn" onClick={() => setVid({ url: e.video, title: e.name })} aria-label={`فيديو ${e.name}`} style={{ color: "#E8602C" }}>
-                          <PlayCircle />
-                        </button>
-                      ) : null}
+                      <button type="button" className="icon-btn" onClick={() => setInfo(e)} aria-label={`طريقة أداء ${e.name}`} style={{ color: "#E8602C" }}>
+                        <PlayCircle />
+                      </button>
                     </div>
                     <div className="exc-b">
                       {e.tip ? <div className="hint"><Info />{e.tip}</div> : null}
@@ -356,7 +352,7 @@ export default function WorkoutPage() {
                       {e.alt ? (
                         <div className="note">
                           ما تقدرين عليه؟ بديله: <b>{e.alt.name}</b>
-                          {e.alt.video ? <> · <button type="button" className="link" style={{ minHeight: 0, fontSize: 12.5 }} onClick={() => setVid({ url: e.alt!.video, title: e.alt!.name })}>فيديو</button></> : null}
+                          {e.alt.video ? <> · <button type="button" className="link" style={{ minHeight: 0, fontSize: 12.5 }} onClick={() => setVid({ url: e.alt!.video, title: e.alt!.name })}>فيديو يوتيوب</button></> : null}
                         </div>
                       ) : null}
                       <div className="sets">
