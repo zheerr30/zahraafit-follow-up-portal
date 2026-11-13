@@ -41,7 +41,7 @@ function slice(a: number, b: number, r1: number, r2: number) {
 }
 
 const PARTS = [
-  { k: "p" as const, label: "بروتين", from: "#C9D2E6", to: "#8FA0C4", dot: "var(--protein-on-navy, #8FA0C4)" },
+  { k: "p" as const, label: "بروتين", from: "var(--plate-p1)", to: "var(--plate-p2)", dot: "var(--plate-p2)" },
   { k: "c" as const, label: "كارب", from: "#F28B5C", to: "#D2501F", dot: "#E8602C" },
   { k: "f" as const, label: "دهون", from: "#F7BFA3", to: "#EE9468", dot: "#F2A27F" }
 ];
@@ -78,14 +78,14 @@ export function PlateCard({ eaten, target, off, hide, free }: { eaten: Macros; t
             </radialGradient>
             {PARTS.map((x) => (
               <radialGradient key={x.k} id={`pl-${x.k}`} gradientUnits="userSpaceOnUse" cx={C} cy={C} r={R_OUT}>
-                <stop offset="45%" stopColor={x.from} />
-                <stop offset="100%" stopColor={x.to} />
+                <stop offset="45%" style={{ stopColor: x.from }} />
+                <stop offset="100%" style={{ stopColor: x.to }} />
               </radialGradient>
             ))}
           </defs>
           <circle cx={C} cy={C} r={118} fill="url(#pl-glow)" style={{ opacity: off ? 0 : 0.15 + overall * 0.55, transition: "opacity .6s cubic-bezier(.2,.8,.2,1)" }} />
-          <circle cx={C} cy={C} r={108} fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.12)" strokeWidth={1.5} />
-          <circle cx={C} cy={C} r={95} fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.07)" strokeWidth={1} />
+          <circle cx={C} cy={C} r={108} style={{ fill: "var(--plate-rim)", stroke: "var(--plate-rim-line)" }} strokeWidth={1.5} />
+          <circle cx={C} cy={C} r={95} style={{ fill: "var(--plate-dish)", stroke: "var(--plate-rim-line)" }} strokeWidth={1} />
           {PARTS.map((x) => {
             const span = share[x.k] * 360;
             const a = at + GAP / 2, b = at + span - GAP / 2;

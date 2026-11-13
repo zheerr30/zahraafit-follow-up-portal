@@ -1082,28 +1082,28 @@ button:active:not(:disabled), a.btn:active, a.card:active, .d-row:active, .list-
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-  --bg: #16171A;
-  --surface: #232529;
-  --sunken: #33363C;
-  --surface-2: #33363C;
-  --ink: #F2F2F2;
-  --ink-2: #C7C9CF;
-  --ink-3: #8E8E93;
-  --line: rgba(255, 255, 255, .07);
-  --line-2: rgba(255, 255, 255, .12);
+  --bg: #050B1E;
+  --surface: #0D1631;
+  --sunken: #16203F;
+  --surface-2: #16203F;
+  --ink: #F2F3F7;
+  --ink-2: #C3C8D6;
+  --ink-3: #8C93A8;
+  --line: rgba(255, 255, 255, .06);
+  --line-2: rgba(255, 255, 255, .10);
   --track: rgba(255, 255, 255, .08);
   --card-border: rgba(255, 255, 255, .06);
-  --navy: #8FA0C4;
-  --navy-2: #A9B6D2;
-  --navy-fill: #8FA0C4;
-  --on-fill: #16171A;
-  --navy-soft: #8FA0C4;
+  --navy: #9FB0D6;
+  --navy-2: #B7C4E2;
+  --navy-fill: #9FB0D6;
+  --on-fill: #050B1E;
+  --navy-soft: #9FB0D6;
   --clay-tint: rgba(232, 96, 44, .16);
-  --pill: rgba(255, 255, 255, .07);
-  --glass: rgba(22, 23, 26, .82);
-  --nav-glass: rgba(35, 37, 41, .75);
-  --green-tint: rgba(255, 255, 255, .06);
-  --blue-tint: rgba(255, 255, 255, .06);
+  --pill: #16203F;
+  --glass: rgba(5, 11, 30, .82);
+  --nav-glass: rgba(13, 22, 49, .85);
+  --green-tint: rgba(255, 255, 255, .05);
+  --blue-tint: rgba(255, 255, 255, .05);
   --amber-tint: rgba(232, 96, 44, .16);
   --red-tint: rgba(194, 58, 48, .18);
   --ring: rgba(255, 255, 255, .08);
@@ -1111,28 +1111,28 @@ button:active:not(:disabled), a.btn:active, a.card:active, .d-row:active, .list-
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #16171A;
-  --surface: #232529;
-  --sunken: #33363C;
-  --surface-2: #33363C;
-  --ink: #F2F2F2;
-  --ink-2: #C7C9CF;
-  --ink-3: #8E8E93;
-  --line: rgba(255, 255, 255, .07);
-  --line-2: rgba(255, 255, 255, .12);
+  --bg: #050B1E;
+  --surface: #0D1631;
+  --sunken: #16203F;
+  --surface-2: #16203F;
+  --ink: #F2F3F7;
+  --ink-2: #C3C8D6;
+  --ink-3: #8C93A8;
+  --line: rgba(255, 255, 255, .06);
+  --line-2: rgba(255, 255, 255, .10);
   --track: rgba(255, 255, 255, .08);
   --card-border: rgba(255, 255, 255, .06);
-  --navy: #8FA0C4;
-  --navy-2: #A9B6D2;
-  --navy-fill: #8FA0C4;
-  --on-fill: #16171A;
-  --navy-soft: #8FA0C4;
+  --navy: #9FB0D6;
+  --navy-2: #B7C4E2;
+  --navy-fill: #9FB0D6;
+  --on-fill: #050B1E;
+  --navy-soft: #9FB0D6;
   --clay-tint: rgba(232, 96, 44, .16);
-  --pill: rgba(255, 255, 255, .07);
-  --glass: rgba(22, 23, 26, .82);
-  --nav-glass: rgba(35, 37, 41, .75);
-  --green-tint: rgba(255, 255, 255, .06);
-  --blue-tint: rgba(255, 255, 255, .06);
+  --pill: #16203F;
+  --glass: rgba(5, 11, 30, .82);
+  --nav-glass: rgba(13, 22, 49, .85);
+  --green-tint: rgba(255, 255, 255, .05);
+  --blue-tint: rgba(255, 255, 255, .05);
   --amber-tint: rgba(232, 96, 44, .16);
   --red-tint: rgba(194, 58, 48, .18);
   --ring: rgba(255, 255, 255, .08);
@@ -1350,3 +1350,12 @@ svg.lucide { stroke-width: 1.8; }
 .screen { padding-bottom: calc(62px + 14px + env(safe-area-inset-bottom, 0px) + 24px); }
 /* 42: Zahraa's message shows in full on home */
 .coach-card2 p { display: block; -webkit-line-clamp: unset; overflow: visible; }
+
+/* 43: dark mode in navy. The plate card is a normal card there; the orange glow stays behind the plate only. */
+:root { --plate-rim: rgba(255, 255, 255, .05); --plate-rim-line: rgba(255, 255, 255, .12); --plate-dish: rgba(255, 255, 255, .04); --plate-p1: #C9D2E6; --plate-p2: #8FA0C4; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --plate-rim: #16203F; --plate-rim-line: rgba(255, 255, 255, .06); --plate-dish: #0A1229; --plate-p1: #C3CEE8; --plate-p2: #9FB0D6; }
+  :root:not([data-theme="light"]) .plate-card { background: var(--surface); border: 1px solid var(--card-border); }
+}
+:root[data-theme="dark"] { --plate-rim: #16203F; --plate-rim-line: rgba(255, 255, 255, .06); --plate-dish: #0A1229; --plate-p1: #C3CEE8; --plate-p2: #9FB0D6; }
+:root[data-theme="dark"] .plate-card { background: var(--surface); border: 1px solid var(--card-border); }
