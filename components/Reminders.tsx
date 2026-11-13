@@ -6,7 +6,14 @@ import { useToast } from "@/components/ui";
 import { pushState, turnOffPush, turnOnPush, type PushState } from "@/lib/push";
 import { supabase } from "@/lib/supabase";
 
-type Prefs = { meal_times: string[]; water: boolean; workout_time: string | null; saturday?: boolean };
+type Prefs = { meal_times: string[]; water: boolean; workout_time: string | null; saturday?: boolean; day_summary?: boolean; day_summary_time?: string };
+
+/** 6 pm to 11:30 pm, every half hour (Riyadh time). */
+const SUMMARY_TIMES = Array.from({ length: 12 }, (_, i) => `${String(18 + Math.floor(i / 2))}:${i % 2 ? "30" : "00"}`);
+const timeLabel = (t: string) => {
+  const [h, m] = t.split(":").map(Number);
+  return `${h > 12 ? h - 12 : h}:${String(m).padStart(2, "0")} ${h >= 12 ? "مساء" : "صباحا"}`;
+};
 
 const DEFAULT_TIMES: Record<number, string[]> = {
   1: ["14:00"],
@@ -36,6 +43,8 @@ export function Reminders({ profileId, mealsPerDay, subscriber = true }: { profi
     setPrefs(next);
     const clean: Prefs = { ...next, meal_times: Array.from(new Set(next.meal_times.filter(Boolean))).sort() };
     if (clean.saturday === undefined) delete clean.saturday;
+    if (clean.day_summary === undefined) delete clean.day_summary;
+    if (clean.day_summary_time === undefined) delete clean.day_summary_time;
     const { error } = await supabase.from("reminder_prefs").upsert({ profile_id: profileId, ...clean }, { onConflict: "profile_id" });
     toast.show(error ? "ما انحفظ. تأكدي من الاتصال." : msg);
   }
@@ -83,6 +92,23 @@ export function Reminders({ profileId, mealsPerDay, subscriber = true }: { profi
         </>
       ) : null}
       {err ? <p className="alert err">{err}</p> : null}
+
+      <div className="stack" style={{ gap: 8, borderTop: "1px solid var(--line)", paddingTop: 12 }}>
+        <label className="row between" style={{ cursor: "pointer" }}>
+          <span>ملخص نهاية اليوم <span className="note">(وش سويتي اليوم، ونصيحة لبكرا)</span></span>
+          <input type="checkbox" checked={prefs.day_summary !== false} onChange={() => save({ ...prefs, day_summary: prefs.day_summary === false, day_summary_time: prefs.day_summary_time || "21:00" })} style={{ width: 22, height: 22, accentColor: "var(--clay)" }} />
+        </label>
+        {prefs.day_summary !== false ? (
+          <div className="row between">
+            <span>وقت الملخص</span>
+            <select className="inp num" aria-label="وقت ملخص نهاية اليوم" value={prefs.day_summary_time || "21:00"} style={{ width: 150, minHeight: 40 }}
+              onChange={(e) => save({ ...prefs, day_summary: true, day_summary_time: e.target.value })}>
+              {SUMMARY_TIMES.map((t) => <option key={t} value={t}>{timeLabel(t)}</option>)}
+            </select>
+          </div>
+        ) : null}
+        {state !== "on" && prefs.day_summary !== false ? <p className="note">يطلع لك الملخص في الرئيسية. ولو تبينه يوصلك إشعار، شغلي التذكيرات فوق.</p> : null}
+      </div>
 
       {state === "on" ? (
         <>

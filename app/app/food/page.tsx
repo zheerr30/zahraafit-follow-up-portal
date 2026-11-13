@@ -22,6 +22,7 @@ import { planMealFor, resolve, tickedMeals, type MealRef } from "@/lib/meal-reso
 import { ingredientText, todayKey, waterCups, type Meal, type MealPlanData } from "@/lib/plan-data";
 import { saveRow } from "@/lib/offline";
 import { supabase } from "@/lib/supabase";
+import { DayStatsSync } from "@/components/DaySummary";
 import { useAuthGuard } from "@/lib/use-auth";
 import { useClientPlans } from "@/lib/use-client";
 
@@ -441,6 +442,7 @@ export default function FoodPage() {
             line={smartLine(eatenToday.cal)}
             details={showDetails && cp.client ? <DayDetails clientId={cp.client.id} date={today} meals={ticked.map((x) => x.meal)} male={auth.profile.gender === "male"} refresh={Math.round(todayFood.cal)} /> : undefined}
           />
+          {cp.client ? <DayStatsSync clientId={cp.client.id} day={today} n={{ cal: eatenToday.cal, p: eatenToday.p, c: eatenToday.c, f: eatenToday.f, target_cal: target?.cal || null, target_p: target?.p || null, water: log.water, water_goal: cups, meals_done: eatenCount, meals_total: todayMeals.length }} /> : null}
 
           <div className="tip-card">
             <span className="em" aria-hidden="true">🔁</span>

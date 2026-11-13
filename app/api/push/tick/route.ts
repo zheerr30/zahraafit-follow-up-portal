@@ -1,12 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 import webpush from "web-push";
+import { runDaySummaries } from "@/lib/day-summary-server";
 
 // Called every 10 minutes by the database (pg_cron → push_ping) with the shared
 // secret, and right away after a subscriber asks for a test. Sends whatever
-// reminders are due. Without the right secret the database returns nothing.
+// reminders are due, after making the end-of-day summaries whose time has come
+// (their notifications join the queue). Without the right secret the database returns nothing.
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 type Due = { endpoint: string; p256dh: string; auth: string; title: string; body: string; url: string };
 
@@ -30,6 +33,9 @@ export async function POST(req: Request) {
     priv = (again as { private: string } | null)?.private || null;
     if (!pub || !priv) return Response.json({ ok: false }, { status: 500 });
   }
+
+  // Summaries first, so their notifications go out in this same run.
+  await runDaySummaries(db, secret).catch(() => 0);
 
   const { data: due, error } = await db.rpc("push_due", { p_secret: secret });
   if (error) return Response.json({ ok: false }, { status: 500 });

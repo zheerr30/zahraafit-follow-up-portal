@@ -65,7 +65,8 @@ export function IosGuide({ onClose }: { onClose: () => void }) {
       <button type="button" className="fr-skip" onClick={onClose}>لاحقا</button>
       <div className="fr-body" style={{ gap: 14 }}>
         <h2>ثبتي التطبيق على جوالك</h2>
-        <p>عشان يفتح مثل أي تطبيق وتوصلك التذكيرات:</p>
+        <p>عشان يفتح مثل أي تطبيق وتوصلك التذكيرات وملخص يومك.</p>
+        <p className="small">على الآيفون الإشعارات ما توصل إلا بعد ما تثبتين التطبيق على الشاشة الرئيسية بهالطريقة:</p>
         <ol className="ios-steps">
           <li>
             <span className="ios-shot" aria-hidden="true">

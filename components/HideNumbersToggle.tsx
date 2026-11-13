@@ -11,7 +11,7 @@ export function HideNumbersToggle({ initial }: { initial: boolean }) {
       <label className="row between" style={{ cursor: "pointer" }}>
         <span>
           <b>🙈 توصيات بدون أرقام</b>
-          <span className="note" style={{ display: "block" }}>توصيات الجمعة تجيك بالكلام بس، بدون سعرات ولا جرامات ولا وزن.</span>
+          <span className="note" style={{ display: "block" }}>توصيات الجمعة وملخص يومك يجونك بالكلام بس، بدون سعرات ولا جرامات ولا وزن.</span>
         </span>
         <input type="checkbox" checked={on} onChange={async () => {
           const next = !on;

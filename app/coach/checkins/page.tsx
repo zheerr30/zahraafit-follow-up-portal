@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CoachShell, Loading } from "@/components/ui";
 import { CoachRecs } from "@/components/CoachRecs";
+import { DaySummaryTemplates } from "@/components/DaySummaryTemplates";
 import { COMMIT_LABEL, FEELINGS, dayName, followupInfo, type FollowupInfo } from "@/lib/followup";
 import { formatDate } from "@/lib/format";
 import { todayKey } from "@/lib/plan-data";
@@ -80,6 +81,7 @@ export default function CheckinsPage() {
       </div>
       {missingDb ? <p className="alert err">شغلي ملف phase7-weekly-followup.sql في Supabase عشان تشتغل المتابعات.</p> : null}
       <CoachRecs names={names} />
+      <DaySummaryTemplates />
 
       <div className="sec-title">
         <span className="em" aria-hidden="true">💬</span>

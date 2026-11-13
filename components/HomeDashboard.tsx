@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Check, CheckCircle2, ChevronLeft, Dumbbell, Flame, Plus, Share2, X, Droplet } from "lucide-react";
 import { ShareSheet } from "@/components/ShareSheet";
+import { DaySummaryCard, DayStatsSync } from "@/components/DaySummary";
 import { CalorieCard } from "@/components/CalorieCard";
 import { streakDays } from "@/components/Achievements";
 import { WeekSummary } from "@/components/WeekSummary";
@@ -205,6 +206,9 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
           <button type="button" className="alert-x" aria-label="إخفاء" onClick={() => setDismissed(true)}><X size={14} /></button>
         </div>
       ) : null}
+
+      <DaySummaryCard profileId={profile.id} today={today} />
+      <DayStatsSync clientId={client.id} day={today} n={{ cal: eaten.cal, p: eaten.p, c: eaten.c, f: eaten.f, target_cal: d.target?.cal || null, target_p: d.target?.p || null, water: d.water, water_goal: waterCups(d.weight?.kg), meals_done: doneCount, meals_total: todayMeals.length }} />
 
       {readyHero || (isOff(d.off, today) ? (
         <section className="cal-hero off-hero">
