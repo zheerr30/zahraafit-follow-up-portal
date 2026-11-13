@@ -9,6 +9,7 @@ import { ArrowUp, Check, Dumbbell, FileText, History, Info, Play, PlayCircle, X 
 import { ClientShell, Empty, Loading, Rings, useToast } from "@/components/ui";
 import { muscleImage, repRange, restSeconds, type Exercise } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
+import { VideoSheet } from "@/components/VideoSheet";
 import { useAuthGuard } from "@/lib/use-auth";
 import { useClientPlans } from "@/lib/use-client";
 import { STORE_URL, accountOf } from "@/lib/account";
@@ -39,6 +40,7 @@ export default function WorkoutPage() {
   const [info, setInfo] = useState<Exercise | null>(null);
   const female = auth.profile?.gender !== "male";
   const overlayRef = useRef<HTMLDivElement>(null);
+  const [vid, setVid] = useState<{ url: string; title: string } | null>(null);
   // «ابدئي» from home: /app/workout?start=1 opens today's workout right away.
   const autoStart = useRef(false);
   useEffect(() => {
@@ -263,9 +265,9 @@ export default function WorkoutPage() {
                   <div><b>{e.reps}</b><span>عدة</span></div>
                 </div>
                 {e.video ? (
-                  <a className="yt" href={e.video} target="_blank" rel="noreferrer" aria-label={`فيديو ${e.name}`}>
+                  <button type="button" className="yt" onClick={() => setVid({ url: e.video, title: e.name })} aria-label={`فيديو ${e.name}`}>
                     <Play />
-                  </a>
+                  </button>
                 ) : null}
               </div>
             );
@@ -319,9 +321,9 @@ export default function WorkoutPage() {
                         </div>
                       </button>
                       {e.video ? (
-                        <a className="icon-btn" href={e.video} target="_blank" rel="noreferrer" aria-label={`فيديو ${e.name}`} style={{ color: "#E8602C" }}>
+                        <button type="button" className="icon-btn" onClick={() => setVid({ url: e.video, title: e.name })} aria-label={`فيديو ${e.name}`} style={{ color: "#E8602C" }}>
                           <PlayCircle />
-                        </a>
+                        </button>
                       ) : null}
                     </div>
                     <div className="exc-b">
@@ -338,7 +340,7 @@ export default function WorkoutPage() {
                       {e.alt ? (
                         <div className="note">
                           ما تقدرين عليه؟ بديله: <b>{e.alt.name}</b>
-                          {e.alt.video ? <> · <a className="link" style={{ minHeight: 0, fontSize: 12.5 }} href={e.alt.video} target="_blank" rel="noreferrer">فيديو</a></> : null}
+                          {e.alt.video ? <> · <button type="button" className="link" style={{ minHeight: 0, fontSize: 12.5 }} onClick={() => setVid({ url: e.alt!.video, title: e.alt!.name })}>فيديو</button></> : null}
                         </div>
                       ) : null}
                       <div className="sets">
@@ -391,6 +393,7 @@ export default function WorkoutPage() {
         </div>
       ) : null}
       {info ? <ExerciseSheet ex={info} logs={logs as never} female={female} onClose={() => setInfo(null)} /> : null}
+      {vid ? <VideoSheet url={vid.url} title={vid.title} onClose={() => setVid(null)} /> : null}
       {done && shareDone ? <ShareSheet card={done.card} onClose={() => setShareDone(false)} /> : null}
       {toast.node}
     </ClientShell>

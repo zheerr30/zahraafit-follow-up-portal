@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { MuscleMap } from "@/components/MuscleMap";
+import { InlineVideo } from "@/components/VideoSheet";
 import { mediaFor, mediaSrc } from "@/lib/exercise-media";
 import { formatDate } from "@/lib/format";
 import type { Exercise } from "@/lib/plan-data";
@@ -44,7 +45,7 @@ export function ExerciseSheet({ ex, logs, female, onClose }: { ex: Exercise; log
             {media ? (
               <video className="ex-video" src={`${mediaSrc(media, female)}.mp4`} poster={`${mediaSrc(media, female)}.jpg`} autoPlay muted loop playsInline aria-label={`طريقة أداء ${ex.name}`} />
             ) : null}
-            {ex.video ? <a className="btn btn-s btn-block" href={ex.video} target="_blank" rel="noreferrer">▶️ فيديو الشرح</a> : null}
+            {ex.video ? (media ? <details className="ex-more-video"><summary>فيديو الشرح</summary><InlineVideo url={ex.video} title={ex.name} /></details> : <InlineVideo url={ex.video} title={ex.name} />) : null}
             {media?.desc ? <p className="small" style={{ margin: 0, lineHeight: 1.8 }}>{media.desc}</p> : null}
             <b className="ex-h">العضلات المستهدفة</b>
             <MuscleMap primary={primary} secondary={secondary} />

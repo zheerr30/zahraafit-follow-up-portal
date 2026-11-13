@@ -1359,3 +1359,7 @@ svg.lucide { stroke-width: 1.8; }
 }
 :root[data-theme="dark"] { --plate-rim: #16203F; --plate-rim-line: rgba(255, 255, 255, .06); --plate-dish: #0A1229; --plate-p1: #C3CEE8; --plate-p2: #9FB0D6; }
 :root[data-theme="dark"] .plate-card { background: var(--surface); border: 1px solid var(--card-border); }
+/* exercise videos play inside the app */
+.yt-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; background: #000; }
+.yt-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.ex-more-video summary { cursor: pointer; font-weight: 700; color: var(--clay); padding: 6px 0; }
