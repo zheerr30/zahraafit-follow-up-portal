@@ -1270,3 +1270,54 @@ svg.lucide { stroke-width: 1.8; }
 .offer-card2 { background: linear-gradient(160deg, #050F2C 0%, #14244F 100%); color: #fff; border-radius: var(--r-lg); padding: 18px; display: grid; gap: 8px; justify-items: start; }
 .offer-card2 b { font-size: 18px; }
 .offer-card2 p { font-size: 14px; line-height: 1.7; color: rgba(255, 255, 255, .78); }
+
+/* ---------- 39 / section 5: «أكلي» ---------- */
+.cal-hero .mdot-p { background: #8FA0C4; }
+.cal-hero .mdot-c { background: #E8602C; }
+.cal-hero .mdot-f { background: #F2A27F; }
+.cal-hero .cal-macros b { color: #fff; }
+.cal-today { font-size: 15px; color: #fff; }
+.cal-chip { background: rgba(255, 255, 255, .1); color: rgba(255, 255, 255, .85); }
+.cal-line.in { margin: 12px -4px 0; background: rgba(255, 255, 255, .08); border: 0; border-radius: 14px; padding: 10px 12px; font-size: 14px; line-height: 1.7; color: rgba(255, 255, 255, .92); box-shadow: none; }
+.cal-line.in b { color: #fff; }
+.cal-line.in .cal-line-btn { color: inherit; }
+.off-chip { background: rgba(255, 255, 255, .1); color: #fff; border: 0; }
+
+/* meal cards: light, check circle, small slot, name, macro dots, calories */
+.mcard { border: 1px solid var(--card-border); box-shadow: none; }
+.mcard.eaten { outline: 0; }
+.mc-eat { border-inline-end: 0; color: transparent; }
+.mc-eat svg { border-color: var(--line-2); color: transparent; }
+.mc-eat[aria-pressed="true"] svg { background: var(--grad); border-color: transparent; color: #fff; }
+.mc-name { color: var(--ink); }
+.kcal2 { flex: none; display: grid; justify-items: end; line-height: 1.1; color: var(--ink); }
+.kcal2 b { font-size: 18px; }
+.kcal2 small { font-size: 11px; color: var(--ink-3); }
+.eat[aria-pressed="true"], .chk[aria-pressed="true"], .snack-foot button[aria-pressed="true"] { background: var(--grad); border-color: transparent; color: #fff; }
+.from-plan { color: var(--clay); }
+.day-notes summary { cursor: pointer; font-weight: 700; list-style: none; display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
+.day-notes[open] summary { margin-bottom: 12px; }
+
+/* «سعراتي» meals and items */
+.slot-card { gap: 0; padding: 12px 16px; }
+.slot-top { padding-bottom: 6px; }
+.slot-h { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+.slot-h .emo { font-size: 22px; width: 26px; }
+.slot-empty .slot-h { flex: 1; }
+.diary-row { border-top: 1px solid var(--line); }
+.dr-btn { width: 100%; text-align: start; color: inherit; background: var(--surface); }
+.dr-mid { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.dr-name { font-size: 15px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.diary-row > b { color: var(--ink); }
+.swipe-row { position: relative; overflow: hidden; }
+.sw-under { position: absolute; inset: 1px 0 0; display: flex; align-items: center; padding: 0 16px; color: #fff; background: transparent; }
+.sw-under.del { background: var(--clay); justify-content: flex-end; }
+.sw-under.fav { background: var(--navy-fill); color: var(--on-fill); justify-content: flex-start; }
+[dir="rtl"] .sw-under.del { justify-content: flex-end; }
+.sw-top { position: relative; background: var(--surface); transition: transform .2s var(--ease); touch-action: pan-y; }
+.slot-foot { display: flex; align-items: center; justify-content: space-between; padding-top: 8px; border-top: 1px solid var(--line); margin-top: 2px; }
+.slot-foot .link { min-height: 36px; }
+.muted-link { color: var(--ink-3) !important; font-weight: 500; }
+.shop-sec-h { display: flex; align-items: center; gap: 8px; color: var(--ink); }
+.scan-btns button { display: inline-flex; align-items: center; gap: 6px; }
+.snack-fit { background: var(--clay-tint); color: var(--clay); }

@@ -90,7 +90,7 @@ export function Calculator({ profileId }: { profileId: string }) {
               </div>
             ))}
           </div>
-          <p className="small">🌿 ألياف {res.fiber} جم · 🎯 {res.note}</p>
+          <p className="small">🌿 ألياف {res.fiber} غ · 🎯 {res.note}</p>
           <p className="note">أرقام تقريبية تساعدك تتابعين نفسك. لو عندك خطة من المدربة، خطتك هي المعتمدة.</p>
           <button type="button" className="btn btn-s" onClick={async () => {
             const { data: c } = await supabase.from("clients").select("id").eq("profile_id", profileId).maybeSingle();

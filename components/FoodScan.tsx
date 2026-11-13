@@ -121,7 +121,7 @@ export function MealPhoto({ onAdd, onCancel }: { onAdd: (items: { name: string; 
                 <span className="note" style={{ display: "block" }}><MacLine p={scaled(r).p} c={scaled(r).c} f={scaled(r).f} /></span>
               </span>
               <input className="inp num" inputMode="numeric" aria-label={`جرامات ${r.name}`} value={r.g} onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, g: e.target.value.replace(/\D/g, "") } : x)))} style={{ width: 66, minHeight: 38, padding: "0 8px", flex: "none" }} />
-              <span className="note" style={{ flex: "none" }}>جم</span>
+              <span className="note" style={{ flex: "none" }}>غ</span>
               <b className="num" style={{ minWidth: 36, textAlign: "end" }}>{scaled(r).cal}</b>
             </div>
           ))}

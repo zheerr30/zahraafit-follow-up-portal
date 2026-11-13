@@ -25,7 +25,7 @@ export function SuggestedSnacks({ snacks, fromCoach, left, open: autoOpen, onAdd
   return (
     <section id="snacks" className="snacks">
       <button type="button" className="snacks-h" aria-expanded={open} onClick={() => setOpen(!open)}>
-        <b>🍎 سناكات مقترحة</b>
+        <b>سناكات مقترحة</b>
         <span className="note">{fromCoach ? "من المدربة" : ""}{left !== null && left > 0 ? `${fromCoach ? " · " : ""}الباقي ${left} سعرة` : ""}</span>
         <ChevronDown size={18} className="snacks-chev" aria-hidden="true" />
       </button>

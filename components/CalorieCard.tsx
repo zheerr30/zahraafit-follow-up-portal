@@ -4,6 +4,9 @@ import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+/** Macro colours on the navy card (protein navy reads as light navy here). */
+const MAC_ON_NAVY = { p: "#8FA0C4", c: "#E8602C", f: "#F2A27F" };
+
 export type Totals = { cal: number; p: number; c: number; f: number };
 export type Target = { cal: number; p: number; c: number; f: number };
 
@@ -12,7 +15,7 @@ export type Target = { cal: number; p: number; c: number; f: number };
  * The ring shows what is left and fills as she eats; the macro rows show what is
  * left of each. It starts from zero eaten: only ticked meals and logged food count.
  */
-export function CalorieCard({ totals, target, header, footer, line, details }: { totals: Totals; target: Target | null; header?: ReactNode; footer?: ReactNode; line?: ReactNode; details?: ReactNode }) {
+export function CalorieCard({ totals, target, header, footer, line, details, hide = false }: { totals: Totals; target: Target | null; header?: ReactNode; footer?: ReactNode; line?: ReactNode; details?: ReactNode; hide?: boolean }) {
   const eaten = Math.round(totals.cal);
   const left = target ? Math.round(target.cal - totals.cal) : 0;
   const fill = target && target.cal ? Math.min(1, totals.cal / target.cal) : 0;
@@ -31,33 +34,35 @@ export function CalorieCard({ totals, target, header, footer, line, details }: {
               <circle cx="60" cy="60" r={R} fill="none" stroke={left >= 0 ? "var(--clay)" : "#E8602C"} strokeWidth="10" strokeLinecap="round"
                 strokeDasharray={`${C * fill} ${C}`} transform="rotate(-90 60 60)" />
             ) : null}
-            <text x="60" y="58" textAnchor="middle" fontSize="26" fontWeight="700" fill="#fff">{target ? (left >= 0 ? left : `+${-left}`) : eaten}</text>
-            <text x="60" y="78" textAnchor="middle" fontSize="11" fill="rgba(255,255,255,.75)">{target ? (left >= 0 ? "باقي" : "زيادة") : "سعرة"}</text>
+            {hide ? (
+              <text x="60" y="66" textAnchor="middle" fontSize="13" fontWeight="700" fill="#fff">{target ? (left >= 0 ? "باقي لك" : "زيادة") : "اليوم"}</text>
+            ) : (
+              <>
+                <text x="60" y="58" textAnchor="middle" fontSize="26" fontWeight="700" fill="#fff" style={{ fontVariantNumeric: "tabular-nums" }}>{(target ? Math.abs(left) : eaten).toLocaleString("en-US")}</text>
+                <text x="60" y="78" textAnchor="middle" fontSize="11" fill="rgba(255,255,255,.75)">{target ? (left >= 0 ? "باقي" : "زيادة") : "سعرة"}</text>
+              </>
+            )}
           </svg>
           <div className="cal-side">
-            {target ? (
-              <span className="cal-eaten">أكلتي <b>{eaten}</b> من {target.cal}</span>
-            ) : (
-              <Link href="/app/guide?tab=calc" className="cal-goal">🎯 حطي هدفك اليومي من الحاسبة</Link>
-            )}
+            {target ? null : <Link href="/app/guide?tab=calc" className="cal-goal">حطي هدفك اليومي من الحاسبة</Link>}
             <div className="cal-macros">
               {([["p", totals.p, target?.p], ["c", totals.c, target?.c], ["f", totals.f, target?.f]] as ["p" | "c" | "f", number, number | undefined][]).map(([l, v, t]) => {
                 const rest = t ? Math.round(t - v) : 0;
                 return (
                   <div key={l}>
                     <span><MacLabel k={l} /></span>
-                    <b style={{ color: `var(--${l === "p" ? "protein" : l === "c" ? "carb" : "fat"})` }}>{t ? (rest >= 0 ? <>باقي {rest} غ</> : <>زيادة {-rest} غ</>) : <>{Math.round(v)} غ</>}</b>
-                    {t ? <i aria-hidden="true"><i style={{ width: `${Math.min(100, (v / t) * 100)}%`, background: `var(--${l === "p" ? "protein" : l === "c" ? "carb" : "fat"})` }} /></i> : null}
+                    {hide ? null : <b className="num">{t ? (rest >= 0 ? <>باقي {rest} غ</> : <>زيادة {-rest} غ</>) : <>{Math.round(v)} غ</>}</b>}
+                    {t ? <i aria-hidden="true"><i style={{ width: `${Math.min(100, (v / t) * 100)}%`, background: MAC_ON_NAVY[l] }} /></i> : null}
                   </div>
                 );
               })}
             </div>
           </div>
         </div>
+        {line ? <div className="cal-line in">{line}</div> : null}
         {details}
         {footer}
       </section>
-      {line ? <div className="cal-line">{line}</div> : null}
     </>
   );
 }

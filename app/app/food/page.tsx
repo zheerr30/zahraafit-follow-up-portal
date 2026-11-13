@@ -7,7 +7,7 @@ import { amountText, nameKey, unitKey } from "@/lib/shop-cats";
 import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeftRight, Check, ChevronDown, FileText, Plus, Utensils, X } from "lucide-react";
+import { ArrowLeftRight, Check, ChevronDown, FileText, Plus, ThumbsDown, ThumbsUp, Utensils, X } from "lucide-react";
 import { ClientShell, Empty, Loading, useToast } from "@/components/ui";
 import { FoodDiary } from "@/components/FoodDiary";
 import { CalorieCard } from "@/components/CalorieCard";
@@ -67,6 +67,8 @@ function subsFor(meal: Meal, ingName: string) {
 
 const toTaste = (a: number | string, u: string) => u === "حسب الذوق" || a === 0 || a === "";
 
+const TAB_KEY = "zf-food-tab";
+
 export default function FoodPage() {
   const auth = useAuthGuard("client");
   const cp = useClientPlans(auth.profile);
@@ -82,15 +84,29 @@ export default function FoodPage() {
   const [todayDay, setTodayDay] = useState(0);
   const [focusSnacks, setFocusSnacks] = useState(false);
   const [share, setShare] = useState<ShareCard | null>(null);
-  const [freeTab, setFreeTab] = useState<"diary" | "meals" | "shop">("diary");
+  const [freeTab, setFreeTab] = useState<"diary" | "meals">("diary");
   useEffect(() => {
-    // «علب جاهزة» opens on the diary tab
+    // «علب جاهزة» opens on the diary tab; otherwise the last tab she used today.
     const sp = new URLSearchParams(window.location.search);
     if (sp.get("boxes") === "1" || sp.get("tab") === "diary") {
       setTab("diary");
       setFreeTab("diary");
+      return;
     }
+    try {
+      const m = JSON.parse(localStorage.getItem(TAB_KEY) || "null") as { d: string; t: Tab } | null;
+      if (m && m.d === todayKey() && (m.t === "meals" || m.t === "diary" || m.t === "shop")) {
+        setTab(m.t);
+        if (m.t !== "shop") setFreeTab(m.t);
+      }
+    } catch {}
   }, []);
+  useEffect(() => {
+    try { localStorage.setItem(TAB_KEY, JSON.stringify({ d: todayKey(), t: tab })); } catch {}
+  }, [tab]);
+  useEffect(() => {
+    try { localStorage.setItem(TAB_KEY, JSON.stringify({ d: todayKey(), t: freeTab })); } catch {}
+  }, [freeTab]);
   const [todayFood, setTodayFood] = useState({ cal: 0, p: 0, c: 0, f: 0 });
   const [ready, setReady] = useState(false);
   const today = todayKey();
@@ -202,23 +218,17 @@ export default function FoodPage() {
   // «تفاصيل أكثر»: hidden when she chose no numbers, or the coach hid it for her.
   const showDetails = !auth.profile.hide_numbers && !(cp.client as { hide_micros?: boolean } | null)?.hide_micros;
   const detailsProp = showDetails ? { male: auth.profile.gender === "male" } : null;
+  const hide = Boolean(auth.profile.hide_numbers);
   if ((!plan || day === null || !acc.sub) && cp.client) {
     return (
-      <ClientShell title="أكلي" sub="سجلي أكلك واحسبي سعراتك">
+      <ClientShell title="أكلي">
         <div className="seg-tabs" role="tablist" aria-label="أقسام أكلي">
-          {([["diary", "🔥 سعراتي"], ["meals", "🍽️ وجباتي"], ["shop", "🛒 تسوق"]] as ["diary" | "meals" | "shop", string][]).map(([k, l]) => (
+          {([["diary", "سعراتي"], ["meals", "وجباتي"]] as ["diary" | "meals", string][]).map(([k, l]) => (
             <button key={k} type="button" role="tab" aria-selected={freeTab === k} onClick={() => setFreeTab(k)}>{l}</button>
           ))}
         </div>
         {freeTab === "diary" ? (
-          <>
-            <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={null} planMeal={null} ramadan={cp.ramadan} details={detailsProp} afterMeals={<PrepBoxes clientId={cp.client.id} onLogged={() => window.location.reload()} />} />
-          </>
-        ) : freeTab === "shop" ? (
-          <>
-            <p className="shop-sub">أضيفي اللي تحتاجينه، أو من «حضري وجباتك» تنضاف المكونات الناقصة لحالها.</p>
-            <ShoppingList clientId={cp.client.id} />
-          </>
+          <FoodDiary clientId={cp.client.id} profileId={auth.profile.id} planTarget={null} planMeal={null} ramadan={cp.ramadan} details={detailsProp} hide={hide} afterMeals={<PrepBoxes clientId={cp.client.id} onLogged={() => window.location.reload()} />} />
         ) : <PlanOffer clientId={cp.client.id} sub={acc.sub} locked={Boolean(plan) && !acc.sub} />}
         {cp.files.length ? (
           <p className="note" style={{ textAlign: "center" }}>
@@ -258,7 +268,7 @@ export default function FoodPage() {
   /** The line under the card: next meal, then open calories, or how much over. */
   const smartLine = (eatenCal: number) => {
     const left = target ? Math.round(target.cal - eatenCal) : null;
-    if (left !== null && left < -40) return <>📊 زدتي <b>{-left}</b> سعرة عن هدفك اليوم. عادي يصير، كملي يومك وبكرا يوم جديد 💪</>;
+    if (left !== null && left < -40) return hide ? <>زدتي عن هدفك اليوم شوي. عادي يصير، بكرا يوم جديد.</> : <>زدتي <b className="num">{-left}</b> سعرة عن هدفك اليوم. عادي يصير، بكرا يوم جديد.</>;
     const next = todayMeals.find((x) => log.meals[x.key] !== true);
     const goNext = () => {
       setTab("meals");
@@ -269,26 +279,18 @@ export default function FoodPage() {
     if (next) {
       return (
         <button type="button" className="cal-line-btn" onClick={goNext}>
-          {eatenCount ? "👏 الوجبة الجاية" : "🍽️ ابدئي يومك بـ"}: <b>{next.slot}</b> · {next.meal.name} ({next.meal.cal} سعرة)
+          {eatenCount ? "الوجبة الجاية" : "ابدئي يومك بـ"}: <b>{next.slot}</b> · {next.meal.name}{hide ? "" : ` (${next.meal.cal} سعرة)`}
         </button>
       );
     }
-    const shareBtn = (
-      <button type="button" className="share-btn" onClick={() => setShare({ kind: "day", day: { cal: eatenCal, target: target?.cal || null, p: eatenToday.p, c: eatenToday.c, f: eatenToday.f, water: log.water, waterGoal: cups, meals: todayMeals.length ? { done: eatenCount, total: todayMeals.length } : null, streak: null, weight: null, workout: null } })}>
-        📤 شاركي يومك
-      </button>
-    );
     if (left !== null && left > 40) {
       return (
-        <>
-          <button type="button" className="cal-line-btn" onClick={() => { setFocusSnacks(true); setTab("diary"); }}>
-            ✅ خلصتي وجبات اليوم، باقي لك <b>{left}</b> سعرة مفتوحة، اختاري من «🍎 سناكات مقترحة»
-          </button>
-          {shareBtn}
-        </>
+        <button type="button" className="cal-line-btn" onClick={() => { setFocusSnacks(true); setTab("diary"); }}>
+          {hide ? <>خلصتي وجبات اليوم، وباقي لك مجال لسناك. شوفي «سناكات مقترحة»</> : <>خلصتي وجبات اليوم، باقي لك <b className="num">{left}</b> سعرة. شوفي «سناكات مقترحة»</>}
+        </button>
       );
     }
-    return <>✅ خلصتي وجبات اليوم وضبطتي هدفك 👏<br />{shareBtn}</>;
+    return null;
   };
 
   const pdf = cp.pdfs.find((f) => /غذائي/.test(f.title)) || cp.pdfs.find((f) => f.kind === "nutrition");
@@ -312,27 +314,23 @@ export default function FoodPage() {
           <button type="button" className="mc-head" aria-expanded={isOpen} onClick={toggle}>
             <span style={{ minWidth: 0, flex: 1 }}>
               <span className="slot">
-                <span aria-hidden="true">{slotEmoji(slot)}</span>
                 {slot}
                 {opts.swapped ? " · بدلتيها" : ""}
               </span>
               <b className="mc-name">{meal.name}</b>
-              <span className="mc-mac"><MacLine p={Math.round(meal.p)} c={Math.round(meal.c)} f={Math.round(meal.f)} /></span>
+              {hide ? null : <span className="mc-mac"><MacLine p={Math.round(meal.p)} c={Math.round(meal.c)} f={Math.round(meal.f)} unit=" غ" /></span>}
             </span>
-            <span className="kcal">
-              <b>{meal.cal}</b>
-              <span>سعرة</span>
-            </span>
+            {hide ? null : <span className="kcal2"><b className="num">{meal.cal}</b><small>سعرة</small></span>}
             <ChevronDown className="mc-chev" aria-hidden="true" />
           </button>
         </div>
         {isOpen ? (
         <>
-        <div className="mrow">
+        {hide ? null : <div className="mrow">
           <div className="mtile" style={{ "--c": "var(--protein)" } as React.CSSProperties}><b>{Math.round(meal.p)} غ</b><span><MacLabel k="p" /></span></div>
           <div className="mtile" style={{ "--c": "var(--carb)" } as React.CSSProperties}><b>{Math.round(meal.c)} غ</b><span><MacLabel k="c" /></span></div>
           <div className="mtile" style={{ "--c": "var(--fat)" } as React.CSSProperties}><b>{Math.round(meal.f)} غ</b><span><MacLabel k="f" /></span></div>
-        </div>
+        </div>}
         <div className="ings">
           {meal.ingredients.map((ing) => {
             const ik = `${key}-${meal.name}-${ing.n}`;
@@ -364,16 +362,16 @@ export default function FoodPage() {
         {meal.note ? <p className="note" style={{ padding: "0 16px 10px" }}>{meal.note}</p> : null}
         {steps.length ? (
           <details className="prep-box">
-            <summary>👩‍🍳 طريقة التحضير</summary>
+            <summary>طريقة التحضير</summary>
             <ol>{steps.map((st, n) => <li key={n}>{st}</li>)}</ol>
           </details>
         ) : null}
         {/^\d+-\d+$/.test(key) ? (
-          <Link className="prep-link" href={`/app/prep?d=${key.split("-")[0]}&m=${key.split("-")[1]}`}>🍱 حضري منها كمية</Link>
+          <Link className="prep-link" href={`/app/prep?d=${key.split("-")[0]}&m=${key.split("-")[1]}`}>حضري منها كمية</Link>
         ) : null}
         <div className="rate-row">
           <span>عجبتك؟</span>
-          {([[1, "👍", "عجبتني"], [-1, "👎", "ما عجبتني"]] as [1 | -1, string, string][]).map(([v, em, l]) => {
+          {([[1, <ThumbsUp key="u" size={18} />, "عجبتني"], [-1, <ThumbsDown key="d" size={18} />, "ما عجبتني"]] as [1 | -1, React.ReactNode, string][]).map(([v, em, l]) => {
             const on = choices.rates[meal.name] === v;
             return (
               <button key={v} type="button" aria-pressed={on} aria-label={l} onClick={() => {
@@ -405,19 +403,18 @@ export default function FoodPage() {
   }
 
   return (
-    <ClientShell title="أكلي" action={pdf ? <a className="btn btn-g btn-sm" href={pdf.href} target={pdf.external ? "_blank" : undefined} rel="noreferrer"><FileText />PDF</a> : undefined}>
+    <ClientShell title="أكلي">
       <div className="seg-tabs" role="tablist" aria-label="أقسام أكلي">
-        {([["meals", "🍽️ وجباتي"], ["diary", "🔥 سعراتي"], ["shop", "🛒 تسوق"]] as [Tab, string][]).map(([k, l]) => (
+        {([["meals", "وجباتي"], ["diary", "سعراتي"], ["shop", "تسوق"]] as [Tab, string][]).map(([k, l]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => { setFocusSnacks(false); setTab(k); }}>{l}</button>
         ))}
       </div>
 
       {tab === "meals" ? (
         <>
-          <Link href="/app/prep" className="card prep-cta"><span><b>🍱 حضري وجباتك</b><span className="note" style={{ display: "block" }}>اطبخي كمية مرة وحدة وقسميها علب للأيام الجاية</span></span><span aria-hidden="true">‹</span></Link>
           {plan.coachNote ? (
             <div className="reply">
-              <b>💬 من المدربة</b>
+              <b>من المدربة</b>
               <p style={{ whiteSpace: "pre-line" }}>{plan.coachNote}</p>
             </div>
           ) : null}
@@ -433,10 +430,11 @@ export default function FoodPage() {
           <CalorieCard
             totals={eatenToday}
             target={target}
+            hide={hide}
             header={
               <div className="row between" style={{ alignItems: "center" }}>
-                <h2>🔥 سعراتك اليوم</h2>
-                {todayMeals.length ? <span className="cal-chip">✅ {eatenCount} من {todayMeals.length} وجبات</span> : null}
+                <b className="cal-today">اليوم</b>
+                {todayMeals.length ? <span className="cal-chip"><span className="num">{eatenCount}</span> من <span className="num">{todayMeals.length}</span> وجبات</span> : null}
               </div>
             }
             line={smartLine(eatenToday.cal)}
@@ -444,38 +442,16 @@ export default function FoodPage() {
           />
           {cp.client ? <DayStatsSync clientId={cp.client.id} day={today} n={{ cal: eatenToday.cal, p: eatenToday.p, c: eatenToday.c, f: eatenToday.f, target_cal: target?.cal || null, target_p: target?.p || null, water: log.water, water_goal: cups, meals_done: eatenCount, meals_total: todayMeals.length }} /> : null}
 
-          <div className="tip-card">
-            <span className="em" aria-hidden="true">🔁</span>
-            <span>ما تبين صنف؟ اضغطي <b>بدلي</b> جنبه. وتقدرين تبدلين الوجبة كاملة بوجبة من نفس الخانة.</span>
-          </div>
-
           {meals.map(({ key, meal, swapped, slot }) => mealCard(key, meal, slot || meal.slot, { swapped, swapMeal: true }))}
 
-          <button type="button" className="tip-card" style={{ width: "100%", textAlign: "start" }} onClick={() => { setTab("diary"); window.scrollTo(0, 0); }}>
-            <span className="em" aria-hidden="true">🍔</span>
-            <span><b>أكلتي شي برا الخطة؟</b> عادي يصير، سجليه في <b>🔥 سعراتي</b> ونحسب لك سعراته.</span>
-          </button>
+          {pdf ? (
+            <a className="btn btn-s btn-block" href={pdf.href} target={pdf.external ? "_blank" : undefined} rel="noreferrer"><FileText />خطتك PDF</a>
+          ) : null}
 
-          <div className="sec-title">
-            <span className="em" aria-hidden="true">💧</span>
-            <h2>الماء</h2>
-            <span className="aside num">{log.water} / {cups} أكواب</span>
-          </div>
-          <section className="card stack">
-            <div className="cups">
-              {Array.from({ length: Math.min(20, Math.max(cups, log.water + (log.water >= cups ? 1 : 0))) }, (_, i) => (
-                <button key={i} type="button" className={`cup ${i < log.water ? "full" : ""}`} aria-label={`كوب ${i + 1}`} onClick={() => saveLog({ ...log, water: log.water === i + 1 ? i : i + 1 })} />
-              ))}
-            </div>
-            <p className="note">{`كل كوب ٢٥٠ مل. هدفك ${cups} أكواب (${(cups * 0.25).toLocaleString("ar-SA-u-nu-latn")} لتر) على حسب وزنك.`}</p>
-          </section>
-
-          <div className="sec-title">
-            <span className="em" aria-hidden="true">📝</span>
-            <h2>متابعة اليوم</h2>
-          </div>
+          <details className="card day-notes">
+          <summary>ملاحظات اليوم <span className="note">(الخطوات، النوم، الجوع والطاقة)</span></summary>
           <form
-            className="card stack"
+            className="stack"
             onSubmit={(e) => {
               e.preventDefault();
               saveLog({ ...log, meals: { ...log.meals, _day: dayNote } }, "حفظنا متابعة اليوم");
@@ -483,25 +459,26 @@ export default function FoodPage() {
           >
             <div className="grid2">
               <div className="field">
-                <label htmlFor="steps">👟 الخطوات</label>
+                <label htmlFor="steps">الخطوات</label>
                 <input id="steps" className="inp num" inputMode="numeric" placeholder="8000" value={dayNote.steps || ""} onChange={(e) => setDayNote({ ...dayNote, steps: e.target.value })} />
               </div>
               <div className="field">
-                <label htmlFor="sleep">😴 النوم (ساعات)</label>
+                <label htmlFor="sleep">النوم (ساعات)</label>
                 <input id="sleep" className="inp num" inputMode="decimal" placeholder="7" value={dayNote.sleep || ""} onChange={(e) => setDayNote({ ...dayNote, sleep: e.target.value })} />
               </div>
             </div>
             <div className="field">
-              <label htmlFor="notes">💭 ملاحظاتك (جوع، طاقة، مزاج)</label>
+              <label htmlFor="notes">ملاحظاتك (جوع، طاقة، مزاج)</label>
               <textarea id="notes" className="inp" value={dayNote.notes || ""} onChange={(e) => setDayNote({ ...dayNote, notes: e.target.value })} placeholder="مثلًا: جعت بعد الغداء، طاقتي حلوة اليوم" />
             </div>
             <button className="btn btn-s" type="submit">حفظ</button>
           </form>
+          </details>
         </>
       ) : null}
 
       {tab === "diary" && cp.client ? (
-        <FoodDiary details={detailsProp} clientId={cp.client.id} profileId={auth.profile.id} planTarget={plan.target.cal ? plan.target : null} planMeal={planMeal} smartLine={smartLine} ramadan={cp.ramadan} coachSnacks={[...plan.extras.snacks, ...plan.extras.salads]} focusSnacks={focusSnacks} planDone={Boolean(todayMeals?.length) && todayMeals!.every((x) => log.meals[x.key] === true)} afterMeals={<PrepBoxes clientId={cp.client.id} onLogged={() => window.location.reload()} />} />
+        <FoodDiary hide={hide} details={detailsProp} clientId={cp.client.id} profileId={auth.profile.id} planTarget={plan.target.cal ? plan.target : null} planMeal={planMeal} smartLine={smartLine} ramadan={cp.ramadan} coachSnacks={[...plan.extras.snacks, ...plan.extras.salads]} focusSnacks={focusSnacks} planDone={Boolean(todayMeals?.length) && todayMeals!.every((x) => log.meals[x.key] === true)} afterMeals={<PrepBoxes clientId={cp.client.id} onLogged={() => window.location.reload()} />} />
       ) : null}
 
       {tab === "shop" && cp.client ? (
@@ -540,7 +517,7 @@ export default function FoodPage() {
                       }}>
                         <span className="radio" />
                         <span>
-                          <span className="opt-t">{o.name} <b className="num">{o.grams}</b> جم</span>
+                          <span className="opt-t">{o.name} <b className="num">{o.grams}</b> غ</span>
                           <span className="opt-s">{o.cal} سعرة · <MacLine p={o.p} c={o.c} f={o.f} /></span>
                         </span>
                       </button>

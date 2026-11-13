@@ -82,7 +82,7 @@ export function PrepBoxes({ clientId, onLogged }: { clientId: string; onLogged?:
                   <b>{b.name}</b> <span className="chip">× {list.length}</span>
                   <span className="note" style={{ display: "block" }}>
                     <b className="num">{Math.round(b.cal)}</b> سعرة · <MacLine p={Math.round(b.p)} c={Math.round(b.c)} f={Math.round(b.f)} />
-                    {b.detail ? <> · {b.detail}</> : b.grams ? <> · {Math.round(b.grams)} جم</> : null}
+                    {b.detail ? <> · {b.detail}</> : b.grams ? <> · {Math.round(b.grams)} غ</> : null}
                   </span>
                   <span className={`box-exp ${left < 0 ? "bad" : warn ? "warn" : ""}`}>
                     {b.place === "freezer" ? `بالفريزر لين ${formatDate(b.use_by)}` : left < 0 ? "انتهت مدتها، لا تاكلينها" : left === 0 ? "كليها اليوم" : left === 1 ? "كليها بكرة بالكثير" : `باقي ${left} أيام بالثلاجة`}

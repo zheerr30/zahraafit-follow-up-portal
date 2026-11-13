@@ -161,7 +161,7 @@ export default function PrepPage() {
       return shares.map((s, i) => {
         const k = s.share * n; // this box = k servings of the recipe
         const grams = parts.length ? parts.reduce((a, x) => a + net(x) * s.share, 0) : whole ? whole * s.share : null;
-        const detail = parts.length ? parts.map((x) => `${x.name.trim()} ${Math.round(net(x) * s.share)} جم`).join(" + ") : null;
+        const detail = parts.length ? parts.map((x) => `${x.name.trim()} ${Math.round(net(x) * s.share)} غ`).join(" + ") : null;
         const g = p.groups[s.group];
         const freezer = st.freezer !== null && i >= freezeFrom;
         return {

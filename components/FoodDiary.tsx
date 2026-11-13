@@ -5,8 +5,8 @@ import { NO_OFF, isOff, loadOff, setOff, type OffInfo } from "@/lib/off-days";
 import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import { track } from "@/components/AppStatus";
 import Link from "next/link";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Camera, ChevronLeft, ChevronRight, Plus, ScanBarcode, Search, Store, X, Star } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Camera, ChevronLeft, ChevronRight, Plus, ScanBarcode, Search, Store, X, Star, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui";
 import { SLOTS, SLOT_EMOJI, defaultSlot, fromBarcode, fromBase, fromCustom, scaled, search, type BarcodeProduct, type BaseFood, type CustomFood, type FoodEntry, type Pickable, type Slot } from "@/lib/foods";
 import { aiRead, lookupBarcode } from "@/lib/food-scan";
@@ -29,7 +29,8 @@ type Sheet =
   | { mode: "barcode"; slot: Slot }
   | { mode: "photo"; slot: Slot }
   | { mode: "saveMeal"; slot: Slot }
-  | { mode: "rest"; slot: Slot };
+  | { mode: "rest"; slot: Slot }
+  | { mode: "item"; slot: Slot; entry: FoodEntry };
 type EntryRow = Omit<FoodEntry, "id" | "client_id" | "log_date" | "slot" | "created_at">;
 type Saved = { id: string; kind: "item" | "meal"; name: string; data: { food?: Pickable; items?: EntryRow[] } };
 
@@ -55,15 +56,24 @@ function slotNow(ramadan: boolean): Slot {
   if (h < 5) return "عشاء";
   return "فطور";
 }
-/** Line under the card when there is no plan to follow (or for another day). */
-function genericLine(eaten: number, target: Target | null, isToday: boolean): ReactNode {
-  const e = Math.round(eaten);
-  if (!isToday) return e ? <>سجلتي هاليوم <b>{e}</b> سعرة{target ? ` من ${target.cal}` : ""}.</> : <>ما سجلتي أكل هاليوم.</>;
-  if (!e) return <>👆 ابدئي بتسجيل أول شي أكلتيه اليوم.</>;
-  if (!target) return <>سجلتي <b>{e}</b> سعرة اليوم. حطي هدفك من الحاسبة عشان نقولك كم باقي.</>;
-  const left = Math.round(target.cal - eaten);
-  if (left < 0) return <>📊 زدتي <b>{-left}</b> سعرة عن هدفك اليوم. عادي يصير، بكرا يوم جديد 💪</>;
-  return <>👍 باقي لك <b>{left}</b> سعرة اليوم.</>;
+const MAC_TIPS = { p: ["بروتين", "صدر دجاج أو زبادي يوناني"], c: ["كارب", "شوفان أو فاكهة"], f: ["دهون", "حفنة مكسرات أو أفوكادو"] } as const;
+
+/** Line in the card when there is no plan to follow (or for another day). null = nothing useful to say. */
+function genericLine(t: { cal: number; p: number; c: number; f: number }, target: Target | null, isToday: boolean, hide: boolean): ReactNode {
+  const e = Math.round(t.cal);
+  if (!isToday) return null;
+  if (!e) return <>ابدئي بتسجيل أول شي أكلتيه اليوم.</>;
+  if (!target) return <>حطي هدفك من الحاسبة عشان نقولك كم باقي.</>;
+  const left = Math.round(target.cal - t.cal);
+  if (left < -40) return hide ? <>زدتي عن هدفك اليوم شوي. عادي يصير، بكرا يوم جديد.</> : <>زدتي <b className="num">{-left}</b> سعرة عن هدفك اليوم. عادي يصير، بكرا يوم جديد.</>;
+  // The macro most behind its target, with an easy food for it.
+  const gaps = (["p", "c", "f"] as const).map((k) => ({ k, g: target[k] ? (target[k] - t[k]) / target[k] : 0, left: Math.round(target[k] - t[k]) }));
+  const top = gaps.sort((a, b) => b.g - a.g)[0];
+  if (top && top.g > 0.25 && top.left > 5) {
+    const [name, food] = MAC_TIPS[top.k];
+    return hide ? <>باقي لك {name}، جربي {food}.</> : <>باقي لك {name} <b className="num">{top.left}</b> غ، جربي {food}.</>;
+  }
+  return null;
 }
 
 const fmt = (v: number) => (Math.round(v * 10) / 10).toString();
@@ -83,7 +93,8 @@ export function FoodDiary({
   planDone = false,
   ramadan = false,
   afterMeals,
-  details = null
+  details = null,
+  hide = false
 }: {
   clientId: string;
   profileId: string;
@@ -104,6 +115,8 @@ export function FoodDiary({
   afterMeals?: ReactNode;
   /** «تفاصيل أكثر» in the card (fiber, sodium...): null hides it (hide_numbers or the coach hid it). */
   details?: { male: boolean } | null;
+  /** «بدون أرقام»: no calories or grams on screen. */
+  hide?: boolean;
 }) {
   const lbl = (sl: Slot) => (ramadan ? RAMADAN_SLOT[sl] : sl);
   const emo = (sl: Slot) => (ramadan ? RAMADAN_EMOJI[sl] : SLOT_EMOJI[sl]);
@@ -308,6 +321,7 @@ export function FoodDiary({
   return (
     <>
       <CalorieCard
+        hide={hide}
         totals={totals}
         target={target}
         details={details ? <DayDetails clientId={clientId} date={date} meals={ticked.map((x) => x.meal)} male={details.male} refresh={entries.length} /> : undefined}
@@ -319,23 +333,23 @@ export function FoodDiary({
               <button type="button" aria-label="اليوم اللي بعد" disabled={date >= today} onClick={() => setDate(shiftDay(date, 1))}><ChevronLeft size={15} /></button>
             </div>
             {isOff(off, date) ? (
-              <span className="off-chip">😌 يوم أوف</span>
+              <span className="off-chip">يوم أوف</span>
             ) : date >= today && off.limit > 0 ? (
               <button type="button" className="off-chip" onClick={async () => {
                 const err = await setOff(date);
                 if (err) return toast.show(err);
                 setOff2(await loadOff(clientId));
-                toast.show("صار اليوم يوم أوف 😌 استمتعي");
+                toast.show("صار اليوم يوم أوف، استمتعي");
               }}>يوم أوف؟</button>
             ) : null}
           </div>
         }
         line={
           isOff(off, date)
-            ? <>😌 يوم أوف: سجلي أكلك لو تبين، ينحفظ بس ما يدخل في متوسطك ولا ملخصك.</>
+            ? <>يوم أوف: سجلي أكلك لو تبين، ينحفظ بس ما يدخل في متوسطك ولا ملخصك.</>
             : date === today && smartLine
             ? smartLine(totals.cal)
-            : genericLine(totals.cal, target, date === today)
+            : genericLine(totals, target, date === today, hide)
         }
       />
 
@@ -345,7 +359,7 @@ export function FoodDiary({
           <button type="button" onClick={() => setSheet({ mode: "barcode", slot: slotNow(ramadan) })}><ScanBarcode size={22} />باركود</button>
           <button type="button" onClick={() => { track("food:photo"); setSheet({ mode: "photo", slot: slotNow(ramadan) }); }}>
             <Camera size={22} />صوري صحنك
-            {photosLeft !== null && photosLeft >= 0 && photosLeft <= 10 ? <span className="log-badge">{photosLeft > 0 ? `باقي ${photosLeft}` : "للمشتركين"}</span> : null}
+            {photosLeft !== null && photosLeft >= 0 && photosLeft <= 10 ? <span className="log-badge num">{photosLeft > 0 ? `باقي ${photosLeft}` : "للمشتركين"}</span> : null}
           </button>
           <button type="button" onClick={() => setSheet({ mode: "rest", slot: slotNow(ramadan) })}><Store size={22} />مطاعم</button>
         </div>
@@ -359,49 +373,42 @@ export function FoodDiary({
         if (!plan.length && !mine.length) {
           return (
             <section key={slot} className="card slot-empty">
-              <b>{emo(slot)} {lbl(slot)}</b>
+              <b className="slot-h"><span className="emo" aria-hidden="true">{emo(slot)}</span>{lbl(slot)}</b>
               {prevSame ? <button type="button" className="link small" style={{ minHeight: 0 }} onClick={() => copyPrev(slot)} title={prevEntries.filter((x) => x.slot === slot).map((x) => x.name).join("، ")}>↺ نفس أمس</button> : null}
               <button type="button" className="link" style={{ minHeight: 0, marginInlineStart: "auto" }} onClick={() => { setQ(""); setSheet({ mode: "search", slot }); }}><Plus size={16} />أضيفي</button>
             </section>
           );
         }
         return (
-          <section key={slot} className="card stack" style={{ gap: 0, padding: "12px 16px" }}>
-            <div className="row between" style={{ paddingBottom: 6 }}>
-              <b>{emo(slot)} {lbl(slot)}</b>
-              <span className="row" style={{ gap: 8 }}>
-                <button type="button" className="link small" style={{ minHeight: 0 }} onClick={() => { setMealName(""); setSheet({ mode: "saveMeal", slot }); }}>⭐ احفظيها</button>
-                <span className="small muted num">{Math.round(cal)} سعرة</span>
-              </span>
+          <section key={slot} className="card stack slot-card">
+            <div className="row between slot-top">
+              <b className="slot-h"><span className="emo" aria-hidden="true">{emo(slot)}</span>{lbl(slot)}</b>
+              {hide ? null : <span className="small muted"><span className="num">{Math.round(cal)}</span> سعرة</span>}
             </div>
             {plan.map(({ key, meal }) => (
               <div key={key} className="diary-row">
-                <span style={{ minWidth: 0 }}>
-                  {meal.name}
-                  <span className="note" style={{ display: "block" }}><span className="from-plan">من خطتك</span> · <MacLine p={Math.round(meal.p)} c={Math.round(meal.c)} f={Math.round(meal.f)} /></span>
+                <span className="dr-mid">
+                  <span className="dr-name">{meal.name}</span>
+                  <span className="note"><span className="from-plan">من خطتك</span>{hide ? null : <> · <MacLine p={Math.round(meal.p)} c={Math.round(meal.c)} f={Math.round(meal.f)} /></>}</span>
                 </span>
-                <b className="num">{meal.cal}</b>
+                {hide ? null : <b className="num">{Math.round(meal.cal)}</b>}
               </div>
             ))}
             {mine.map((e) => (
-              <div key={e.id} className="diary-row">
-                <span style={{ minWidth: 0 }}>
-                  {e.name}
-                  <span className="note" style={{ display: "block" }}>{fmt(Number(e.amount))} {e.unit} · <MacLine p={fmt(Number(e.p))} c={fmt(Number(e.c))} f={fmt(Number(e.f))} /></span>
-                </span>
-                <b className="num">{Math.round(Number(e.cal))}</b>
-                <button type="button" className="icon-btn fav-mini" aria-pressed={Boolean(favOf(entryFood(e)))} aria-label={favOf(entryFood(e)) ? `شيلي ${e.name} من المفضلة` : `أضيفي ${e.name} للمفضلة`} onClick={() => toggleFav(entryFood(e))}>
-                  <Star size={16} fill={favOf(entryFood(e)) ? "currentColor" : "none"} />
+              <SwipeRow key={e.id} onLeft={() => remove(e.id)} onRight={() => toggleFav(entryFood(e))} fav={Boolean(favOf(entryFood(e)))}>
+                <button type="button" className="diary-row dr-btn" onClick={() => setSheet({ mode: "item", slot, entry: e })}>
+                  <span className="dr-mid">
+                    <span className="dr-name">{e.name}</span>
+                    <span className="note">{portionText(Number(e.amount), e.unit)}{hide ? null : <> · <MacLine p={Math.round(Number(e.p))} c={Math.round(Number(e.c))} f={Math.round(Number(e.f))} /></>}</span>
+                  </span>
+                  {hide ? null : <b className="num">{Math.round(Number(e.cal))}</b>}
                 </button>
-                <button type="button" className="icon-btn" aria-label={`احذفي ${e.name}`} onClick={() => remove(e.id)}>
-                  <X size={15} />
-                </button>
-              </div>
+              </SwipeRow>
             ))}
-            <button type="button" className="link" style={{ alignSelf: "flex-start", marginTop: 6 }} onClick={() => { setQ(""); setSheet({ mode: "search", slot }); }}>
-              <Plus size={16} />
-              أضيفي أكل
-            </button>
+            <div className="slot-foot">
+              <button type="button" className="link" onClick={() => { setQ(""); setSheet({ mode: "search", slot }); }}><Plus size={16} />أضيفي أكل</button>
+              <button type="button" className="link small muted-link" onClick={() => { setMealName(""); setSheet({ mode: "saveMeal", slot }); }}>احفظي الوجبة كاملة</button>
+            </div>
           </section>
         );
       })}
@@ -427,19 +434,30 @@ export function FoodDiary({
         <div className="sheet-bg" onClick={(e) => e.target === e.currentTarget && setSheet(null)}>
           <div className="sheet" role="dialog" aria-modal="true" aria-label="أضيفي أكل" style={{ maxHeight: "88vh", overflowY: "auto" }}>
             <div className="row between">
-              <h2 style={{ fontSize: 18 }}>{emo(sheet.slot)} {sheet.mode === "new" ? (sheet.barcode ? "منتج جديد" : "صنف جديد") : sheet.mode === "barcode" ? "امسحي الباركود" : sheet.mode === "photo" ? "صوري وجبتك" : sheet.mode === "saveMeal" ? `احفظي ${lbl(sheet.slot)} كوجبة` : sheet.mode === "rest" ? `مطاعم · ${lbl(sheet.slot)}` : `أضيفي لـ${lbl(sheet.slot)}`}</h2>
+              <h2 style={{ fontSize: 18 }}>{sheet.mode === "item" ? sheet.entry.name : sheet.mode === "new" ? (sheet.barcode ? "منتج جديد" : "صنف جديد") : sheet.mode === "barcode" ? "امسحي الباركود" : sheet.mode === "photo" ? "صوري وجبتك" : sheet.mode === "saveMeal" ? `احفظي ${lbl(sheet.slot)} كوجبة` : sheet.mode === "rest" ? `مطاعم · ${lbl(sheet.slot)}` : `أضيفي لـ${lbl(sheet.slot)}`}</h2>
               <button type="button" className="icon-btn" aria-label="إغلاق" onClick={() => setSheet(null)}>
                 <X />
               </button>
             </div>
 
-            {sheet.mode === "search" ? (
+            {sheet.mode === "item" ? (
+              <ItemSheet entry={sheet.entry} hide={hide} fav={Boolean(favOf(entryFood(sheet.entry)))} onFav={() => toggleFav(entryFood(sheet.entry))}
+                onDelete={async () => { await remove(sheet.entry.id); setSheet(null); }}
+                onAmount={async (n) => {
+                  const e = sheet.entry, k = n / Number(e.amount);
+                  const row = { amount: n, cal: Math.round(Number(e.cal) * k * 10) / 10, p: Math.round(Number(e.p) * k * 10) / 10, c: Math.round(Number(e.c) * k * 10) / 10, f: Math.round(Number(e.f) * k * 10) / 10 };
+                  const { error } = await supabase.from("food_entries").update(row).eq("id", e.id);
+                  if (error) return toast.show("ما انحفظ. تأكدي من الاتصال.");
+                  setEntries((cur) => cur.map((x) => (x.id === e.id ? { ...x, ...row } : x)));
+                  setSheet(null);
+                }} />
+            ) : sheet.mode === "search" ? (
               <>
                 <div className="scan-btns">
-                  <button type="button" onClick={() => setSheet({ mode: "barcode", slot: sheet.slot })}><span aria-hidden="true">📷</span>باركود</button>
-                  <button type="button" onClick={() => setSheet({ mode: "photo", slot: sheet.slot })}><span aria-hidden="true">🤖</span>صوري وجبتك</button>
-                  <button type="button" onClick={() => setSheet({ mode: "rest", slot: sheet.slot })}><span aria-hidden="true">🍔</span>مطاعم</button>
-                  <button type="button" onClick={() => setSheet({ mode: "new", slot: sheet.slot, name: q.trim() })}><span aria-hidden="true">✍️</span>صنف جديد</button>
+                  <button type="button" onClick={() => setSheet({ mode: "barcode", slot: sheet.slot })}><ScanBarcode size={18} />باركود</button>
+                  <button type="button" onClick={() => setSheet({ mode: "photo", slot: sheet.slot })}><Camera size={18} />صوري صحنك</button>
+                  <button type="button" onClick={() => setSheet({ mode: "rest", slot: sheet.slot })}><Store size={18} />مطاعم</button>
+                  <button type="button" onClick={() => setSheet({ mode: "new", slot: sheet.slot, name: q.trim() })}><Plus size={18} />صنف جديد</button>
                 </div>
                 <div className="unit">
                   <label htmlFor="food-q" className="sr-only">ابحثي</label>
@@ -531,7 +549,7 @@ export function FoodDiary({
                   <label htmlFor="meal-name">اسمها</label>
                   <input id="meal-name" className="inp" value={mealName} onChange={(e) => setMealName(e.target.value)} placeholder={`مثلًا: ${({ فطور: "فطوري", غداء: "غدائي", عشاء: "عشائي", سناك: "سناكي" } as Record<Slot, string>)[sheet.slot]} المعتاد`} />
                 </div>
-                <button type="button" className="btn btn-p" onClick={() => saveMeal(sheet.slot)}>⭐ احفظيها</button>
+                <button type="button" className="btn btn-p" onClick={() => saveMeal(sheet.slot)}>احفظيها</button>
               </div>
             ) : sheet.mode === "barcode" ? (
               <BarcodeScanner onCode={(code) => { track("food:barcode"); onBarcode(sheet.slot, code); }} onCancel={() => setSheet({ mode: "search", slot: sheet.slot })} />
@@ -713,5 +731,60 @@ function NewFood({ initialName, barcode, profileId, onSaved }: { initialName: st
       {err ? <p className="alert err">{err}</p> : null}
       <button className="btn btn-p" type="submit" disabled={busy || reading}>{busy ? "لحظة..." : "احفظي وكملي"}</button>
     </form>
+  );
+}
+
+/** «1 علبة · 330 مل» instead of «حصة 3.3». */
+function portionText(amount: number, unit: string) {
+  const a = Math.round(amount * 10) / 10;
+  const m = unit.match(/^(.+?)\s*\((.+)\)\s*$/);
+  return m ? `${a} ${m[1]} · ${m[2]}` : `${a} ${unit}`;
+}
+
+/** A logged item: swipe left to delete, right to star (and tap to open). */
+function SwipeRow({ children, onLeft, onRight, fav }: { children: ReactNode; onLeft: () => void; onRight: () => void; fav: boolean }) {
+  const [dx, setDx] = useState(0);
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const moved = useRef(false);
+  return (
+    <div className="swipe-row">
+      <span className={`sw-under ${dx < 0 ? "del" : dx > 0 ? "fav" : ""}`} aria-hidden="true">{dx < 0 ? <Trash2 size={18} /> : <Star size={18} fill={fav ? "currentColor" : "none"} />}</span>
+      <div className="sw-top" style={{ transform: `translateX(${dx}px)` }}
+        onPointerDown={(e) => { start.current = { x: e.clientX, y: e.clientY }; moved.current = false; }}
+        onPointerMove={(e) => {
+          if (!start.current) return;
+          const x = e.clientX - start.current.x;
+          if (Math.abs(x) > 8 && Math.abs(x) > Math.abs(e.clientY - start.current.y)) { moved.current = true; setDx(Math.max(-120, Math.min(120, x))); }
+        }}
+        onPointerUp={() => { if (dx <= -80) onLeft(); else if (dx >= 80) onRight(); setDx(0); start.current = null; }}
+        onPointerCancel={() => { setDx(0); start.current = null; }}
+        onClickCapture={(e) => { if (moved.current) { e.stopPropagation(); e.preventDefault(); moved.current = false; } }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** Tap on a logged item: change the amount, star it, or delete it. */
+function ItemSheet({ entry, hide, fav, onFav, onDelete, onAmount }: { entry: FoodEntry; hide: boolean; fav: boolean; onFav: () => void; onDelete: () => void; onAmount: (n: number) => void }) {
+  const [amount, setAmount] = useState(String(Math.round(Number(entry.amount) * 10) / 10));
+  const n = Number(amount);
+  const k = n > 0 ? n / Number(entry.amount) : 0;
+  return (
+    <div className="stack">
+      <div className="field">
+        <label htmlFor="item-amt">الكمية</label>
+        <div className="unit">
+          <input id="item-amt" className="inp num" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          <span>{entry.unit}</span>
+        </div>
+      </div>
+      {hide || !k ? null : <p className="note"><span className="num">{Math.round(Number(entry.cal) * k)}</span> سعرة · <MacLine p={Math.round(Number(entry.p) * k)} c={Math.round(Number(entry.c) * k)} f={Math.round(Number(entry.f) * k)} unit=" غ" /></p>}
+      <button type="button" className="btn btn-p" disabled={!(n > 0) || n > 5000} onClick={() => onAmount(n)}>احفظي الكمية</button>
+      <div className="row" style={{ gap: 8 }}>
+        <button type="button" className="btn btn-s" style={{ flex: 1 }} onClick={onFav}><Star size={16} fill={fav ? "currentColor" : "none"} />{fav ? "في مفضلتك" : "للمفضلة"}</button>
+        <button type="button" className="btn btn-s" style={{ flex: 1, color: "var(--red)" }} onClick={onDelete}><Trash2 size={16} />احذفي</button>
+      </div>
+    </div>
   );
 }

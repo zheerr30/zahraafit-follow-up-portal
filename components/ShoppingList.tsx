@@ -101,7 +101,7 @@ export function ShoppingList({ clientId, planItems = [], bought = {}, onTogglePl
         const sorted = [...list].sort((a, b) => Number(a.done) - Number(b.done));
         return (
           <section key={sec} className="card shop-sec">
-            <b className="shop-sec-h">{SECTION_EMOJI[sec]} {sec}</b>
+            <b className="shop-sec-h"><span className="emo" aria-hidden="true">{SECTION_EMOJI[sec]}</span>{sec}</b>
             {sorted.map((l) => (
               <div key={l.id} className={`shop-line ${l.done ? "done" : ""}`}>
                 <label>
@@ -117,7 +117,7 @@ export function ShoppingList({ clientId, planItems = [], bought = {}, onTogglePl
       })}
       {taste.length ? (
         <section className="card shop-sec">
-          <b className="shop-sec-h">🧂 حسب الذوق</b>
+          <b className="shop-sec-h"><span className="emo" aria-hidden="true">🧂</span>حسب الذوق</b>
           <p className="small" style={{ lineHeight: 2, margin: 0 }}>{taste.join("، ")}</p>
         </section>
       ) : null}
