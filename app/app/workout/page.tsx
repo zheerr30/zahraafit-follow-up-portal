@@ -43,6 +43,11 @@ export default function WorkoutPage() {
   const plan = cp.workout;
   const row = cp.workoutRow;
 
+  // Opening the plan closes its «وصلك جدولك» pill on home.
+  useEffect(() => {
+    if (row?.id) try { localStorage.setItem(`zf-newplan-${row.id}`, "1"); } catch {}
+  }, [row?.id]);
+
   const loadLogs = useCallback(async () => {
     if (!cp.client) return;
     const { data } = await supabase.from("workout_logs").select("*").eq("client_id", cp.client.id).order("created_at", { ascending: false }).limit(60);
@@ -200,6 +205,7 @@ export default function WorkoutPage() {
 
   return (
     <ClientShell title="تماريني" action={pdf ? <a className="btn btn-g btn-sm" href={pdf.href} target={pdf.external ? "_blank" : undefined} rel="noreferrer"><FileText />PDF</a> : undefined}>
+      {row?.content ? <p className="plan-msg">{row.content}</p> : null}
       <section className="photo-hero">
         <span className="kicker">💪 تمرينك الجاي · تمارين هالأسبوع {thisWeek}</span>
         <h2>{plan.days[nextIdx].title}</h2>

@@ -113,6 +113,9 @@ export default function FoodPage() {
 
   const plan = cp.meal;
   const row = cp.mealRow;
+  useEffect(() => {
+    if (row?.id) try { localStorage.setItem(`zf-newplan-${row.id}`, "1"); } catch {}
+  }, [row?.id]);
 
   useEffect(() => {
     if (cp.loading) return;

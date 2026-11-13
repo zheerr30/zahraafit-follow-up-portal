@@ -55,6 +55,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
   const today = todayKey();
   const [d, setD] = useState<Data | null>(null);
   const [dismissed, setDismissed] = useState(false);
+  const [planGone, setPlanGone] = useState(false);
   const [share, setShare] = useState(false);
 
   const mealRow = plans.find((p) => p.kind === "nutrition" && p.data && !p.variant) || null;
@@ -146,7 +147,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
   try { seenReply = localStorage.getItem(SEEN_KEY); } catch {}
   const newReply = acc.sub && Boolean(d.followup?.coach_notes && d.followup.coach_replied_at && seenReply !== d.followup.id);
   // A plan that arrived in the last 3 days (and she hasn't closed its strip).
-  const newPlan = acc.sub && !readyHero
+  const newPlan = acc.sub
     ? [...plans].filter((p) => (p.kind === "workout" || p.kind === "nutrition") && p.data && !p.variant && Date.now() - new Date(p.created_at).getTime() < 3 * 864e5)
         .sort((a, b) => b.created_at.localeCompare(a.created_at))
         .find((p) => { try { return localStorage.getItem(`zf-newplan-${p.id}`) !== "1"; } catch { return true; } }) || null
@@ -160,9 +161,6 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
     pill = { key: `reply-${d.followup!.id}`, text: "زهراء ردت على تسجيلك", link: "افتحيه", href: "/app/progress#coach-msg", act: () => markReplySeen(d.followup!.id) };
   } else if (checkinDue) {
     pill = { key: `checkin-${today}`, text: "وقت متابعتك الأسبوعية", link: "سجلي", href: "/app/checkin" };
-  } else if (newPlan) {
-    pill = { key: `newplan-${newPlan.id}`, text: newPlan.kind === "workout" ? "وصلك جدولك الرياضي" : "وصلك جدولك الغذائي", link: newPlan.kind === "workout" ? "تماريني" : "أكلي", href: newPlan.kind === "workout" ? "/app/workout" : "/app/food",
-      act: () => { try { localStorage.setItem(`zf-newplan-${newPlan.id}`, "1"); } catch {} } };
   } else if (ramadanSuggest) {
     pill = { key: `ramadan-${today}`, text: "رمضان كريم، نشغل وضع رمضان؟", link: "شغليه", act: async () => {
       await supabase.from("reminder_prefs").upsert({ profile_id: profile.id, ramadan_until: ramadanUntil() }, { onConflict: "profile_id" });
@@ -199,16 +197,42 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
   const workMinutes = todayWork ? Math.max(5, Math.round(todayWork.exercises.reduce((t, e) => t + e.sets * (40 + restSeconds(e.rest)), 0) / 60 / 5) * 5) : 0;
   const lastWeight = d.weight;
   const week7 = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6));
+  // This week from Saturday (first dot on the right). Orange = the days counted in the streak,
+  // so the number of orange dots matches the number written (up to the days of this week).
+  const satStart = addDays(today, -((new Date(today + "T12:00:00").getDay() + 1) % 7));
+  const weekSat = Array.from({ length: 7 }, (_, i) => addDays(satStart, i));
+  const streakSet = new Set<string>();
+  {
+    let k = d.weekOn.has(today) ? today : addDays(today, -1);
+    for (let n = 0, guard = 0; n < d.streak && guard < 120; guard++, k = addDays(k, -1)) {
+      if (isOff(d.off, k) && !d.weekOn.has(k)) continue;
+      streakSet.add(k);
+      n++;
+    }
+  }
   const DAY_L = ["ح", "ن", "ث", "ر", "خ", "ج", "س"];
 
   return (
     <>
       {pill && !dismissed ? <AlertPill pill={pill} onClose={() => setDismissed(true)} /> : null}
 
-      <DaySummaryCard profileId={profile.id} today={today} />
       <DayStatsSync clientId={client.id} day={today} n={{ cal: eaten.cal, p: eaten.p, c: eaten.c, f: eaten.f, target_cal: d.target?.cal || null, target_p: d.target?.p || null, water: d.water, water_goal: cups, meals_done: doneCount, meals_total: todayMeals.length }} />
 
-      {readyHero || <PlateCard eaten={eaten} target={d.target} off={isOff(d.off, today)} hide={hide} free={!acc.sub} />}
+      {newPlan ? (
+        <AlertPill key={`np-${newPlan.id}`} pill={{ key: `newplan-${newPlan.id}`, text: newPlan.kind === "workout" ? "وصلك جدولك الرياضي" : "وصلك جدولك الغذائي", link: "افتحيه", href: newPlan.kind === "workout" ? "/app/workout" : "/app/food?tab=meals",
+          act: () => { try { localStorage.setItem(`zf-newplan-${newPlan.id}`, "1"); } catch {} } }} onClose={() => { try { localStorage.setItem(`zf-newplan-${newPlan.id}`, "1"); } catch {} setPlanGone(true); }} hidden={planGone} />
+      ) : null}
+
+      {readyHero || (acc.sub && work && !plan && todayWork ? (
+        <Link href="/app/workout" className="work-hero">
+          <span className="wh-kicker">{trainedToday ? "تمرنتي اليوم، عافية عليك" : "تمرين اليوم"}</span>
+          <b className="wh-title">{muscleTitle(todayWork.title)}</b>
+          <span className="wh-meta"><span className="num">{todayWork.exercises.length}</span> تمارين · <span className="num">{todayWork.exercises.reduce((t, e) => t + e.sets, 0)}</span> مجموعة · <span className="num">{workMinutes}</span> دقيقة</span>
+          <span className="btn btn-p wh-go">{trainedToday ? "شوفي جدولك" : "ابدئي التمرين"}</span>
+        </Link>
+      ) : <PlateCard eaten={eaten} target={d.target} off={isOff(d.off, today)} hide={hide} free={!acc.sub} />)}
+
+      <DaySummaryCard profileId={profile.id} today={today} />
 
       <div className="sec-title">
         <h2>يومك</h2>
@@ -252,7 +276,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
           <Link href="/app/workout" className="d-row">
             <span className="emo" aria-hidden="true">🏋️</span>
             <span className="d-mid">
-              <b className="trunc">{trainedToday ? "تمرنتي اليوم" : todayWork.title}</b>
+              <b className="trunc">{trainedToday ? "تمرنتي اليوم" : muscleTitle(todayWork.title)}</b>
               <small>{trainedToday ? "عافية عليك" : <><span className="num">{todayWork.exercises.length}</span> تمارين · <span className="num">{workMinutes}</span> دقيقة</>}</small>
             </span>
             <span className="d-end"><ChevronLeft size={16} /></span>
@@ -263,8 +287,8 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
           <span className="d-mid">
             <b>{d.streak > 0 ? <><span className="num">{d.streak}</span> {d.streak === 1 ? "يوم" : d.streak === 2 ? "يومين" : "أيام"} ورا بعض</> : "ابدئي سلسلتك اليوم"}</b>
           </span>
-          <span className="wk-dots9" aria-label={`سجلتي ${week7.filter((k) => d.weekOn.has(k)).length} من آخر 7 أيام`}>
-            {week7.map((k) => <i key={k} className={`${d.weekOn.has(k) ? "on" : ""} ${k === today ? "now" : ""}`} />)}
+          <span className="wk-dots9" aria-label={`${d.streak} أيام ورا بعض`}>
+            {weekSat.map((k) => <i key={k} className={`${streakSet.has(k) ? "on" : ""} ${k === today ? "now" : ""}`} />)}
           </span>
         </Link>
       </section>
@@ -324,7 +348,7 @@ function timeAgo(iso: string) {
 }
 
 /** The one alert: a small pill (dot, one line, orange link). Swipe it sideways to close. */
-function AlertPill({ pill, onClose }: { pill: { key: string; text: string; link: string; href?: string; ext?: boolean; act?: () => void }; onClose: () => void }) {
+function AlertPill({ pill, onClose, hidden = false }: { pill: { key: string; text: string; link: string; href?: string; ext?: boolean; act?: () => void }; onClose: () => void; hidden?: boolean }) {
   const [dx, setDx] = useState(0);
   const start = useRef<number | null>(null);
   const close = () => { try { sessionStorage.setItem(`zf-pill-${pill.key}`, "1"); } catch {} onClose(); };
@@ -336,6 +360,7 @@ function AlertPill({ pill, onClose }: { pill: { key: string; text: string; link:
       ? <a className="pill-link" href={pill.href} target="_blank" rel="noreferrer" onClick={pill.act}>{pill.link}</a>
       : <Link className="pill-link" href={pill.href} onClick={pill.act}>{pill.link}</Link>
     : <button type="button" className="pill-link" onClick={pill.act}>{pill.link}</button>;
+  if (hidden) return null;
   return (
     <div className="alert-pill" role="status" style={{ transform: `translateX(${dx}px)`, opacity: 1 - Math.min(1, Math.abs(dx) / 160) }}
       onPointerDown={(e) => { start.current = e.clientX; }}
@@ -348,4 +373,10 @@ function AlertPill({ pill, onClose }: { pill: { key: string; text: string; link:
       <button type="button" className="pill-x" aria-label="إخفاء" onClick={close}><X size={13} /></button>
     </div>
   );
+}
+
+/** «صدر + أكتاف + ترايسبس» → «صدر وأكتاف وترايسبس». */
+function muscleTitle(t: string) {
+  const parts = t.split(/\s*[+،,]\s*/).map((x) => x.trim()).filter(Boolean);
+  return parts.length > 1 ? [parts[0], ...parts.slice(1).map((x) => "و" + x)].join(" ") : t;
 }

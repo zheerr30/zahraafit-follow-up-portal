@@ -1335,3 +1335,16 @@ svg.lucide { stroke-width: 1.8; }
 .wp-key i.part { background: var(--navy); }
 .sec-h h2 { display: flex; align-items: center; gap: 8px; }
 .slogan { text-align: center; font-size: 13px; color: var(--ink-3); letter-spacing: .5px; padding: 8px 0 4px; }
+
+/* 41: top of home */
+.alert-pill { height: 36px; padding-block: 0; }
+.pill-dot { width: 8px; height: 8px; }
+.work-hero { background: radial-gradient(120% 90% at 50% 0%, #14244F 0%, #050F2C 70%); color: #fff; border-radius: var(--r-xl); padding: 22px 20px; min-height: 360px; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; text-decoration: none; position: relative; overflow: hidden; }
+.work-hero::before { content: ""; position: absolute; width: 260px; height: 260px; border-radius: 50%; top: -60px; inset-inline-end: -70px; background: radial-gradient(circle, rgba(232, 96, 44, .35), rgba(232, 96, 44, 0) 70%); }
+.wh-kicker { font-size: 13px; color: #F2A27F; font-weight: 600; position: relative; }
+.wh-title { font-size: 26px; line-height: 1.35; position: relative; }
+.wh-meta { font-size: 14px; color: rgba(255, 255, 255, .75); position: relative; }
+.wh-go { position: relative; margin-top: 8px; }
+.plan-msg { background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--r-lg); padding: 14px 16px; font-size: 15px; line-height: 1.75; white-space: pre-line; color: var(--ink); }
+/* room under the last card: tab bar 62 + 14 + safe area + 24 */
+.screen { padding-bottom: calc(62px + 14px + env(safe-area-inset-bottom, 0px) + 24px); }

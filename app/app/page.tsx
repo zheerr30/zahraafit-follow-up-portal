@@ -130,50 +130,8 @@ export default function ClientHome() {
       </>
     );
   } else {
-    // The calories card stays the main card when there's a meal plan (a new plan only adds a
-    // small strip above it, in HomeDashboard). The big «خطتك جاهزة» is for a new plan without meals.
-    const fresh = !plan || Date.now() - new Date(plan.created_at).getTime() < 3 * 864e5;
-    const hasMeal = plans.some((x) => x.kind === "nutrition" && x.data);
-    main = fresh && !hasMeal ? (
-      <>
-        <section className="photo-hero plain">
-
-          <span className="kicker">{plan ? `🎉 وصلتك ${formatDate(plan.created_at)}` : "🎉 خطتك"}</span>
-          <h2>خطتك جاهزة</h2>
-          {!plan ? <p>المدربة أرسلت خطتك. إذا ما وصلتك تواصلي معها.</p> : null}
-          {plan?.content ? <p style={{ whiteSpace: "pre-line" }}>{plan.content}</p> : null}
-          {plans.some((x) => x.kind === "nutrition" && x.data) ? (
-            <Link className="btn btn-p btn-block" href="/app/food">
-              <Utensils />
-              وجباتي
-            </Link>
-          ) : null}
-          {plans.some((x) => x.kind === "workout" && x.data) ? (
-            <Link className="btn btn-p btn-block" href="/app/workout">
-              <Dumbbell />
-              تماريني
-            </Link>
-          ) : null}
-          {plans.map((x) => {
-            const isDoc = (x.data as { format?: string } | null)?.format === "zahraafit-doc";
-            if (!x.url && !isDoc) return null;
-            const label = `${x.title.replace(/\s*\(PDF\)$/, "")} (PDF)`;
-            const cls = `btn btn-block ${plans.some((y) => y.kind !== "other" && y.data) ? "btn-on-navy" : "btn-p"}`;
-            return x.url ? (
-              <a key={x.id} className={cls} href={x.url} target="_blank" rel="noreferrer">
-                <FileText />
-                {label}
-              </a>
-            ) : (
-              <Link key={x.id} className={cls} href={`/app/print/${x.id}`}>
-                <FileText />
-                {label}
-              </Link>
-            );
-          })}
-        </section>
-      </>
-    ) : null;
+    // The plate card is always first (HomeDashboard); a new plan only adds a small pill above it.
+    main = null;
   }
 
   return (
