@@ -83,6 +83,14 @@ export function ClientShell({ title, sub, action, children }: { title: ReactNode
   const path = usePathname();
   const root = useRef<HTMLDivElement>(null);
   useGenderText(root, getGender());
+  // Once the big title scrolls away, a small one stays on top.
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    const on = () => setCompact(window.scrollY > 48);
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, []);
   const tabs = [
     { href: "/app", label: "الرئيسية", icon: <Home /> },
     { href: "/app/food", label: "أكلي", icon: <Utensils /> },
@@ -95,6 +103,7 @@ export function ClientShell({ title, sub, action, children }: { title: ReactNode
       <div className="safe-top" aria-hidden="true" />
       <AppStatus />
       <FirstRun />
+      <div className={`ph-compact ${compact ? "on" : ""}`} aria-hidden="true"><span>{title}</span></div>
       <header className="page-head gutter">
         <div style={{ minWidth: 0 }}>
           <div className="ph-date">{todayLabel()}</div>

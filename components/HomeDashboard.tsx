@@ -4,7 +4,7 @@ import { isOff, loadOff, type OffInfo } from "@/lib/off-days";
 import { boxDaysLeft, loadBoxes, type Box } from "@/components/PrepBoxes";
 import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Check, CheckCircle2, ChevronLeft, Dumbbell, Flame, Plus, Share2, X, Droplet } from "lucide-react";
+import { Check, CheckCircle2, ChevronLeft, Dumbbell, Flame, Plus, Share2, X, Droplet, Utensils } from "lucide-react";
 import { ShareSheet } from "@/components/ShareSheet";
 import { DaySummaryCard, DayStatsSync } from "@/components/DaySummary";
 import { CalorieCard } from "@/components/CalorieCard";
@@ -55,6 +55,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
   const [d, setD] = useState<Data | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [share, setShare] = useState(false);
+  const [planBarClosed, setPlanBarClosed] = useState<string[]>([]);
 
   const mealRow = plans.find((p) => p.kind === "nutrition" && p.data && !p.variant) || null;
   const plan = acc.sub ? ((mealRow?.data as MealPlanData | undefined) || null) : null;
@@ -140,7 +141,9 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
   // ── one alert, by priority ──
   const fu = followupInfo(client, today, acc.sub);
   const markSeen = () => { if (d.followup) markReplySeen(d.followup.id); };
-  const checkinDue = fu.openDate && d.followup?.week_date !== fu.openDate;
+  // The weekly check-in bar: Saturdays only, gone once she sends it.
+  const isSaturday = new Date(today + "T12:00:00").getDay() === 6;
+  const checkinDue = isSaturday && fu.openDate && d.followup?.week_date !== fu.openDate;
   const period = profile.gender !== "male" && currentPeriod(d.periods, today);
   const ramadanSuggest = isRamadanMonth(today) && hijri(today).d <= 2 && !ramadan;
   const soonBox = d.boxes.find((b) => b.place === "fridge" && boxDaysLeft(b, today) <= 1);
@@ -149,11 +152,9 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
     alert = <div className="alert-card warn"><b>⏳ {acc.daysLeft <= 0 ? "اشتراكك ينتهي اليوم" : `باقي ${acc.daysLeft} أيام على نهاية اشتراكك`}</b><span>جددي عشان ما توقف خطتك ومتابعتك.</span><a className="btn btn-p btn-sm" href={STORE_URL} target="_blank" rel="noreferrer">جددي اشتراكك</a></div>;
   } else if (!acc.sub && acc.expired) {
     alert = <div className="alert-card warn"><b>⏳ انتهى اشتراكك</b><span>بياناتك وسجلك محفوظين. جددي عشان تفتح خطتك وتمارينك.</span><a className="btn btn-p btn-sm" href={STORE_URL} target="_blank" rel="noreferrer">جددي اشتراكك</a></div>;
-  } else if (checkinDue && fu.saturday) {
-    alert = <Link href="/app/checkin" className="alert-card"><b>📅 اليوم السبت! وقت تسجيلك الأسبوعي</b><span>سجلي وزنك وقياساتك وكيف كان أسبوعك.</span></Link>;
   } else if (checkinDue) {
-    alert = <Link href="/app/checkin" className="alert-card"><b>📅 {fu.saturday ? "اليوم السبت! وقت تسجيلك الأسبوعي" : "وقت متابعتك الأسبوعية"}</b><span>سجلي وزنك وقياساتك وكيف كان أسبوعك.</span></Link>;
-  } else if (!acc.sub && new Date(today + "T12:00:00").getDay() === 6 && !(d.weight && d.weight.date >= addDays(today, -6))) {
+    alert = <Link href="/app/checkin" className="alert-card"><b>📅 اليوم السبت! وقت تسجيلك الأسبوعي</b><span>سجلي وزنك وقياساتك وكيف كان أسبوعك.</span></Link>;
+  } else if (!acc.sub && isSaturday && !(d.weight && d.weight.date >= addDays(today, -6))) {
     alert = <Link href="/app/progress" className="alert-card"><b>📅 اليوم السبت! وقت وزنك الأسبوعي</b><span>سجلي وزنك وتابعي تغيره أسبوع بأسبوع.</span></Link>;
   } else if (soonBox) {
     const dl = boxDaysLeft(soonBox, today);
@@ -194,6 +195,12 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
   const workValue = !work ? null : trainedToday ? "✅ تمرنتي اليوم" : weekDays >= work.days.length ? "يوم راحة 😌" : nextWorkout || "—";
   const workSub = !work ? "" : trainedToday ? "عافية عليك!" : weekDays >= work.days.length ? `خلصتي ${weekDays} تمارين هالأسبوع` : "تمرين اليوم";
   const cups = waterCups(d.weight?.kg);
+  // A plan that arrived in the last 3 days (and she hasn't closed its strip).
+  const newPlan = acc.sub && !readyHero
+    ? [...plans].filter((p) => (p.kind === "workout" || p.kind === "nutrition") && p.data && !p.variant && Date.now() - new Date(p.created_at).getTime() < 3 * 864e5)
+        .sort((a, b) => b.created_at.localeCompare(a.created_at))
+        .find((p) => { try { return localStorage.getItem(`zf-newplan-${p.id}`) !== "1"; } catch { return true; } }) || null
+    : null;
   const lastWeight = d.weight;
   const week7 = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6));
   const DAY_L = ["ح", "ن", "ث", "ر", "خ", "ج", "س"];
@@ -208,6 +215,16 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
       ) : null}
 
       <DaySummaryCard profileId={profile.id} today={today} />
+      {newPlan && !planBarClosed.includes(newPlan.id) ? (
+        <div className="newplan-bar" role="status">
+          <b>{newPlan.kind === "workout" ? "وصلك جدولك الرياضي" : "وصلك جدولك الغذائي"}</b>
+          <Link className="btn btn-p btn-sm" href={newPlan.kind === "workout" ? "/app/workout" : "/app/food"}>{newPlan.kind === "workout" ? "تماريني" : "أكلي"}</Link>
+          <button type="button" className="icon-btn" aria-label="إخفاء" onClick={() => {
+            try { localStorage.setItem(`zf-newplan-${newPlan.id}`, "1"); } catch {}
+            setPlanBarClosed([...planBarClosed, newPlan.id]);
+          }}><X size={15} /></button>
+        </div>
+      ) : null}
       <DayStatsSync clientId={client.id} day={today} n={{ cal: eaten.cal, p: eaten.p, c: eaten.c, f: eaten.f, target_cal: d.target?.cal || null, target_p: d.target?.p || null, water: d.water, water_goal: waterCups(d.weight?.kg), meals_done: doneCount, meals_total: todayMeals.length }} />
 
       {readyHero || (isOff(d.off, today) ? (
@@ -269,6 +286,16 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
         <button type="button" className="share-btn" style={{ margin: 0, marginInlineStart: "auto" }} onClick={() => setShare(true)}><Share2 size={14} /> شاركي</button>
       </div>
       <section className="card day-rows">
+        <Link href="/app/food" className="d-row">
+          <span className="d-ic" style={{ background: "var(--clay-tint)", color: "var(--clay)" }}><Utensils size={18} /></span>
+          <span className="d-mid">
+            <small>الأكل{todayMeals.length ? <> · <span className="num">{doneCount} من {todayMeals.length}</span> وجبات</> : null}</small>
+            <b className="num">
+              {d.target ? `${Math.round(eaten.cal).toLocaleString("en-US")} من ${d.target.cal.toLocaleString("en-US")} سعرة` : eaten.cal ? `${Math.round(eaten.cal).toLocaleString("en-US")} سعرة` : "ما سجلتي أكل اليوم"}
+            </b>
+          </span>
+          <span className="d-end"><ChevronLeft size={16} /></span>
+        </Link>
         <div className="d-row">
           <Link href="/app/food" className="d-link">
             <span className="d-ic" style={{ background: "var(--bg)", color: "var(--navy-soft)" }}><Droplet size={18} /></span>

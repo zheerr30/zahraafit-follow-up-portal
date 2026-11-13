@@ -132,8 +132,11 @@ export default function ClientHome() {
       </>
     );
   } else {
+    // The calories card stays the main card when there's a meal plan (a new plan only adds a
+    // small strip above it, in HomeDashboard). The big «خطتك جاهزة» is for a new plan without meals.
     const fresh = !plan || Date.now() - new Date(plan.created_at).getTime() < 3 * 864e5;
-    main = fresh ? (
+    const hasMeal = plans.some((x) => x.kind === "nutrition" && x.data);
+    main = fresh && !hasMeal ? (
       <>
         <section className="photo-hero plain">
 

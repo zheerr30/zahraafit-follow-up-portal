@@ -996,3 +996,35 @@ button:active:not(:disabled), a.btn:active, a.card:active, .d-row:active, .list-
 .sum-rec b { font-size: 12px; color: var(--clay); }
 .sum-rec p { margin: 2px 0 0; font-size: 14px; line-height: 1.7; }
 @media (max-width: 360px) { .sum-body { flex-direction: column; align-items: stretch; } }
+
+/* 38: home fixes */
+/* Side line: its own short, straight, rounded bar inside the card (not the card's border). */
+.recs, .coach-msg, .coach-card, .alert-card, .alert-card.warn, .alert-card.ok, .alert-card.pink, .alert-card.coach-note, .newplan-bar { border-inline-start: 0 !important; position: relative; }
+.recs::before, .coach-msg::before, .coach-card::before, .alert-card::before, .newplan-bar::before {
+  content: ""; position: absolute; inset-inline-start: 0; top: 18px; bottom: 18px; width: 3px; border-radius: 3px; background: var(--clay); pointer-events: none;
+}
+.newplan-bar::before { top: 12px; bottom: 12px; }
+
+/* «وصلك جدولك» strip above the calories card */
+.newplan-bar { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 16px; padding: 10px 12px 10px 10px; padding-inline-start: 16px; box-shadow: var(--shadow); }
+.newplan-bar b { flex: 1; font-size: 14px; color: var(--navy); }
+.newplan-bar .btn { min-height: 36px; }
+
+/* Header: big title in the page; once scrolled, a small centered title stays on top (blurred, below the status bar). */
+.page-head h1 { font-size: 28px; }
+.ph-compact {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 61;
+  padding-top: env(safe-area-inset-top, 0px); height: calc(46px + env(safe-area-inset-top, 0px));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 700; color: var(--navy);
+  background: rgba(244, 242, 238, .8); -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4);
+  border-bottom: 1px solid transparent;
+  opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .25s ease, transform .25s ease, border-color .25s ease;
+}
+.ph-compact.on { opacity: 1; transform: none; pointer-events: auto; border-bottom-color: var(--line); }
+.ph-compact span { max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Room under the last card: tab bar height + its gap + safe area + 20px. */
+:root { --nav-h: 62px; }
+.nav { height: var(--nav-h); background: rgba(255, 255, 255, .62); -webkit-backdrop-filter: blur(24px) saturate(1.6); backdrop-filter: blur(24px) saturate(1.6); }
+.screen { padding-bottom: calc(var(--nav-h) + 14px + env(safe-area-inset-bottom, 0px) + 20px); }
