@@ -1363,3 +1363,11 @@ svg.lucide { stroke-width: 1.8; }
 .yt-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; background: #000; }
 .yt-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .ex-more-video summary { cursor: pointer; font-weight: 700; color: var(--clay); padding: 6px 0; }
+/* «تمرينك الجاي» and the day cards: day names joined with و */
+.work-next .kicker { color: #F2A27F; font-weight: 600; font-size: 13px; }
+.work-next h2 { font-size: 24px; line-height: 1.4; }
+.work-next p { color: rgba(255, 255, 255, .78); font-size: 14px; }
+.work-next .wn-week { font-size: 12.5px; color: rgba(255, 255, 255, .6); margin-top: -6px; }
+.dcard-h h3 { font-size: 16.5px; line-height: 1.45; }
+/* headings on the navy cards stay white (they were taking the page's ink colour) */
+:is(.cal-hero, .photo-hero, .hero, .offer, .offer-card, .offer-card2, .mcard-h, .dcard-h, .rest, .checkin-card.hot, .plate-card, .work-hero) :is(h1, h2, h3) { color: #fff; }

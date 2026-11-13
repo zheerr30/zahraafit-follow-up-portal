@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUp, Check, Dumbbell, FileText, History, Info, Play, PlayCircle, X } from "lucide-react";
 import { ClientShell, Empty, Loading, Rings, useToast } from "@/components/ui";
-import { muscleImage, repRange, restSeconds, type Exercise } from "@/lib/plan-data";
+import { dayTitle, muscleImage, repRange, restSeconds, type Exercise } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
 import { VideoSheet } from "@/components/VideoSheet";
 import { useAuthGuard } from "@/lib/use-auth";
@@ -147,7 +147,7 @@ export default function WorkoutPage() {
     const d = plan!.days[i];
     setSession({
       dayIndex: i,
-      title: d.title,
+      title: dayTitle(d.title),
       exercises: d.exercises,
       t0: Date.now(),
       sets: d.exercises.map((e) => {
@@ -218,10 +218,11 @@ export default function WorkoutPage() {
   return (
     <ClientShell title="تماريني" action={pdf ? <a className="btn btn-g btn-sm" href={pdf.href} target={pdf.external ? "_blank" : undefined} rel="noreferrer"><FileText />PDF</a> : undefined}>
       {row?.content ? <p className="plan-msg">{row.content}</p> : null}
-      <section className="photo-hero">
-        <span className="kicker">💪 تمرينك الجاي · تمارين هالأسبوع {thisWeek}</span>
-        <h2>{plan.days[nextIdx].title}</h2>
-        <p>{plan.days[nextIdx].exercises.length} تمارين · خذي وقتك بين الجولات</p>
+      <section className="photo-hero work-next">
+        <span className="kicker">تمرينك الجاي</span>
+        <h2>{dayTitle(plan.days[nextIdx].title)}</h2>
+        <p><span className="num">{plan.days[nextIdx].exercises.length}</span> تمارين · <span className="num">{plan.days[nextIdx].exercises.reduce((t, e) => t + e.sets, 0)}</span> مجموعة · <span className="num">{Math.max(5, Math.round(plan.days[nextIdx].exercises.reduce((t, e) => t + e.sets * (40 + restSeconds(e.rest)), 0) / 300) * 5)}</span> دقيقة</p>
+        {thisWeek ? <p className="wn-week">خلصتي <span className="num">{thisWeek}</span> من <span className="num">{plan.days.length}</span> تمارين هالأسبوع</p> : null}
         <button type="button" className="btn btn-p btn-block" onClick={() => start(nextIdx)}>
           <Play />
           ابدئي التمرين
@@ -229,17 +230,16 @@ export default function WorkoutPage() {
       </section>
 
       <div className="sec-title">
-        <span className="em" aria-hidden="true">📅</span>
         <h2>جدولك</h2>
         <span className="aside">{plan.days.length} أيام بالأسبوع</span>
       </div>
 
       {plan.days.map((d, i) => (
-        <section key={i} className="dcard" aria-label={d.title}>
+        <section key={i} className="dcard" aria-label={dayTitle(d.title)}>
           <div className="dcard-h">
             <span className="dnum">{d.n}</span>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <h3>{d.title}</h3>
+              <h3>{dayTitle(d.title)}</h3>
               <span className="s">{d.exercises.length} تمارين{i === nextIdx ? " · التمرين الجاي" : ""}</span>
             </div>
             <button type="button" className={`btn btn-sm ${i === nextIdx ? "btn-p" : "btn-on-navy"}`} onClick={() => start(i)}>

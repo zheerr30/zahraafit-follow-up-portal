@@ -165,3 +165,9 @@ export function waterCups(weightKg: number | null | undefined) {
   if (!weightKg) return 10;
   return Math.max(8, Math.min(14, Math.round((weightKg * 35) / 250)));
 }
+
+/** A workout day's name as written in the app: «صدر + أكتاف + ترايسبس» → «صدر وأكتاف وترايسبس». */
+export function dayTitle(t: string) {
+  const parts = t.split(/\s*[+،,/&]\s*|\s+-\s+/).map((x) => x.trim()).filter(Boolean);
+  return parts.length > 1 ? [parts[0], ...parts.slice(1).map((x) => (x.startsWith("و") && !/^(وجه|ورك)/.test(x) ? x : "و" + x))].join(" ") : t.trim();
+}

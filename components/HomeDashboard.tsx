@@ -15,7 +15,7 @@ import { STORE_URL, type Account } from "@/lib/account";
 import { addDays, followupInfo } from "@/lib/followup";
 import { resolve, tickedMeals, type MealRef } from "@/lib/meal-resolve";
 import { currentPeriod, inPeriod, type PeriodLog } from "@/lib/period";
-import { restSeconds, todayKey, waterCups, type MealPlanData, type WorkoutPlanData } from "@/lib/plan-data";
+import { dayTitle, restSeconds, todayKey, waterCups, type MealPlanData, type WorkoutPlanData } from "@/lib/plan-data";
 import { hijri, isRamadanMonth, ramadanActive, ramadanMealSlot, ramadanUntil } from "@/lib/ramadan";
 import { saveRow } from "@/lib/offline";
 import { track } from "@/components/AppStatus";
@@ -276,7 +276,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
                 ) : restDay ? (
                   <><b>يوم راحة</b><small>خلصتي تمارين هالأسبوع</small></>
                 ) : (
-                  <><b className="trunc">{muscleTitle(todayWork.title)}</b><small><span className="num">{todayWork.exercises.length}</span> تمارين · <span className="num">{workMinutes}</span> دقيقة</small></>
+                  <><b className="trunc">{dayTitle(todayWork.title)}</b><small><span className="num">{todayWork.exercises.length}</span> تمارين · <span className="num">{workMinutes}</span> دقيقة</small></>
                 )}
               </span>
             </Link>
@@ -374,10 +374,4 @@ function AlertPill({ pill, onClose, hidden = false }: { pill: { key: string; tex
       <button type="button" className="pill-x" aria-label="إخفاء" onClick={close}><X size={13} /></button>
     </div>
   );
-}
-
-/** «صدر + أكتاف + ترايسبس» → «صدر وأكتاف وترايسبس». */
-function muscleTitle(t: string) {
-  const parts = t.split(/\s*[+،,]\s*/).map((x) => x.trim()).filter(Boolean);
-  return parts.length > 1 ? [parts[0], ...parts.slice(1).map((x) => "و" + x)].join(" ") : t;
 }
