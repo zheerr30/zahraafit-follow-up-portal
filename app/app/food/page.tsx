@@ -415,6 +415,7 @@ export default function FoodPage() {
 
       {tab === "meals" ? (
         <>
+          {row?.content ? <p className="plan-msg">{row.content}</p> : null}
           {plan.coachNote ? (
             <div className="reply">
               <b>من المدربة</b>
