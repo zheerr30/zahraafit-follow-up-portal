@@ -5,7 +5,7 @@ import { mediaFor, mediaSrc } from "@/lib/exercise-media";
 import { track } from "@/components/AppStatus";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowUp, Check, Dumbbell, FileText, History, Info, Play, PlayCircle, X } from "lucide-react";
+import { ArrowUp, Check, Dumbbell, FileText, History, Info, Minus, Play, PlayCircle, Plus, X } from "lucide-react";
 import { ClientShell, Empty, Loading, Rings, useToast } from "@/components/ui";
 import { dayTitle, muscleImage, repRange, restSeconds, type Exercise } from "@/lib/plan-data";
 import { supabase } from "@/lib/supabase";
@@ -185,6 +185,22 @@ export default function WorkoutPage() {
     setSession({ ...session, sets });
   }
 
+  /** Her own number of sets for this exercise today: add one (same weight and reps as the last) or take the last off. */
+  function addSet(ei: number) {
+    if (!session) return;
+    const sets = session.sets.map((s) => s.map((x) => ({ ...x })));
+    const last = sets[ei][sets[ei].length - 1];
+    if (sets[ei].length >= 10) return;
+    sets[ei].push({ w: last?.w || "", r: last?.r || "", done: false });
+    setSession({ ...session, sets });
+  }
+  function removeSet(ei: number) {
+    if (!session || session.sets[ei].length <= 1) return;
+    const sets = session.sets.map((s) => s.map((x) => ({ ...x })));
+    sets[ei].pop();
+    setSession({ ...session, sets });
+  }
+
   async function finish() {
     if (!session || !cp.client) return;
     track("workout:finish");
@@ -351,6 +367,10 @@ export default function WorkoutPage() {
                         {session.sets[i].map((x, k) => (
                           <SetRow key={k} k={k} x={x} onW={(v) => edit(i, k, "w", v)} onR={(v) => edit(i, k, "r", v)} onDone={() => toggleSet(i, k)} />
                         ))}
+                      </div>
+                      <div className="set-ctrl">
+                        <button type="button" className="btn btn-s btn-sm" disabled={session.sets[i].length >= 10} onClick={() => addSet(i)}><Plus size={16} />أضيفي جولة</button>
+                        <button type="button" className="btn btn-g btn-sm" disabled={session.sets[i].length <= 1} onClick={() => removeSet(i)}><Minus size={16} />شيلي جولة</button>
                       </div>
                     </div>
                   </article>

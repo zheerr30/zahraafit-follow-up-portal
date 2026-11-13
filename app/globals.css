@@ -1371,3 +1371,7 @@ svg.lucide { stroke-width: 1.8; }
 .dcard-h h3 { font-size: 16.5px; line-height: 1.45; }
 /* headings on the navy cards stay white (they were taking the page's ink colour) */
 :is(.cal-hero, .photo-hero, .hero, .offer, .offer-card, .offer-card2, .mcard-h, .dcard-h, .rest, .checkin-card.hot, .plate-card, .work-hero) :is(h1, h2, h3) { color: #fff; }
+/* during a workout: add or take off a set; no «+» button over the rest timer */
+.set-ctrl { display: flex; gap: 8px; margin-top: 10px; }
+.set-ctrl .btn { flex: 1; min-height: 38px; }
+body:has(.overlay) .fab { display: none; }
