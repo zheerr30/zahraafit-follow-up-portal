@@ -84,8 +84,13 @@ const AR = "\\u0621-\\u064A";
 const WORD_RE = new RegExp(`(^|[^${AR}])(و|ف|ل|ب)?(${Object.keys(WORDS).sort((a, b) => b.length - a.length).join("|")})(?![${AR}])`, "g");
 
 /** The text as this subscriber should see it. */
+/** Emoji (with their joiners and the space after them): the app uses line icons only. */
+const EMOJI = /(?:\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*\uFE0F?|[\u{1F1E6}-\u{1F1FF}]{2})[ \u00A0]?/gu;
+export const stripEmoji = (s: string) => (EMOJI.test(s) ? ((EMOJI.lastIndex = 0), s.replace(EMOJI, "")) : s);
+
 export function genderText(s: string, g: Gender = current) {
-  let out = /[ًّ٠-٩]/.test(s) ? s.replace(/[ًّ]/g, "").replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))) : s;
+  EMOJI.lastIndex = 0;
+  let out = stripEmoji(/[ًّ٠-٩]/.test(s) ? s.replace(/[ًّ]/g, "").replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))) : s);
   if (g !== "male" || !/[ء-ي]/.test(out)) return out;
   for (const [a, b] of PHRASES) if (out.includes(a)) out = out.split(a).join(b);
   return out.replace(WORD_RE, (_m, pre: string, p: string | undefined, w: string) => pre + (p || "") + WORDS[w]);
@@ -97,7 +102,10 @@ function fixNode(node: Node) {
   if (node.nodeType === Node.TEXT_NODE) {
     const v = node.nodeValue || "";
     const n = genderText(v);
-    if (n !== v) node.nodeValue = n;
+    if (n !== v) {
+      node.nodeValue = n;
+      hideIfEmpty(node);
+    }
     return;
   }
   if (node.nodeType !== Node.ELEMENT_NODE) return;
@@ -111,8 +119,17 @@ function fixNode(node: Node) {
     if (p && (p.tagName === "TEXTAREA" || p.tagName === "SCRIPT" || p.tagName === "STYLE")) continue;
     const v = t.nodeValue || "";
     const n = genderText(v);
-    if (n !== v) t.nodeValue = n;
+    if (n !== v) {
+      t.nodeValue = n;
+      hideIfEmpty(t);
+    }
   }
+}
+
+/** An icon box that held only an emoji is hidden once the emoji is gone. */
+function hideIfEmpty(t: Node) {
+  const p = t.parentElement;
+  if (p && !(t.nodeValue || "").trim() && !p.textContent?.trim() && !p.querySelector("svg,img,video,canvas") && (p.getAttribute("aria-hidden") === "true" || p.classList.contains("em"))) p.style.display = "none";
 }
 
 function fixAttrs(el: Element) {

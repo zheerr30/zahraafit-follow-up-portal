@@ -3,7 +3,7 @@
 import { OffDays } from "@/components/OffDays";
 import { FormEvent, useEffect, useState } from "react";
 import { LogOut } from "lucide-react";
-import { ClientShell, Loading, useToast } from "@/components/ui";
+import { Brand, ClientShell, Loading, useToast } from "@/components/ui";
 import { Reminders } from "@/components/Reminders";
 import { RamadanToggle } from "@/components/RamadanToggle";
 import { HideNumbersToggle } from "@/components/HideNumbersToggle";
@@ -60,6 +60,7 @@ export default function AccountPage() {
 
   return (
     <ClientShell title="حسابي" sub="معلوماتك وإعداداتك">
+      <div style={{ display: "flex", justifyContent: "center", padding: "4px 0 2px" }}><Brand height={34} /></div>
       <section className="card row">
         <span className="avatar" style={{ width: 56, height: 56, fontSize: 22 }}>{(p.full_name || "؟").slice(0, 1)}</span>
         <div style={{ minWidth: 0 }}>

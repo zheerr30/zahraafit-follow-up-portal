@@ -2,7 +2,7 @@
 
 import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import { useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Star } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { RestItem, Restaurant } from "@/components/Restaurants";
 
@@ -84,7 +84,7 @@ export function CoachRestaurants() {
               {items.map((it) => (
                 <div key={it.id} className="stack" style={{ gap: 6, borderTop: "1px solid var(--line)", padding: "10px 0" }}>
                   <div className="row between" style={{ gap: 8 }}>
-                    <button type="button" className="fav-star" style={{ width: 38, height: 38, fontSize: 20 }} aria-pressed={it.coach_pick} aria-label={it.coach_pick ? "شيليه من اختياراتك" : "اختياري الأفضل"} onClick={() => patch(it, { coach_pick: !it.coach_pick })}>{it.coach_pick ? "⭐" : "☆"}</button>
+                    <button type="button" className="fav-star" style={{ width: 38, height: 38, fontSize: 20 }} aria-pressed={it.coach_pick} aria-label={it.coach_pick ? "شيليه من اختياراتك" : "اختياري الأفضل"} onClick={() => patch(it, { coach_pick: !it.coach_pick })}><Star size={18} fill={it.coach_pick ? "currentColor" : "none"} /></button>
                     <b style={{ flex: 1, minWidth: 0 }}>{it.name}</b>
                     <button type="button" className="icon-btn" aria-label={`احذفي ${it.name}`} onClick={() => removeItem(it.id)}><Trash2 size={15} /></button>
                   </div>

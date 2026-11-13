@@ -16,6 +16,10 @@ type AuthState = {
   error: string | null;
 };
 
+let userName = "";
+/** First name of the signed-in account (for the round initial in the header). */
+export const getUserName = () => userName;
+
 /** Loads the signed-in account; sends visitors to /login and the wrong role to its own home. */
 export function useAuthGuard(requiredRole?: UserRole) {
   const router = useRouter();
@@ -50,6 +54,7 @@ export function useAuthGuard(requiredRole?: UserRole) {
       }
 
       setGender(profile.gender);
+      userName = profile.full_name || "";
       setState({ loading: false, session, profile, error: null });
     }
 

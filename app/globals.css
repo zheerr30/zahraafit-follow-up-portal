@@ -842,3 +842,131 @@ details.msg-old[open] .sub { display: none; }
 .ex-prog small { font-size: 10px; color: var(--ink-3); }
 .ex-thumb { width: 52px; height: 52px; border-radius: 12px; object-fit: cover; background: #fff; flex: none; border: 1px solid var(--line); }
 .xrow-btn { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; text-align: start; background: none; font: inherit; color: inherit; }
+
+/* ======================================================================
+   36) Professional design — applies to the whole app (this block wins).
+   Background #F4F2EE, white cards 22px, navy #050F2C + orange #E8602C,
+   grey text #8C8A86, lines #F0EEEA, system font, tabular numbers.
+   ====================================================================== */
+:root {
+  --bg: #F4F2EE;
+  --surface: #FFFFFF;
+  --sunken: #F4F2EE;
+  --line: #F0EEEA;
+  --line-2: #E4E1DB;
+  --ink: #050F2C;
+  --ink-2: #4E4C49;
+  --ink-3: #8C8A86;
+  --clay: #E8602C;
+  --clay-ink: #C94E1F;
+  --clay-tint: #FBEDE6;
+  --navy: #050F2C;
+  --navy-2: #0D1F4F;
+  --navy-soft: #7C8BA8;
+  /* one palette: success = navy, info = soft navy, warning = orange */
+  --green: #050F2C;
+  --green-tint: #EEF0F5;
+  --blue: #7C8BA8;
+  --blue-tint: #EEF0F5;
+  --amber: #E8602C;
+  --amber-tint: #FBEDE6;
+  --f-body: -apple-system, "SF Arabic", "SF Pro Text", system-ui, "Segoe UI", "IBM Plex Sans Arabic", sans-serif;
+  --f-num: var(--f-body);
+  --r: 16px;
+  --r-lg: 22px;
+  --shadow: 0 1px 2px rgba(5, 15, 44, .04);
+}
+body { background: var(--bg); font-size: 15px; }
+b, strong, .num, h1, h2, h3 { font-variant-numeric: tabular-nums; }
+.num { font-weight: 700; }
+
+/* spacing: 14px from the screen edges, 12px between cards, 18px inside */
+.gutter { padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); }
+.screen { gap: 12px; padding-block: 4px calc(96px + env(safe-area-inset-bottom, 0px)); }
+.card { border: 0; border-radius: var(--r-lg); padding: 18px; box-shadow: var(--shadow); }
+.list-row { border: 0; box-shadow: var(--shadow); border-radius: var(--r-lg); }
+
+/* card and section titles: 12px grey */
+.sec-title, .sec-h { margin-top: 6px; }
+.sec-title h2, .sec-h h2 { font-size: 12px; font-weight: 500; color: var(--ink-3); letter-spacing: .2px; }
+.sec-title .em { display: none; }
+.sec-h-ic svg { display: none; }
+.label { font-size: 12px; font-weight: 500; color: var(--ink-3); }
+
+/* header: date + big page title, a small navy circle for «حسابي» */
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding-block: calc(14px + env(safe-area-inset-top, 0px)) 8px; }
+.page-head .ph-date { font-size: 12px; color: var(--ink-3); font-weight: 500; }
+.page-head h1 { font-size: 30px; font-weight: 700; line-height: 1.15; color: var(--navy); letter-spacing: -.3px; }
+.page-head .ph-sub { font-size: 13px; color: var(--ink-3); margin-top: 2px; }
+.page-head .ph-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+.ph-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--navy); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 15px; flex: none; }
+.ph-avatar[aria-current="page"] { background: var(--clay); }
+.safe-top { background: var(--bg); }
+
+/* floating glass tab bar */
+.nav {
+  left: max(14px, env(safe-area-inset-left, 0px)); right: max(14px, env(safe-area-inset-right, 0px));
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  max-width: 452px; margin: 0 auto; height: 62px; padding: 0 6px;
+  border-radius: 999px; border: 0;
+  background: rgba(255, 255, 255, .75);
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  box-shadow: 0 8px 30px rgba(5, 15, 44, .10);
+}
+.nav-in { height: 100%; align-items: center; }
+.nav a { min-height: 54px; justify-content: center; font-size: 11px; color: var(--ink-3); font-weight: 500; }
+.nav a[aria-current="page"] { color: var(--clay); font-weight: 700; }
+.nav svg { stroke-width: 1.8; }
+
+/* line icons everywhere at 1.8 */
+svg.lucide { stroke-width: 1.8; }
+
+/* motion: numbers and bars ease in 0.4s; anything tappable shrinks a touch */
+.seg-bar i, .dots i, .cd-bar > i, .wk-bar > i, .cal-macros i i, .gauge-arc, .left-bar > i, .ring-fg { transition: width .4s var(--ease), stroke-dashoffset .4s var(--ease), background-color .4s var(--ease); }
+button, a.btn, .card a, a.card, .d-row, .list-row, .chip-toggles button, .seg-tabs button, .nav a, .ph-avatar {
+  transition: transform .12s var(--ease), background-color .2s var(--ease), color .2s var(--ease);
+}
+button:active:not(:disabled), a.btn:active, a.card:active, .d-row:active, .list-row:active, .ph-avatar:active, .nav a:active { transform: scale(.97); }
+
+/* buttons and pills in the one palette */
+.btn { border-radius: 14px; }
+.btn-p { background: var(--clay); }
+.btn-s { background: var(--surface); box-shadow: inset 0 0 0 1px var(--line-2); color: var(--navy); }
+.chip { background: var(--bg); color: var(--ink-2); }
+.seg-tabs { background: var(--surface); box-shadow: var(--shadow); border-radius: 16px; }
+.seg-tabs button[aria-selected="true"] { background: var(--navy); }
+.alert-card { box-shadow: var(--shadow); }
+.cal-hero { background: var(--navy); border-radius: var(--r-lg); }
+.photo-hero.plain { background: var(--navy); }
+
+/* Home (36): gauges, «باقي لك اليوم», coach card */
+.gauges { display: grid; grid-template-columns: 1fr 1.25fr 1fr; align-items: end; gap: 6px; padding: 16px 12px 14px; }
+.gauge { position: relative; display: grid; justify-items: center; text-align: center; }
+.gauge svg { width: 100%; max-width: 110px; height: auto; }
+.gauge-v { position: absolute; top: 34%; font-size: 20px; color: var(--navy); }
+.gauge.big .gauge-v { font-size: 26px; top: 32%; }
+.gauge-l { font-size: 12.5px; font-weight: 600; color: var(--navy); margin-top: 2px; }
+.gauge-g { font-size: 11px; color: var(--ink-3); font-weight: 500; }
+.left-card { display: grid; gap: 12px; }
+.left-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; }
+.left-num { display: block; font-size: 44px; line-height: 1.05; color: var(--navy); letter-spacing: -.5px; }
+.left-goal { font-size: 13px; color: var(--ink-3); font-weight: 600; }
+.left-bar { display: block; height: 8px; border-radius: 99px; background: var(--bg); overflow: hidden; }
+.left-bar > i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #F2955F, var(--clay)); }
+[dir="rtl"] .left-bar > i { background: linear-gradient(270deg, #F2955F, var(--clay)); margin-inline-start: 0; }
+.left-meals { display: grid; }
+.meal-tick { display: flex; align-items: center; gap: 12px; padding: 11px 0; text-align: start; width: 100%; }
+.meal-tick + .meal-tick { border-top: 1px solid var(--line); }
+.meal-tick .tick { width: 26px; height: 26px; border-radius: 50%; border: 1.8px solid var(--line-2); display: grid; place-items: center; flex: none; color: #fff; transition: background-color .25s var(--ease), border-color .25s var(--ease); }
+.meal-tick.on .tick { background: var(--clay); border-color: var(--clay); }
+.mt-mid { flex: 1; min-width: 0; display: grid; }
+.mt-mid small { font-size: 12px; color: var(--ink-3); }
+.mt-name { font-size: 15px; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.meal-tick.on .mt-name { color: var(--ink-3); }
+.mt-cal { font-size: 14px; color: var(--navy); }
+.left-line { font-size: 13.5px; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 10px; }
+.left-line .cal-line-btn { color: inherit; }
+.coach-card { display: grid; gap: 6px; border-inline-start: 3px solid var(--clay); text-decoration: none; }
+.coach-card p { font-size: 15px; line-height: 1.75; color: var(--navy); white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.d-plus { background: var(--navy); box-shadow: none; }
+.dots i.on { background: var(--navy-soft); }

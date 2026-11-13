@@ -6,7 +6,7 @@ import { FirstRun } from "@/components/FirstRun";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Users, BadgeCheck, BookOpen, CalendarCheck, ClipboardList, Newspaper, Dumbbell, Home, Inbox, LineChart, Loader2, LogOut, UserRound, Utensils, Wrench } from "lucide-react";
-import { signOut } from "@/lib/use-auth";
+import { getUserName, signOut } from "@/lib/use-auth";
 import { supabase } from "@/lib/supabase";
 import { getGender, useGenderText } from "@/lib/gender";
 
@@ -73,7 +73,12 @@ export function useToast() {
   return { show, node };
 }
 
-/** Subscriber screens: sticky top bar and bottom tabs. */
+/** Today in Arabic with 0123 digits, e.g. «الخميس 13 نوفمبر». */
+function todayLabel() {
+  return new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Riyadh" }).format(new Date());
+}
+
+/** Subscriber screens: date + big page title, a round initial for «حسابي», floating tabs. */
 export function ClientShell({ title, sub, action, children }: { title: ReactNode; sub?: ReactNode; action?: ReactNode; children: ReactNode }) {
   const path = usePathname();
   const root = useRef<HTMLDivElement>(null);
@@ -90,18 +95,17 @@ export function ClientShell({ title, sub, action, children }: { title: ReactNode
       <div className="safe-top" aria-hidden="true" />
       <AppStatus />
       <FirstRun />
-      <header className="appbar gutter">
+      <header className="page-head gutter">
         <div style={{ minWidth: 0 }}>
-          <div className="t">{title}</div>
-          {sub ? <div className="s">{sub}</div> : null}
+          <div className="ph-date">{todayLabel()}</div>
+          <h1>{title}</h1>
+          {sub ? <div className="ph-sub">{sub}</div> : null}
         </div>
-        <div className="row" style={{ gap: 8 }}>
+        <div className="ph-actions">
           {action}
-          <Link className="acc-btn" href="/app/account" aria-current={path === "/app/account" ? "page" : undefined}>
-            <UserRound />
-            <span>حسابي</span>
+          <Link className="ph-avatar" href="/app/account" aria-current={path === "/app/account" ? "page" : undefined} aria-label="حسابي">
+            {(getUserName().trim()[0] || "") || <UserRound size={18} />}
           </Link>
-          <LogoWhite height={28} />
         </div>
       </header>
       <main className="screen gutter">{children}</main>

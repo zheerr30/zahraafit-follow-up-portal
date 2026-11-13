@@ -4,7 +4,7 @@ import { isOff, loadOff, type OffInfo } from "@/lib/off-days";
 import { boxDaysLeft, loadBoxes, type Box } from "@/components/PrepBoxes";
 import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { CheckCircle2, ChevronLeft, Dumbbell, Flame, Plus, Share2, Utensils, X } from "lucide-react";
+import { Check, CheckCircle2, ChevronLeft, Dumbbell, Flame, Plus, Share2, X, Droplet } from "lucide-react";
 import { ShareSheet } from "@/components/ShareSheet";
 import { CalorieCard } from "@/components/CalorieCard";
 import { streakDays } from "@/components/Achievements";
@@ -42,9 +42,6 @@ type Data = {
 const SEEN_KEY = "zf-seen-reply";
 export const markReplySeen = (id: string) => {
   try { localStorage.setItem(SEEN_KEY, id); } catch {}
-};
-const seenReply = () => {
-  try { return localStorage.getItem(SEEN_KEY); } catch { return null; }
 };
 
 /**
@@ -141,9 +138,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
 
   // ── one alert, by priority ──
   const fu = followupInfo(client, today, acc.sub);
-  let replyAlert = false;
   const markSeen = () => { if (d.followup) markReplySeen(d.followup.id); };
-  const reply = d.followup?.coach_notes && d.followup.coach_replied_at && Date.now() - new Date(d.followup.coach_replied_at).getTime() < 7 * 864e5 && seenReply() !== d.followup.id ? d.followup : null;
   const checkinDue = fu.openDate && d.followup?.week_date !== fu.openDate;
   const period = profile.gender !== "male" && currentPeriod(d.periods, today);
   const ramadanSuggest = isRamadanMonth(today) && hijri(today).d <= 2 && !ramadan;
@@ -155,18 +150,6 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
     alert = <div className="alert-card warn"><b>⏳ انتهى اشتراكك</b><span>بياناتك وسجلك محفوظين. جددي عشان تفتح خطتك وتمارينك.</span><a className="btn btn-p btn-sm" href={STORE_URL} target="_blank" rel="noreferrer">جددي اشتراكك</a></div>;
   } else if (checkinDue && fu.saturday) {
     alert = <Link href="/app/checkin" className="alert-card"><b>📅 اليوم السبت! وقت تسجيلك الأسبوعي</b><span>سجلي وزنك وقياساتك وكيف كان أسبوعك.</span></Link>;
-  } else if (reply) {
-    replyAlert = true;
-    alert = (
-      <div className="alert-card coach-note">
-        <span className="coach-av" aria-hidden="true"><img src="/brand/logo-mark.png" alt="" /></span>
-        <span className="coach-note-t">
-          <b>رسالة جديدة من زهراء</b>
-          <span className="one-line">{reply.coach_notes}</span>
-          <Link href="/app/progress#coach-msg" className="link" onClick={markSeen}>اقرئي الرسالة</Link>
-        </span>
-      </div>
-    );
   } else if (checkinDue) {
     alert = <Link href="/app/checkin" className="alert-card"><b>📅 {fu.saturday ? "اليوم السبت! وقت تسجيلك الأسبوعي" : "وقت متابعتك الأسبوعية"}</b><span>سجلي وزنك وقياساتك وكيف كان أسبوعك.</span></Link>;
   } else if (!acc.sub && new Date(today + "T12:00:00").getDay() === 6 && !(d.weight && d.weight.date >= addDays(today, -6))) {
@@ -185,6 +168,15 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
         }}>شغليه</button>
       </div>
     );
+  }
+
+  // Latest message from the coach (two weeks), shown as its own card.
+  const coachNote = d.followup?.coach_notes && d.followup.coach_replied_at && Date.now() - new Date(d.followup.coach_replied_at).getTime() < 14 * 864e5 ? d.followup.coach_notes : null;
+  async function toggleMeal(key: string) {
+    const meals = { ...d!.meals, [key]: d!.meals[key] !== true };
+    setD({ ...d!, meals });
+    track("meal:tick");
+    await saveRow("daily_logs", { client_id: client.id, log_date: today, meals, water: d!.water }, "client_id,log_date");
   }
 
   // ── «يومك» ──
@@ -210,7 +202,7 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
       {alert && !dismissed ? (
         <div className="alert-wrap">
           {alert}
-          <button type="button" className="alert-x" aria-label="إخفاء" onClick={() => { if (replyAlert) markSeen(); setDismissed(true); }}><X size={14} /></button>
+          <button type="button" className="alert-x" aria-label="إخفاء" onClick={() => setDismissed(true)}><X size={14} /></button>
         </div>
       ) : null}
 
@@ -222,13 +214,47 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
           <Link href="/app/food?tab=diary" className="off-log">سجلي أكلك لو تبين</Link>
         </section>
       ) : (
-        <CalorieCard totals={eaten} target={d.target} header={
-          <div className="row between" style={{ alignItems: "center" }}>
-            <h2>🔥 سعراتك اليوم</h2>
-            <Link href="/app/food" className="cal-chip" style={{ color: "#fff", background: "rgba(255,255,255,.12)" }}>{todayMeals.length ? `✅ ${doneCount} من ${todayMeals.length} وجبات` : "أكلي"} ‹</Link>
-          </div>
-        } line={line} />
+        <>
+          <section className="card gauges" aria-label="يومك بالأرقام">
+            <Gauge label="بروتين" value={eaten.p} goal={d.target?.p || null} unit="g" color="var(--navy)" />
+            <Gauge label="سعرات" value={eaten.cal} goal={d.target?.cal || null} color="var(--clay)" big />
+            <Gauge label="ماء" value={d.water} goal={cups} unit="أكواب" color="var(--navy-soft)" />
+          </section>
+          <section className="card left-card">
+            <div className="left-top">
+              <div>
+                <span className="label">{left !== null && left < 0 ? "زيادة عن هدفك" : "باقي لك اليوم"}</span>
+                <b className="num left-num">{left !== null ? Math.abs(left).toLocaleString("en-US") : Math.round(eaten.cal).toLocaleString("en-US")}</b>
+              </div>
+              {d.target ? <span className="left-goal num">الهدف {d.target.cal.toLocaleString("en-US")}</span> : <Link href="/app/guide?tab=calc" className="link small">حطي هدفك</Link>}
+            </div>
+            {d.target ? <span className="left-bar" aria-hidden="true"><i style={{ width: `${Math.min(100, (eaten.cal / Math.max(1, d.target.cal)) * 100)}%` }} /></span> : null}
+            {todayMeals.length ? (
+              <div className="left-meals">
+                {todayMeals.map((x) => {
+                  const on = d.meals[x.key] === true;
+                  return (
+                    <button key={x.key} type="button" className={`meal-tick ${on ? "on" : ""}`} aria-pressed={on} onClick={() => toggleMeal(x.key)}>
+                      <span className="tick" aria-hidden="true">{on ? <Check size={15} strokeWidth={2.4} /> : null}</span>
+                      <span className="mt-mid"><small>{x.slot}</small><span className="mt-name">{x.meal.name}</span></span>
+                      <span className="num mt-cal">{x.meal.cal}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <Link href="/app/food?tab=diary" className="btn btn-s btn-block">سجلي أكلك</Link>
+            )}
+            {line ? <div className="left-line">{line}</div> : null}
+          </section>
+        </>
       ))}
+      {coachNote ? (
+        <Link href="/app/progress#coach-msg" className="card coach-card" onClick={markSeen}>
+          <span className="label">من زهراء</span>
+          <p>{coachNote}</p>
+        </Link>
+      ) : null}
       {!acc.sub ? (
         <a className="offer-link" href={STORE_URL} target="_blank" rel="noreferrer">🍽️ تبين خطة جاهزة على سعراتك؟ <ChevronLeft size={16} /></a>
       ) : null}
@@ -239,22 +265,9 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
         <button type="button" className="share-btn" style={{ margin: 0, marginInlineStart: "auto" }} onClick={() => setShare(true)}><Share2 size={14} /> شاركي</button>
       </div>
       <section className="card day-rows">
-        <Link href="/app/food" className="d-row">
-          <span className="d-ic" style={{ background: "var(--clay-tint)", color: "var(--clay)" }}><Utensils size={18} /></span>
-          <span className="d-mid">
-            <small>الأكل</small>
-            {plan ? <b className="num">{doneCount} من {todayMeals.length} وجبات</b> : <b className="num">{Math.round(eaten.cal)} {d.target ? <>من {d.target.cal} </> : null}سعرة</b>}
-            {plan ? (
-              <span className="seg-bar" aria-hidden="true">{todayMeals.map((x) => <i key={x.key} className={d.meals[x.key] === true ? "on" : ""} />)}</span>
-            ) : d.target ? (
-              <span className="seg-bar" aria-hidden="true"><i className="on" style={{ flex: "none", width: `${Math.min(100, (eaten.cal / d.target.cal) * 100)}%` }} /></span>
-            ) : null}
-          </span>
-          <span className="d-end">{plan ? (next ? `باقي ${/^ال|\s/.test(next.slot) ? next.slot : "ال" + next.slot}` : "✓ خلصت") : left !== null ? (left >= 0 ? `باقي ${left}` : `زيادة ${-left}`) : "سجلي"}</span>
-        </Link>
         <div className="d-row">
           <Link href="/app/food" className="d-link">
-            <span className="d-ic" style={{ background: "#E6F0FD", color: "#2F7DE1" }}>💧</span>
+            <span className="d-ic" style={{ background: "var(--bg)", color: "var(--navy-soft)" }}><Droplet size={18} /></span>
             <span className="d-mid">
               <small>الماء</small>
               <b className="num">{d.water} من {cups} أكواب</b>
@@ -303,5 +316,22 @@ export function HomeDashboard({ profile, client, plans, acc, readyHero }: { prof
         />
       ) : null}
     </>
+  );
+}
+
+/** Half-circle gauge: the number inside the arc, the name under it. */
+function Gauge({ label, value, goal, unit, color, big }: { label: string; value: number; goal: number | null; unit?: string; color: string; big?: boolean }) {
+  const L = Math.PI * 40;
+  const pct = goal ? Math.min(1, value / goal) : 0;
+  return (
+    <div className={`gauge ${big ? "big" : ""}`}>
+      <svg viewBox="0 0 100 58" aria-hidden="true">
+        <path d="M10 52 A40 40 0 0 1 90 52" fill="none" stroke="var(--bg)" strokeWidth="9" strokeLinecap="round" />
+        <path className="gauge-arc" d="M10 52 A40 40 0 0 1 90 52" fill="none" stroke={color} strokeWidth="9" strokeLinecap="round" strokeDasharray={L} strokeDashoffset={L * (1 - pct)} />
+      </svg>
+      <b className="num gauge-v">{Math.round(value).toLocaleString("en-US")}</b>
+      <span className="gauge-l">{label}</span>
+      <span className="gauge-g num">{goal ? `من ${Math.round(goal).toLocaleString("en-US")}${unit && unit !== "g" ? ` ${unit}` : unit || ""}` : unit === "أكواب" ? "" : "بدون هدف"}</span>
+    </div>
   );
 }

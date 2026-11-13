@@ -73,7 +73,15 @@ function WeightChart({ steady, period, weeks }: { steady: Pt[]; period: Pt[]; we
   const step = hi - lo > 8 ? 2 : 1;
   const ticks: number[] = [];
   for (let v = lo; v <= hi; v += step) ticks.push(v);
-  const line = weeks.map((p, i) => `${i ? "L" : "M"}${x(p.t).toFixed(1)},${y(p.w).toFixed(1)}`).join("");
+  // smooth curve through the weekly averages (Catmull-Rom → Bézier)
+  const P = weeks.map((p) => [x(p.t), y(p.w)] as const);
+  const line = P.map(([px, py], i) => {
+    if (!i) return `M${px.toFixed(1)},${py.toFixed(1)}`;
+    const p0 = P[i - 2] || P[i - 1], p1 = P[i - 1], p3 = P[i + 1] || [px, py];
+    const c1 = [p1[0] + (px - p0[0]) / 6, p1[1] + (py - p0[1]) / 6], c2 = [px - (p3[0] - p1[0]) / 6, py - (p3[1] - p1[1]) / 6];
+    return `C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${px.toFixed(1)},${py.toFixed(1)}`;
+  }).join("");
+  const area = P.length ? `${line}L${P[P.length - 1][0].toFixed(1)},${H - B}L${P[0][0].toFixed(1)},${H - B}Z` : "";
   const short = (t: number) => new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short" }).format(new Date(t));
   const lw = weeks[weeks.length - 1];
   return (
@@ -86,6 +94,13 @@ function WeightChart({ steady, period, weeks }: { steady: Pt[]; period: Pt[]; we
       ))}
       {steady.map((p) => <circle key={p.d} cx={x(ts(p.d))} cy={y(p.w)} r={3} fill="var(--clay)" opacity={0.28}><title>{`${short(ts(p.d))}: ${p.w}`}</title></circle>)}
       {period.map((p) => <circle key={p.d} cx={x(ts(p.d))} cy={y(p.w)} r={4} fill="#E85D9A" opacity={0.85}><title>{`${short(ts(p.d))}: ${p.w} (أيام الدورة)`}</title></circle>)}
+      <defs>
+        <linearGradient id="wfill" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="var(--clay)" stopOpacity=".22" />
+          <stop offset="1" stopColor="var(--clay)" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={area} fill="url(#wfill)" />
       <path d={line} fill="none" stroke="var(--clay)" strokeWidth={2.6} strokeLinejoin="round" strokeLinecap="round" />
       {weeks.map((p) => <circle key={p.wk} cx={x(p.t)} cy={y(p.w)} r={4} fill="var(--clay)" stroke="var(--surface)" strokeWidth={2}><title>{`متوسط أسبوع ${short(ts(p.wk))}: ${p.w}`}</title></circle>)}
       <text x={L} y={H - 6} textAnchor="start">{short(t0)}</text>
@@ -230,13 +245,17 @@ export default function ProgressPage() {
       <section className="card stack">
         <div className="row between" style={{ alignItems: "flex-start" }}>
           <div>
-            <span className="label">آخر وزن</span>
+            <span className="label">{weeks.length ? "متوسط هالأسبوع" : "آخر وزن"}</span>
             <div className="row" style={{ alignItems: "baseline", gap: 6 }}>
-              <b className="num" style={{ fontSize: 36, lineHeight: 1.1 }}>{lastW?.w ?? "—"}</b>
+              <b className="num" style={{ fontSize: 40, lineHeight: 1.1, color: "var(--navy)" }}>{weeks.length ? weeks[weeks.length - 1].w : lastW?.w ?? "—"}</b>
               <span className="muted">كجم</span>
             </div>
           </div>
-          {fromStart !== null && fromStart !== 0 ? <span className="chip" dir="ltr">{sign(fromStart)} كجم من البداية</span> : null}
+          <div style={{ textAlign: "end" }}>
+            {weekChange !== null ? <b className="num" dir="ltr" style={{ fontSize: 18, color: weekChange <= 0 ? "var(--navy)" : "var(--clay)" }}>{sign(weekChange)}</b> : null}
+            {weekChange !== null ? <span className="label" style={{ display: "block" }}>عن الأسبوع اللي قبل</span> : null}
+            {fromStart !== null && fromStart !== 0 ? <span className="label" style={{ display: "block" }}><span dir="ltr">{sign(fromStart)}</span> كجم من البداية</span> : null}
+          </div>
         </div>
         {weeks.length > 1 ? (
           <>

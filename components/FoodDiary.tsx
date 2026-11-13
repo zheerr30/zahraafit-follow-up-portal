@@ -6,7 +6,7 @@ import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import { track } from "@/components/AppStatus";
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Camera, ChevronLeft, ChevronRight, Plus, ScanBarcode, Search, Store, X } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, Plus, ScanBarcode, Search, Store, X, Star } from "lucide-react";
 import { useToast } from "@/components/ui";
 import { SLOTS, SLOT_EMOJI, defaultSlot, fromBarcode, fromBase, fromCustom, scaled, search, type BarcodeProduct, type BaseFood, type CustomFood, type FoodEntry, type Pickable, type Slot } from "@/lib/foods";
 import { aiRead, lookupBarcode } from "@/lib/food-scan";
@@ -391,7 +391,7 @@ export function FoodDiary({
                 </span>
                 <b className="num">{Math.round(Number(e.cal))}</b>
                 <button type="button" className="icon-btn fav-mini" aria-pressed={Boolean(favOf(entryFood(e)))} aria-label={favOf(entryFood(e)) ? `شيلي ${e.name} من المفضلة` : `أضيفي ${e.name} للمفضلة`} onClick={() => toggleFav(entryFood(e))}>
-                  {favOf(entryFood(e)) ? "⭐" : "☆"}
+                  <Star size={16} fill={favOf(entryFood(e)) ? "currentColor" : "none"} />
                 </button>
                 <button type="button" className="icon-btn" aria-label={`احذفي ${e.name}`} onClick={() => remove(e.id)}>
                   <X size={15} />
