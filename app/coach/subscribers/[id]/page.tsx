@@ -1,5 +1,6 @@
 "use client";
 
+import { NewPlanButtons } from "@/components/NewPlanButtons";
 import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -143,6 +144,7 @@ export default function SubscriberPage() {
         </div>
         {req ? <Link className="btn btn-g btn-sm" href={`/coach/requests/${req.id}`}>طلبها ومعلوماتها</Link> : null}
       </div>
+      <NewPlanButtons client={client} profile={profile} lastReq={req} />
 
       {mealRow ? (
         <Link href={`/coach/plans/${mealRow.id}`} className="tip-card">
