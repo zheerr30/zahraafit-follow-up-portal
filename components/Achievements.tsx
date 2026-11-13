@@ -42,7 +42,7 @@ export async function streakDays(clientId: string) {
 }
 
 /** «🏆 إنجازاتك» in «تقدمي», each with a share button. Weight stays hidden unless she shows it. */
-export function Achievements({ clientId, lost }: { clientId: string; lost: number | null }) {
+export function Achievements({ clientId, plateCard = null, pr = null }: { clientId: string; plateCard?: ShareCard | null; pr?: { name: string; w: number } | null }) {
   const [streak, setStreak] = useState(0);
   const [share, setShare] = useState<{ card: ShareCard; toggle: boolean } | null>(null);
   useEffect(() => {
@@ -50,14 +50,17 @@ export function Achievements({ clientId, lost }: { clientId: string; lost: numbe
   }, [clientId]);
 
   const items: { em: string; title: string; sub: string; card: ShareCard; toggle: boolean }[] = [];
-  if (streak >= 2) items.push({ em: "🔥", title: `${streak} أيام ورا بعض`, sub: "التزمتي بتسجيل أكلك", card: { kind: "streak", days: streak }, toggle: false });
-  if (lost !== null && lost >= 0.5) items.push({ em: "🏆", title: `نزلتي ${Math.round(lost * 10) / 10} كيلو`, sub: "من أول أسبوع سجلتي فيه", card: { kind: "weight", lost }, toggle: true });
+  // Streak milestones: 7, 14, 30 days.
+  const ms = [30, 14, 7].find((m) => streak >= m);
+  if (ms) items.push({ em: "🔥", title: `${ms} يوم ورا بعض`, sub: `التزمتي بتسجيل أكلك ${streak} يوم ورا بعض`, card: { kind: "streak", days: streak }, toggle: false });
+  if (pr) items.push({ em: "🏋️", title: `وزن جديد في ${pr.name}`, sub: `رفعتي ${pr.w} كجم، أعلى من أي مرة قبل`, card: { kind: "workout", title: pr.name, min: 0, sets: 0, vol: 0, primary: [], secondary: [], prs: [pr] }, toggle: false });
+  if (plateCard) items.push({ em: "🍽️", title: "صحن كامل", sub: "يوم كامل على هدفك هالأسبوع", card: plateCard, toggle: false });
   if (!items.length) {
     return (
       <>
         <SecH icon="trophy" title="إنجازاتك" />
         <section className="card empty-mini">
-          <p className="small muted">إنجازاتك تطلع هنا: أيام التزامك ورا بعض، والكيلوات اللي نزلتيها. أول خطوة: سجلي أكلك يومين ورا بعض.</p>
+          <p className="small muted">إنجازاتك تطلع هنا: 7 أيام ورا بعض، أول صحن كامل، وأي وزن جديد ترفعينه في تمارينك. أول خطوة: سجلي أكلك اليوم.</p>
           <a className="btn btn-s btn-sm" href="/app/food">سجلي أكلك اليوم</a>
         </section>
       </>
@@ -70,12 +73,12 @@ export function Achievements({ clientId, lost }: { clientId: string; lost: numbe
       <section className="card stack" style={{ gap: 0, padding: "4px 16px" }}>
         {items.map((it) => (
           <div key={it.title} className="diary-row">
-            <span aria-hidden="true" style={{ fontSize: 26, flex: "none" }}>{it.em}</span>
+            <span className="emo" aria-hidden="true">{it.em}</span>
             <span style={{ minWidth: 0 }}>
-              <b style={{ color: "var(--navy)" }}>{it.title}</b>
+              <b>{it.title}</b>
               <span className="note" style={{ display: "block" }}>{it.sub}</span>
             </span>
-            <button type="button" className="share-btn" style={{ margin: 0, flex: "none" }} onClick={() => setShare({ card: it.card, toggle: it.toggle })}>📤 شاركي</button>
+            <button type="button" className="share-btn" style={{ margin: 0, flex: "none" }} onClick={() => setShare({ card: it.card, toggle: it.toggle })}>شاركي</button>
           </div>
         ))}
       </section>

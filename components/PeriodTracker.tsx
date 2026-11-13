@@ -91,7 +91,7 @@ export function PeriodTracker({ clientId, periods, onChange }: { clientId: strin
           </div>
         ) : null}
         {cur ? (
-          <button type="button" className="btn btn-block" disabled={busy} onClick={end} style={{ background: PINK, color: "#fff" }}>خلصت الدورة</button>
+          <button type="button" className="btn btn-block" disabled={busy} onClick={end} style={{ background: PINK, color: "#050F2C" }}>خلصت الدورة</button>
         ) : (
           <button type="button" className="btn btn-block" disabled={busy} onClick={start} style={{ background: "transparent", color: PINK, border: `1.5px solid ${PINK}` }}>بدأت الدورة</button>
         )}

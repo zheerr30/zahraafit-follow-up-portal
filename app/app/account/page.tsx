@@ -147,6 +147,7 @@ export default function AccountPage() {
         </button>
       )}
       <DeleteAccount />
+      <p className="slogan">قوة • توازن • بساطة</p>
       {toast.node}
     </ClientShell>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { SecH } from "@/components/SecH";
+import { WeekPlates } from "@/components/WeekPlates";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { ClientShell, Loading, useToast } from "@/components/ui";
 import { formatDate } from "@/lib/format";
@@ -19,7 +20,7 @@ import { inPeriod } from "@/lib/period";
 import { STORE_URL, accountOf } from "@/lib/account";
 
 type Body = { log_date: string; weight_kg: number | null; waist_cm: number | null; hips_cm: number | null; chest_cm?: number | null; arm_cm?: number | null; thigh_cm?: number | null };
-type WLog = { id: string; day_title: string | null; created_at: string; duration_sec: number | null; items: { sets: { w: number; r: number }[] }[] };
+type WLog = { id: string; day_title: string | null; created_at: string; duration_sec: number | null; items: { name?: string; sets: { w: number; r: number }[] }[] };
 type MKey = "waist_cm" | "hips_cm" | "chest_cm" | "arm_cm" | "thigh_cm";
 const MEASURES: { k: MKey; label: string; min: number; max: number }[] = [
   { k: "waist_cm", label: "الخصر", min: 40, max: 250 },
@@ -58,7 +59,7 @@ function weeklyAverages(steady: Pt[]): WeekAvg[] {
   }));
 }
 
-function WeightChart({ steady, period, weeks }: { steady: Pt[]; period: Pt[]; weeks: WeekAvg[] }) {
+function WeightChart({ steady, period, weeks, hide = false }: { steady: Pt[]; period: Pt[]; weeks: WeekAvg[]; hide?: boolean }) {
   const W = 340, H = 160, L = 34, R = 12, T = 12, B = 24;
   const all = [...steady, ...period];
   const vals = [...all.map((p) => p.w), ...weeks.map((w) => w.w)];
@@ -85,11 +86,11 @@ function WeightChart({ steady, period, weeks }: { steady: Pt[]; period: Pt[]; we
   const short = (t: number) => new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short" }).format(new Date(t));
   const lw = weeks[weeks.length - 1];
   return (
-    <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`متوسط وزنك الأسبوعي من ${weeks[0].w} إلى ${lw.w} كجم`} style={{ direction: "ltr" }}>
+    <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={hide ? "منحنى وزنك الأسبوعي" : `متوسط وزنك الأسبوعي من ${weeks[0].w} إلى ${lw.w} كجم`} style={{ direction: "ltr" }}>
       {ticks.map((v) => (
         <g key={v}>
           <line x1={L} x2={W - R} y1={y(v)} y2={y(v)} stroke="var(--line)" strokeWidth={1} />
-          <text x={L - 6} y={y(v) + 3} textAnchor="end">{v}</text>
+          {hide ? null : <text x={L - 6} y={y(v) + 3} textAnchor="end">{v}</text>}
         </g>
       ))}
       {steady.map((p) => <circle key={p.d} cx={x(ts(p.d))} cy={y(p.w)} r={3} fill="var(--clay)" opacity={0.28}><title>{`${short(ts(p.d))}: ${p.w}`}</title></circle>)}
@@ -102,6 +103,7 @@ function WeightChart({ steady, period, weeks }: { steady: Pt[]; period: Pt[]; we
       </defs>
       <path d={area} fill="url(#wfill)" />
       <path d={line} fill="none" stroke="var(--clay)" strokeWidth={2.6} strokeLinejoin="round" strokeLinecap="round" />
+      {lw ? <circle cx={x(lw.t)} cy={y(lw.w)} r={10} fill="var(--clay)" opacity={0.2} className="w-glow" /> : null}
       {weeks.map((p) => <circle key={p.wk} cx={x(p.t)} cy={y(p.w)} r={4} fill="var(--clay)" stroke="var(--surface)" strokeWidth={2}><title>{`متوسط أسبوع ${short(ts(p.wk))}: ${p.w}`}</title></circle>)}
       <text x={L} y={H - 6} textAnchor="start">{short(t0)}</text>
       <text x={W - R} y={H - 6} textAnchor="end">{short(t1)}</text>
@@ -198,6 +200,7 @@ export default function ProgressPage() {
   if (auth.loading || cp.loading || !ready) return <Loading />;
   if (!auth.profile) return null;
   const sub = accountOf(auth.profile).sub;
+  const hide = Boolean(auth.profile.hide_numbers);
   const today = todayKey();
 
   // Weight: period-day weights are shown apart and left out of every change.
@@ -223,6 +226,20 @@ export default function ProgressPage() {
     return vals.length ? { ...m, last: vals[vals.length - 1], diff: vals.length > 1 ? r1(vals[vals.length - 1] - vals[0]) : null } : null;
   }).filter(Boolean) as ((typeof MEASURES)[number] & { last: number; diff: number | null })[];
   const lastMeas = [...body].reverse().find((b) => MEASURES.some((m) => b[m.k]));
+  // Achievements: a full plate (90%+ of the goal) this week, and a new top weight in the last workout.
+  const fullDay = Boolean(cal.target && (cal.rows || []).some((r) => !r.off && r.cal >= cal.target! * 0.9 && r.cal <= cal.target! * 1.1));
+  const newPr = (() => {
+    const [last, ...older] = wlogs;
+    if (!last) return null;
+    let best: { name: string; w: number } | null = null;
+    for (const it of last.items) {
+      if (!it.name) continue;
+      const top = Math.max(0, ...it.sets.map((x) => Number(x.w) || 0));
+      const before = Math.max(0, ...older.flatMap((l) => l.items.filter((y) => y.name === it.name).flatMap((y) => y.sets.map((x) => Number(x.w) || 0))));
+      if (top > 0 && before > 0 && top > before && (!best || top - before > best.w)) best = { name: it.name, w: top };
+    }
+    return best;
+  })();
   const vol = (l: WLog) => Math.round(l.items.reduce((a, it) => a + it.sets.reduce((b, s) => b + s.w * s.r, 0), 0));
 
   return (
@@ -239,21 +256,24 @@ export default function ProgressPage() {
       ) : (
         <section className="card">
           <div className="wk-now">
-            <div><small>تغير الوزن</small><b className="num" dir="ltr">{weekChange !== null ? `${sign(weekChange)}` : "—"}</b><small>{weekChange !== null ? "كجم عن الأسبوع اللي قبل" : "يحتاج وزن الأسبوعين"}</small></div>
+            {hide ? null : <div><small>تغير الوزن</small><b className="num"><span dir="ltr">{weekChange !== null ? `${sign(weekChange)}` : "—"}</span></b><small>{weekChange !== null ? "كجم عن الأسبوع اللي قبل" : "يحتاج وزن الأسبوعين"}</small></div>}
             <div><small>أيام الالتزام</small><b className="num">{loggedDays.length}<span className="small muted"> من 7</span></b><small>أيام سجلتي أكلك</small></div>
-            <div><small>متوسط السعرات</small><b className="num">{avgCal ?? "—"}</b><small>{avgCal ? `في ${daysText(loggedDays.length)}` : "ما سجلتي أكل"}</small></div>
+            {hide ? null : <div><small>متوسط السعرات</small><b className="num">{avgCal ?? "—"}</b><small>{avgCal ? `في ${daysText(loggedDays.length)}` : "ما سجلتي أكل"}</small></div>}
           </div>
         </section>
       )}
 
-      {/* 2. Coach */}
+      {/* 2. The week's plates */}
+      <WeekPlates rows={cal.rows} target={cal.target} />
+
+      {/* 3. Coach */}
       {sub && cp.client ? <CoachMessages clientId={cp.client.id} /> : null}
       <RecsHistory rows={recs} />
 
       {/* 3. Weight */}
       <SecH icon="weight" title="الوزن" />
       <section className="card stack">
-        <div className="row between" style={{ alignItems: "flex-start" }}>
+        {hide ? null : <div className="row between" style={{ alignItems: "flex-start" }}>
           <div>
             <span className="label">{weeks.length ? "متوسط هالأسبوع" : "آخر وزن"}</span>
             <div className="row" style={{ alignItems: "baseline", gap: 6 }}>
@@ -266,10 +286,10 @@ export default function ProgressPage() {
             {weekChange !== null ? <span className="label" style={{ display: "block" }}>عن الأسبوع اللي قبل</span> : null}
             {fromStart !== null && fromStart !== 0 ? <span className="label" style={{ display: "block" }}><span dir="ltr">{sign(fromStart)}</span> كجم من البداية</span> : null}
           </div>
-        </div>
+        </div>}
         {weeks.length > 1 ? (
           <>
-            <WeightChart steady={steady} period={period} weeks={weeks} />
+            <WeightChart steady={steady} period={period} weeks={weeks} hide={hide} />
             <p className="note">الخط متوسط كل أسبوع، والنقاط الفاتحة أوزانك اليومية.{period.length ? " النقاط البرتقالية الفاتحة أيام الدورة، ما تدخل في الخط ولا في الفرق." : ""}</p>
           </>
         ) : (
@@ -328,10 +348,10 @@ export default function ProgressPage() {
       ) : null}
 
       {/* 5. Calories, 6. Achievements, 7. Period */}
-      <CaloriesChart rows={cal.rows} target={cal.target} />
+      <CaloriesChart rows={cal.rows} target={cal.target} hide={hide} />
       {cp.client ? (
         <>
-          <Achievements clientId={cp.client.id} lost={fromStart !== null ? -fromStart : null} />
+          <Achievements clientId={cp.client.id} pr={newPr} plateCard={fullDay ? { kind: "week", on: (cal.rows || []).map((r) => r.cal > 0 && !r.off), avgCal: avgCal, avgP: null, workouts: null, weight: null } : null} />
           {auth.profile.gender !== "male" ? <PeriodTracker clientId={cp.client.id} periods={cp.periods} onChange={cp.reload} /> : null}
         </>
       ) : null}

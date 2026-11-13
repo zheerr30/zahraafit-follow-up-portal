@@ -60,6 +60,7 @@ export default function UsersPage() {
   const [filter, setFilter] = useState<"all" | "idle" | "sub" | "free">("all");
   const [missing, setMissing] = useState(false);
   const [showDone, setShowDone] = useState(false);
+  const [hideNums, setHideNums] = useState<Set<string>>(new Set());
   const [offs, setOffs] = useState<Map<string, { limit: number; weekday: number | null; days: string[]; hideMicros: boolean }>>(new Map());
 
   const load = useCallback(async () => {
@@ -71,10 +72,12 @@ export default function UsersPage() {
     setUsers((u as User[] | null) || []);
     // Off days: each subscriber's weekly limit, the plan's fixed free day, and this week's picks.
     const since = new Date(Date.now() - 7 * DAY).toISOString().slice(0, 10);
-    const [{ data: cs }, { data: od }] = await Promise.all([
+    const [{ data: cs }, { data: od }, { data: hn }] = await Promise.all([
       supabase.from("clients").select("id, off_limit, off_weekday, hide_micros"),
-      supabase.from("off_days").select("client_id, day").gte("day", since).order("day")
+      supabase.from("off_days").select("client_id, day").gte("day", since).order("day"),
+      supabase.from("profiles").select("id, hide_numbers").eq("hide_numbers", true)
     ]);
+    setHideNums(new Set(((hn as { id: string }[] | null) || []).map((x) => x.id)));
     const m = new Map<string, { limit: number; weekday: number | null; days: string[]; hideMicros: boolean }>();
     ((cs as { id: string; off_limit?: number; off_weekday?: number | null; hide_micros?: boolean }[] | null) || []).forEach((c) => m.set(c.id, { limit: c.off_limit ?? 1, weekday: c.off_weekday ?? null, days: [], hideMicros: Boolean(c.hide_micros) }));
     ((od as { client_id: string; day: string }[] | null) || []).forEach((o) => m.get(o.client_id)?.days.push(o.day));
@@ -154,6 +157,14 @@ export default function UsersPage() {
                             if (!er) setOffs((m) => new Map(m).set(u.client_id!, { ...m.get(u.client_id!)!, hideMicros: v }));
                           }} />
                           إخفاء «تفاصيل أكثر» (ألياف، صوديوم...)
+                        </label>
+                        <label>
+                          <input type="checkbox" checked={hideNums.has(u.profile_id)} style={{ width: 18, height: 18, accentColor: "var(--clay)" }} onChange={async (e) => {
+                            const v = e.target.checked;
+                            const { error: er } = await supabase.rpc("coach_set_hide_numbers", { p_profile: u.profile_id, p_hide: v });
+                            if (!er) setHideNums((cur) => { const n = new Set(cur); if (v) n.add(u.profile_id); else n.delete(u.profile_id); return n; });
+                          }} />
+                          بدون أرقام (ما تشوف سعرات ولا ماكروز ولا وزن)
                         </label>
                         {u.account_type === "subscriber" ? (
                           <label>يوم حر ثابت

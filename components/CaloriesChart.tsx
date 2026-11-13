@@ -67,7 +67,7 @@ export function useCalorieDays(clientId: string | null | undefined, mealRow: Pla
 }
 
 /** «تقدمي»: calories she logged each day of the last week, against her target. Days without a log show as a dotted empty bar. */
-export function CaloriesChart({ rows, target }: { rows: CalDay[] | null; target: number | null }) {
+export function CaloriesChart({ rows, target, hide = false }: { rows: CalDay[] | null; target: number | null; hide?: boolean }) {
   const [sel, setSel] = useState<number | null>(null);
   if (!rows) return null;
   if (!rows.some((r) => r.cal > 0 && !r.off)) {
@@ -93,9 +93,9 @@ export function CaloriesChart({ rows, target }: { rows: CalDay[] | null; target:
 
   return (
     <>
-      <SecH icon="cal" title="سعراتك" />
+      <SecH icon="cal" title="السعرات" />
       <section className="card stack" aria-label="سعراتك آخر 7 أيام">
-        <div className="row between" style={{ alignItems: "flex-end" }}>
+        {hide ? null : <div className="row between" style={{ alignItems: "flex-end" }}>
           <div>
             <span className="label" style={{ display: "block" }}>متوسط {loggedDaysText(logged.length)}</span>
             <b className="num" style={{ fontSize: 26, color: "var(--navy)" }}>{avg}</b>
@@ -104,7 +104,7 @@ export function CaloriesChart({ rows, target }: { rows: CalDay[] | null; target:
           <span className="small" style={{ textAlign: "end", minHeight: 36 }}>
             {s ? <><b>{short(s.d)}</b><br />{s.off ? "يوم أوف" : s.cal ? `${s.cal} سعرة · بروتين ${s.p} غ` : "ما سجلتي"}</> : <span className="note">اضغطي على أي يوم</span>}
           </span>
-        </div>
+        </div>}
         <svg viewBox={`0 0 ${W} ${H + 18}`} style={{ width: "100%", height: "auto", direction: "ltr", overflow: "visible" }} role="img"
           aria-label={`سعراتك آخر 7 أيام، المتوسط ${avg}${target ? ` والهدف ${target}` : ""}`}>
           <line x1="0" x2={W} y1={base} y2={base} stroke="var(--line)" strokeWidth="1" />
@@ -126,14 +126,14 @@ export function CaloriesChart({ rows, target }: { rows: CalDay[] | null; target:
                   <rect x={x + 0.75} y={base - emptyH} width={bw - 1.5} height={emptyH - 0.75} rx={4} fill="none" stroke="var(--ink-3)" strokeWidth="1.5" strokeDasharray="3 3" opacity={0.7} />
                 )}
                 <text x={x + bw / 2} y={H + 14} textAnchor="middle" fontSize="10" fill="var(--ink-3)">{["ح", "ن", "ث", "ر", "خ", "ج", "س"][new Date(r.d + "T12:00:00").getDay()]}</text>
-                <title>{`${short(r.d)}: ${r.off ? "يوم أوف" : r.cal || "ما سجلتي"}`}</title>
+                {hide ? null : <title>{`${short(r.d)}: ${r.off ? "يوم أوف" : r.cal || "ما سجلتي"}`}</title>}
               </g>
             );
           })}
           {target ? (
             <>
               <line x1="0" x2={W} y1={y(target)} y2={y(target)} stroke="var(--navy)" strokeWidth="1.5" strokeDasharray="4 4" />
-              <text x={W} y={y(target) - 4} textAnchor="end" fontSize="10" fill="var(--navy)">هدفك {target}</text>
+              <text x={W} y={y(target) - 4} textAnchor="end" fontSize="10" fill="var(--navy)">{hide ? "هدفك" : `هدفك ${target}`}</text>
             </>
           ) : null}
         </svg>
