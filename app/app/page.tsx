@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CheckCircle2, ClipboardEdit, Clock3, Dumbbell, FileText, PenLine, Utensils } from "lucide-react";
-import { HomeExtras } from "@/components/HomeExtras";
-import { ReminderNudge } from "@/components/ReminderNudge";
 import { HomeDashboard } from "@/components/HomeDashboard";
 import { accountOf } from "@/lib/account";
 import { useRouter } from "next/navigation";
@@ -185,8 +183,6 @@ export default function ClientHome() {
       ) : (
         main
       )}
-      {client && plans.length && acc.sub ? <ReminderNudge /> : null}
-      {client ? <HomeExtras clientId={client.id} /> : null}
       {acc.sub && !request && !plan ? (
         <div className="card row" style={{ alignItems: "flex-start" }}>
           <Clock3 size={20} color="var(--clay)" style={{ flexShrink: 0, marginTop: 2 }} />

@@ -1216,3 +1216,57 @@ svg.lucide { stroke-width: 1.8; }
   :root:not([data-theme="light"]) .qa-bg { background: rgba(0, 0, 0, .5); }
 }
 :root[data-theme="dark"] .qa-bg { background: rgba(0, 0, 0, .5); }
+
+/* ---------- 39 / section 4: home ---------- */
+.d-mid b { font-size: 16px; color: var(--ink); }
+.d-mid small { font-weight: 500; }
+.d-row .emo { font-size: 24px; width: 30px; }
+.d-act { flex: none; min-height: 36px; padding: 0 14px; border-radius: 999px; font-size: 13.5px; white-space: nowrap; }
+.d-plus { width: 40px; height: 40px; border-radius: 50%; background: var(--grad); color: #fff; box-shadow: none; }
+.cups8 { display: flex; gap: 4px; margin-top: 4px; }
+.cups8 i { width: 14px; height: 8px; border-radius: 3px; background: var(--track); transition: background-color .5s var(--ease); }
+.cups8 i.on { background: var(--navy); }
+.wk-dots9 { display: flex; gap: 5px; flex: none; }
+.wk-dots9 i { width: 9px; height: 9px; border-radius: 50%; background: var(--track); box-sizing: border-box; }
+.wk-dots9 i.on { background: var(--clay); }
+.wk-dots9 i.now { background: transparent; box-shadow: inset 0 0 0 2px var(--clay); }
+.wk-dots9 i.now.on { background: var(--clay); }
+.sec-title { display: flex; align-items: baseline; gap: 10px; }
+.sec-link { margin-inline-start: auto; font-size: 14px; font-weight: 600; color: var(--clay); background: none; border: 0; padding: 4px 0; }
+
+/* alert: a small pill a shade darker than the background */
+.alert-pill { display: flex; align-items: center; gap: 10px; background: var(--pill); border-radius: 999px; padding: 9px 10px 9px 14px; padding-inline-start: 14px; font-size: 14px; touch-action: pan-y; user-select: none; transition: transform .25s var(--ease), opacity .25s var(--ease); }
+.pill-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--clay); flex: none; }
+.pill-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); font-weight: 500; }
+.pill-link { flex: none; color: var(--clay); font-weight: 700; background: none; border: 0; padding: 0; font-size: 14px; text-decoration: none; }
+.pill-x { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; color: var(--ink-3); background: none; border: 0; }
+
+/* the plate card: navy in both modes, 30px corners */
+.plate-card { background: radial-gradient(120% 90% at 50% 0%, #14244F 0%, #050F2C 70%); color: #fff; border-radius: var(--r-xl); padding: 18px 18px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.plate-wrap { position: relative; width: min(78vw, 270px); aspect-ratio: 1; }
+.plate-svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.plate-mid { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; }
+.plate-mid > * { pointer-events: auto; }
+.plate-num { font-size: 36px; line-height: 1; letter-spacing: -.5px; }
+.plate-mid span { font-size: 12px; color: rgba(255, 255, 255, .7); margin-top: 4px; }
+.plate-off { font-size: 17px; }
+.plate-empty { max-width: 92px; font-size: 13px !important; line-height: 1.5; color: rgba(255, 255, 255, .85) !important; }
+.plate-empty a { color: #F2A27F; font-weight: 700; }
+.plate-key { display: flex; gap: 16px; font-size: 12.5px; color: rgba(255, 255, 255, .78); }
+.plate-key span { display: flex; align-items: center; gap: 6px; }
+.plate-key i { width: 8px; height: 8px; border-radius: 50%; }
+.plate-note { font-size: 12.5px; color: rgba(255, 255, 255, .7); }
+.plate-note a { color: #F2A27F; font-weight: 700; }
+
+/* the coach's last message (no side line) */
+.coach-card2 { display: grid; gap: 8px; color: var(--ink); text-decoration: none; }
+.coach-head { display: flex; align-items: center; gap: 10px; }
+.z-av { width: 32px; height: 32px; border-radius: 50%; background: var(--grad); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 15px; flex: none; }
+.coach-head b { font-size: 15px; }
+.coach-when { font-size: 12.5px; color: var(--ink-3); }
+.coach-card2 p { font-size: 15px; line-height: 1.75; white-space: pre-line; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* free accounts: navy offer card */
+.offer-card2 { background: linear-gradient(160deg, #050F2C 0%, #14244F 100%); color: #fff; border-radius: var(--r-lg); padding: 18px; display: grid; gap: 8px; justify-items: start; }
+.offer-card2 b { font-size: 18px; }
+.offer-card2 p { font-size: 14px; line-height: 1.7; color: rgba(255, 255, 255, .78); }

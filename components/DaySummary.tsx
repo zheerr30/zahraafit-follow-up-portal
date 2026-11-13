@@ -129,7 +129,7 @@ function Plate({ plate, hide }: { plate: { p: number; c: number; f: number } | n
   const parts = plate ? [
     { k: "بروتين", v: plate.p, color: "var(--navy)" },
     { k: "كارب", v: plate.c, color: "var(--clay)" },
-    { k: "دهون", v: plate.f, color: "var(--navy-soft)" }
+    { k: "دهون", v: plate.f, color: "var(--clay-light)" }
   ] : [];
   const R = 34, C = 2 * Math.PI * R;
   let at = 0;

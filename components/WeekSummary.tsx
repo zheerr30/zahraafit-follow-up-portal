@@ -30,7 +30,7 @@ function headline(s: Stats) {
 }
 
 /** "Your week" on the home screen: last 7 days at a glance. Hidden until she has logged at least two days. */
-export function WeekSummary({ clientId, plans }: { clientId: string; plans: Plan[] }) {
+export function WeekSummary({ clientId, plans, hide = false }: { clientId: string; plans: Plan[]; hide?: boolean }) {
   const [s, setS] = useState<Stats | null>(null);
   const [share, setShare] = useState(false);
   const meal = plans.find((p) => p.kind === "nutrition" && p.data)?.data as MealPlanData | undefined;
@@ -127,16 +127,16 @@ export function WeekSummary({ clientId, plans }: { clientId: string; plans: Plan
       </div>
       <section className="card stack wk2">
         <p className="wk2-first">{first}</p>
-        {s.avgCal || s.avgP ? (
+        {!hide && (s.avgCal || s.avgP) ? (
           <div className="wk2-pair">
             {s.avgCal ? <div><small>متوسط السعرات</small><b className="num">{s.avgCal}</b><small>من {loggedDaysText(s.committed)}</small></div> : null}
             {s.avgP ? <div><small>متوسط البروتين</small><b className="num">{s.avgP} غ</b><small>من {loggedDaysText(s.committed)}</small></div> : null}
           </div>
         ) : null}
-        {s.wAllPeriod ? (
+        {hide ? null : s.wAllPeriod ? (
           <div className="wk2-row"><span>⚖️ الوزن</span><span className="note">الوزن هالأسبوع ما ينحسب، أيام الدورة</span></div>
         ) : s.wChange !== null ? (
-          <div className="wk2-row"><span>⚖️ الوزن عن الأسبوع اللي قبل</span><b className="num" dir="ltr">{s.wChange > 0 ? "+" : ""}{s.wChange} كجم</b></div>
+          <div className="wk2-row"><span>⚖️ الوزن عن الأسبوع اللي قبل</span><b className="num"><span dir="ltr">{s.wChange > 0 ? "+" : ""}{s.wChange}</span> كجم</b></div>
         ) : null}
         {workoutDays ? (
           <div className="wk2-row"><span>💪 التمارين</span><b className="num">{s.workouts} من {workoutDays}</b></div>
