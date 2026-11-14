@@ -6,7 +6,7 @@ import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import { track } from "@/components/AppStatus";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Camera, ChevronLeft, ChevronRight, Plus, ScanBarcode, Search, Store, X, Star, Trash2 } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, PenLine, Plus, ScanBarcode, Search, Store, X, Star, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui";
 import { SLOTS, SLOT_EMOJI, defaultSlot, fromBarcode, fromBase, fromCustom, scaled, search, type BarcodeProduct, type BaseFood, type CustomFood, type FoodEntry, type Pickable, type Slot } from "@/lib/foods";
 import { aiRead, lookupBarcode } from "@/lib/food-scan";
@@ -28,6 +28,7 @@ type Sheet =
   | { mode: "new"; slot: Slot; name: string; barcode?: string }
   | { mode: "barcode"; slot: Slot }
   | { mode: "photo"; slot: Slot }
+  | { mode: "describe"; slot: Slot }
   | { mode: "saveMeal"; slot: Slot }
   | { mode: "rest"; slot: Slot }
   | { mode: "item"; slot: Slot; entry: FoodEntry };
@@ -362,6 +363,7 @@ export function FoodDiary({
             {photosLeft !== null && photosLeft >= 0 && photosLeft <= 10 ? <span className="log-badge num">{photosLeft > 0 ? `باقي ${photosLeft}` : "للمشتركين"}</span> : null}
           </button>
           <button type="button" onClick={() => setSheet({ mode: "rest", slot: slotNow(ramadan) })}><Store size={22} />مطاعم</button>
+          <button type="button" onClick={() => { track("food:describe"); setSheet({ mode: "describe", slot: slotNow(ramadan) }); }}><PenLine size={22} />اكتبي أكلك</button>
         </div>
       </div>
 
@@ -434,7 +436,7 @@ export function FoodDiary({
         <div className="sheet-bg" onClick={(e) => e.target === e.currentTarget && setSheet(null)}>
           <div className="sheet" role="dialog" aria-modal="true" aria-label="أضيفي أكل" style={{ maxHeight: "88vh", overflowY: "auto" }}>
             <div className="row between">
-              <h2 style={{ fontSize: 18 }}>{sheet.mode === "item" ? sheet.entry.name : sheet.mode === "new" ? (sheet.barcode ? "منتج جديد" : "صنف جديد") : sheet.mode === "barcode" ? "امسحي الباركود" : sheet.mode === "photo" ? "صوري وجبتك" : sheet.mode === "saveMeal" ? `احفظي ${lbl(sheet.slot)} كوجبة` : sheet.mode === "rest" ? `مطاعم · ${lbl(sheet.slot)}` : `أضيفي لـ${lbl(sheet.slot)}`}</h2>
+              <h2 style={{ fontSize: 18 }}>{sheet.mode === "item" ? sheet.entry.name : sheet.mode === "new" ? (sheet.barcode ? "منتج جديد" : "صنف جديد") : sheet.mode === "barcode" ? "امسحي الباركود" : sheet.mode === "photo" ? "صوري صحنك" : sheet.mode === "describe" ? "اكتبي وش أكلتي" : sheet.mode === "saveMeal" ? `احفظي ${lbl(sheet.slot)} كوجبة` : sheet.mode === "rest" ? `مطاعم · ${lbl(sheet.slot)}` : `أضيفي لـ${lbl(sheet.slot)}`}</h2>
               <button type="button" className="icon-btn" aria-label="إغلاق" onClick={() => setSheet(null)}>
                 <X />
               </button>
@@ -457,6 +459,7 @@ export function FoodDiary({
                   <button type="button" onClick={() => setSheet({ mode: "barcode", slot: sheet.slot })}><ScanBarcode size={18} />باركود</button>
                   <button type="button" onClick={() => setSheet({ mode: "photo", slot: sheet.slot })}><Camera size={18} />صوري صحنك</button>
                   <button type="button" onClick={() => setSheet({ mode: "rest", slot: sheet.slot })}><Store size={18} />مطاعم</button>
+                  <button type="button" onClick={() => setSheet({ mode: "describe", slot: sheet.slot })}><PenLine size={18} />اكتبي أكلك</button>
                   <button type="button" onClick={() => setSheet({ mode: "new", slot: sheet.slot, name: q.trim() })}><Plus size={18} />صنف جديد</button>
                 </div>
                 <div className="unit">
@@ -553,7 +556,7 @@ export function FoodDiary({
               </div>
             ) : sheet.mode === "barcode" ? (
               <BarcodeScanner onCode={(code) => { track("food:barcode"); onBarcode(sheet.slot, code); }} onCancel={() => setSheet({ mode: "search", slot: sheet.slot })} />
-            ) : sheet.mode === "photo" && photosLeft === 0 ? (
+            ) : (sheet.mode === "photo" || sheet.mode === "describe") && photosLeft === 0 ? (
               <div className="offer">
                 <span className="offer-em" aria-hidden="true">📸</span>
                 <h2>خلصت صورك المجانية</h2>
@@ -561,8 +564,8 @@ export function FoodDiary({
                 <a className="btn btn-p btn-block" href={STORE_URL} target="_blank" rel="noreferrer">اشتركي من المتجر</a>
                 <button type="button" className="link" style={{ color: "#fff", alignSelf: "center" }} onClick={() => setSheet({ mode: "search", slot: sheet.slot })}>سجليه بالبحث بدالها</button>
               </div>
-            ) : sheet.mode === "photo" ? (
-              <MealPhoto onAdd={(rows) => addMany(sheet.slot, rows)} onCancel={() => setSheet({ mode: "search", slot: sheet.slot })} />
+            ) : sheet.mode === "photo" || sheet.mode === "describe" ? (
+              <MealPhoto key={sheet.mode} textOnly={sheet.mode === "describe"} onAdd={(rows) => addMany(sheet.slot, rows)} onCancel={() => setSheet({ mode: "search", slot: sheet.slot })} />
             ) : (
               <NewFood initialName={sheet.name} barcode={sheet.barcode} profileId={profileId} onSaved={(f) => {
                 setFoods((cur) => [f, ...cur]);

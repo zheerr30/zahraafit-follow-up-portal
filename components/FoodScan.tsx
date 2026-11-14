@@ -2,7 +2,7 @@
 
 import { Dot, MacLabel, MacLine } from "@/components/Mac";
 import { useEffect, useRef, useState } from "react";
-import { Camera } from "lucide-react";
+import { Camera, Image as ImageIcon } from "lucide-react";
 import { aiRead } from "@/lib/food-scan";
 import { ShareSheet } from "@/components/ShareSheet";
 import type { ShareCard } from "@/lib/share-card";
@@ -68,7 +68,7 @@ type AiItem = { name: string; grams: number; cal: number; p: number; c: number; 
 type Row = AiItem & { on: boolean; g: string };
 
 /** Photo of a meal → AI estimate she reviews before adding. */
-export function MealPhoto({ onAdd, onCancel }: { onAdd: (items: { name: string; amount: number; unit: string; cal: number; p: number; c: number; f: number }[]) => void; onCancel: () => void }) {
+export function MealPhoto({ onAdd, onCancel, textOnly = false }: { onAdd: (items: { name: string; amount: number; unit: string; cal: number; p: number; c: number; f: number }[]) => void; onCancel: () => void; textOnly?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -77,13 +77,21 @@ export function MealPhoto({ onAdd, onCancel }: { onAdd: (items: { name: string; 
   const [photo, setPhoto] = useState<File | null>(null);
   const [share, setShare] = useState<ShareCard | null>(null);
 
-  async function pick(file: File | undefined) {
+  const [desc, setDesc] = useState("");
+
+  function pick(file: File | undefined) {
     if (!file) return;
-    setBusy(true);
     setErr(null);
     setPreview(URL.createObjectURL(file));
     setPhoto(file);
-    const { data, error } = await aiRead<{ items: AiItem[]; note: string | null }>("meal", file);
+  }
+
+  /** Sends the photo with her description (or the description alone) and lists what was found. */
+  async function read() {
+    if (!photo && !desc.trim()) return setErr(textOnly ? "اكتبي وش أكلتي" : "صوري صحنك أو اختاري صورة");
+    setBusy(true);
+    setErr(null);
+    const { data, error } = await aiRead<{ items: AiItem[]; note: string | null }>("meal", textOnly ? null : photo, desc.trim() || undefined);
     setBusy(false);
     if (error || !data) return setErr(error || "ما قدرنا نقرأ الصورة.");
     setNote(data.note);
@@ -103,16 +111,37 @@ export function MealPhoto({ onAdd, onCancel }: { onAdd: (items: { name: string; 
       {preview ? <img src={preview} alt="صورة وجبتك" style={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 14 }} /> : null}
       {!rows ? (
         <>
-          <p className="small muted">صوري صحنك من فوق وكل الأكل باين، ونقدر لك السعرات تقريبًا. بعدها تراجعين الكميات قبل ما تضيفينها.</p>
-          <label className="btn btn-p" style={{ cursor: busy ? "wait" : "pointer" }}>
-            <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={busy} onChange={(e) => pick(e.target.files?.[0])} />
-            <Camera size={18} />
-            {busy ? "لحظة... نقرأ صحنك 🔍" : preview ? "صوري مرة ثانية" : "📸 صوري وجبتك"}
+          {textOnly ? (
+            <p className="small muted">اكتبي وش أكلتي بكلامك، والكمية لو تعرفينها، ونحسب لك السعرات تقريبا. بعدها تراجعين الكميات قبل ما تضيفينها.</p>
+          ) : (
+            <>
+              <p className="small muted">صوري صحنك من فوق وكل الأكل باين، أو اختاري صورة من الصور. ولو تبين، اكتبي وصف يساعدنا نعرف الأكل والكمية.</p>
+              <div className="photo-pick-row">
+                <label className="btn btn-s" style={{ cursor: busy ? "wait" : "pointer" }}>
+                  <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={busy} onChange={(e) => pick(e.target.files?.[0])} />
+                  <Camera size={18} />
+                  {preview ? "صوري مرة ثانية" : "صوري الحين"}
+                </label>
+                <label className="btn btn-s" style={{ cursor: busy ? "wait" : "pointer" }}>
+                  <input type="file" accept="image/*" className="sr-only" disabled={busy} onChange={(e) => pick(e.target.files?.[0])} />
+                  <ImageIcon size={18} />
+                  من الصور
+                </label>
+              </div>
+            </>
+          )}
+          <label className="field">
+            <span className="label">{textOnly ? "وش أكلتي؟" : "وصف (اختياري)"}</span>
+            <textarea className="inp" rows={textOnly ? 4 : 2} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)}
+              placeholder={textOnly ? "مثلا: نص صحن كبسة دجاج، صدر بدون جلد، وسلطة ولبن" : "مثلا: الرز نص كوب، والدجاج صدر مشوي بدون زيت"} />
           </label>
+          <button type="button" className="btn btn-p" disabled={busy || (textOnly ? !desc.trim() : !photo)} onClick={read}>
+            {busy ? "لحظة... نحسب" : "احسبي السعرات"}
+          </button>
         </>
       ) : rows.length ? (
         <>
-          <div className="alert info">⚠️ <b>هذا تقدير تقريبي من الصورة.</b> لو تعرفين الكمية، عدلي الجرامات قبل الحفظ، والسعرات تتعدل معها.</div>
+          <div className="alert info"><b>هذا تقدير تقريبي.</b> لو تعرفين الكمية، عدلي الغرامات قبل الحفظ، والسعرات تتعدل معها.</div>
           {rows.map((r, i) => (
             <div key={i} className="diary-row" style={{ opacity: r.on ? 1 : 0.45 }}>
               <input type="checkbox" checked={r.on} aria-label={`احسبي ${r.name}`} onChange={() => setRows(rows.map((x, j) => (j === i ? { ...x, on: !x.on } : x)))} style={{ width: 20, height: 20, accentColor: "var(--clay)", flex: "none" }} />
@@ -125,18 +154,18 @@ export function MealPhoto({ onAdd, onCancel }: { onAdd: (items: { name: string; 
               <b className="num" style={{ minWidth: 36, textAlign: "end" }}>{scaled(r).cal}</b>
             </div>
           ))}
-          {note ? <p className="note">💡 {note}</p> : null}
-          <p className="note">الأرقام تقريبية من الصورة، والزيت والصوصات المخفية ممكن تزيدها.</p>
-          <button type="button" className="btn btn-p" disabled={!chosen.length} onClick={() => onAdd(chosen.map((r) => ({ name: `${r.name} 📸`, amount: Number(r.g), unit: "جرام", ...scaled(r) })))}>
+          {note ? <p className="note">{note}</p> : null}
+          <p className="note">الأرقام تقريبية، والزيت والصوصات المخفية ممكن تزيدها.</p>
+          <button type="button" className="btn btn-p" disabled={!chosen.length} onClick={() => onAdd(chosen.map((r) => ({ name: r.name, amount: Number(r.g), unit: "غ", ...scaled(r) })))}>
             أضيفيها ({total} سعرة)
           </button>
-          <button type="button" className="btn btn-s" disabled={!chosen.length} onClick={() => {
+          {photo && !textOnly ? <button type="button" className="btn btn-s" disabled={!chosen.length} onClick={() => {
             const sum = chosen.reduce((a, r) => { const v = scaled(r); return { cal: a.cal + v.cal, p: a.p + v.p, c: a.c + v.c, f: a.f + v.f }; }, { cal: 0, p: 0, c: 0, f: 0 });
             setShare({ kind: "meal", photo, name: chosen.map((r) => r.name).slice(0, 3).join(" و"), ...sum });
-          }}>📤 شاركي صحنك</button>
+          }}>شاركي صحنك</button> : null}
         </>
       ) : (
-        <p className="alert info">{note || "ما لقينا أكل في الصورة. جربي صورة أوضح."}</p>
+        <p className="alert info">{note || (textOnly ? "ما فهمنا الأكل. اكتبيه بشكل أوضح." : "ما لقينا أكل في الصورة. جربي صورة أوضح.")}</p>
       )}
       {err ? <p className="alert err">{err}</p> : null}
       <button type="button" className="btn btn-g" onClick={onCancel}>رجوع</button>

@@ -1383,3 +1383,9 @@ body:has(.overlay) .fab { display: none; }
 .ex-sheet { z-index: 30; }
 .ex-video { flex: none; }
 .ex-video-soon { height: auto; min-height: 240px; aspect-ratio: 1; }
+/* «سعراتي»: four ways to log under the search (barcode, photo, restaurants, write it) */
+.log-row { grid-template-columns: repeat(4, 1fr); }
+.log-row button { font-size: 12.5px; padding: 0 2px; }
+.photo-pick-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.photo-pick-row .btn { min-height: 48px; }
+body:has(.sheet-bg) .fab, body:has(.qa-bg) .fab { display: none; }

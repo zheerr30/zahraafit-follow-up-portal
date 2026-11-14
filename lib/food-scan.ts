@@ -46,21 +46,24 @@ const AI_ERRORS: Record<string, string> = {
   bad_image: "الصورة ما وصلت صح. جربي مرة ثانية."
 };
 
-/** Sends a photo to /api/ai/{kind}. Returns the parsed answer or an Arabic error. */
-export async function aiRead<T>(kind: "label" | "meal" | "menu", file: File): Promise<{ data?: T; error?: string }> {
+/** Sends a photo (and for «meal», her description, or the description alone) to /api/ai/{kind}. Returns the parsed answer or an Arabic error. */
+export async function aiRead<T>(kind: "label" | "meal" | "menu", file: File | null, text?: string): Promise<{ data?: T; error?: string }> {
   try {
-    const blob = await shrinkPhoto(file);
-    const b64 = await new Promise<string>((res, rej) => {
-      const r = new FileReader();
-      r.onload = () => res(String(r.result).split(",")[1] || "");
-      r.onerror = rej;
-      r.readAsDataURL(blob);
-    });
+    let b64 = "";
+    if (file) {
+      const blob = await shrinkPhoto(file);
+      b64 = await new Promise<string>((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(String(r.result).split(",")[1] || "");
+        r.onerror = rej;
+        r.readAsDataURL(blob);
+      });
+    }
     const { data: s } = await supabase.auth.getSession();
     const res = await fetch(`/api/ai/${kind}`, {
       method: "POST",
       headers: { "content-type": "application/json", Authorization: `Bearer ${s.session?.access_token || ""}` },
-      body: JSON.stringify({ image: b64 })
+      body: JSON.stringify({ image: b64, text: text || undefined })
     });
     const j = await res.json().catch(() => ({}));
     if (!res.ok) return { error: AI_ERRORS[(j as { error?: string }).error || ""] || "ما قدرنا نقرأ الصورة. جربي مرة ثانية." };
